@@ -1,0 +1,18 @@
+{
+  "name": "tsconfig.json",
+  "path": "tsconfig.json",
+  "sha": "8a6e4f3da9c56eb48ccf5183ad03ca751c646485",
+  "size": 730,
+  "url": "https://api.github.com/repos/mohamedelnoss89/optisize/contents/tsconfig.json?ref=main",
+  "html_url": "https://github.com/mohamedelnoss89/optisize/blob/main/tsconfig.json",
+  "git_url": "https://api.github.com/repos/mohamedelnoss89/optisize/git/blobs/8a6e4f3da9c56eb48ccf5183ad03ca751c646485",
+  "download_url": "https://raw.githubusercontent.com/mohamedelnoss89/optisize/main/tsconfig.json?token=BLV2M2NICZOHZMZUOKMHLD3KGWWDJAA",
+  "type": "file",
+  "content": "ewogICJjb21waWxlck9wdGlvbnMiOiB7CiAgICAidGFyZ2V0IjogIkVTMjAx\nNyIsCiAgICAibGliIjogWwogICAgICAiZG9tIiwKICAgICAgImRvbS5pdGVy\nYWJsZSIsCiAgICAgICJlc25leHQiCiAgICBdLAogICAgImFsbG93SnMiOiB0\ncnVlLAogICAgInNraXBMaWJDaGVjayI6IHRydWUsCiAgICAic3RyaWN0Ijog\ndHJ1ZSwKICAgICJub0VtaXQiOiB0cnVlLAogICAgIm5vSW1wbGljaXRBbnki\nOiBmYWxzZSwKICAgICJlc01vZHVsZUludGVyb3AiOiB0cnVlLAogICAgIm1v\nZHVsZSI6ICJlc25leHQiLAogICAgIm1vZHVsZVJlc29sdXRpb24iOiAiYnVu\nZGxlciIsCiAgICAicmVzb2x2ZUpzb25Nb2R1bGUiOiB0cnVlLAogICAgImlz\nb2xhdGVkTW9kdWxlcyI6IHRydWUsCiAgICAianN4IjogInJlYWN0LWpzeCIs\nCiAgICAiaW5jcmVtZW50YWwiOiB0cnVlLAogICAgInBsdWdpbnMiOiBbCiAg\nICAgIHsKICAgICAgICAibmFtZSI6ICJuZXh0IgogICAgICB9CiAgICBdLAog\nICAgInBhdGhzIjogewogICAgICAiQC8qIjogWwogICAgICAgICIuL3NyYy8q\nIgogICAgICBdCiAgICB9CiAgfSwKICAiaW5jbHVkZSI6IFsKICAgICJuZXh0\nLWVudi5kLnRzIiwKICAgICIqKi8qLnRzIiwKICAgICIqKi8qLnRzeCIsCiAg\nICAiLm5leHQvdHlwZXMvKiovKi50cyIsCiAgICAiLm5leHQvZGV2L3R5cGVz\nLyoqLyoudHMiCiAgXSwKICAiZXhjbHVkZSI6IFsKICAgICJub2RlX21vZHVs\nZXMiCiAgXQp9Cg==\n",
+  "encoding": "base64",
+  "_links": {
+    "self": "https://api.github.com/repos/mohamedelnoss89/optisize/contents/tsconfig.json?ref=main",
+    "git": "https://api.github.com/repos/mohamedelnoss89/optisize/git/blobs/8a6e4f3da9c56eb48ccf5183ad03ca751c646485",
+    "html": "https://github.com/mohamedelnoss89/optisize/blob/main/tsconfig.json"
+  }
+}
