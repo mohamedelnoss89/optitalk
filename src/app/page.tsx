@@ -87,11 +87,7 @@ export default function Home() {
             {isLoggedIn ? (
               <button
                 id="user-menu-btn"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setMenuPos({ top: rect.bottom + 4, left: rect.left });
-                  setUserMenu((v) => !v);
-                }}
+                onClick={() => setUserMenu((v) => !v)}
                 className="flex size-9 items-center justify-center rounded-full bg-[#D4A03C]/15 text-[#D4A03C]"
                 aria-label="حسابي"
               >
@@ -116,8 +112,8 @@ export default function Home() {
               exit={{ opacity: 0, y: -6, scale: 0.96 }}
               className="fixed z-[100] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
               style={{
-                top: `${menuPos.top}px`,
-                left: `${menuPos.left}px`,
+                top: "calc(env(safe-area-inset-top) + 52px)",
+                right: "1rem",
               }}
             >
               <div className="border-b border-[#D4A03C]/10 p-3">
