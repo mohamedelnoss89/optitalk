@@ -168,7 +168,7 @@ export default function PlaceDetail() {
               أضف للخطة
             </button>
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.location || place.address)}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#1A1612] py-2.5 text-sm font-bold text-[#F5F0E8]"
