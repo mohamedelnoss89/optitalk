@@ -96,15 +96,15 @@ export default function Home() {
                   {userMenu && (
                     <>
                       <div
-                        className="fixed inset-0 z-[100]"
+                        className="fixed inset-0 z-[60]"
                         onClick={() => setUserMenu(false)}
                       />
                       <motion.div
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="fixed top-16 z-[110] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
-                        style={{ insetInlineEnd: "1rem" }}
+                        className="absolute top-11 z-[70] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
+                        style={{ left: 0 }}
                       >
                         <div className="border-b border-[#D4A03C]/10 p-3">
                           <p className="text-xs font-bold text-[#F5F0E8]">

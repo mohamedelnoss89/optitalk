@@ -13,7 +13,7 @@ export default function SearchBar() {
   const results = searchQuery ? searchPlaces(searchQuery).slice(0, 6) : [];
 
   return (
-    <div className="relative z-20">
+    <div className="relative z-10">
       <div
         className={cn(
           "flex items-center gap-2 rounded-xl border border-[#D4A03C]/20 bg-[#141925] px-3 py-2.5 transition-all",
