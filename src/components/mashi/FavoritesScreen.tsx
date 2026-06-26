@@ -24,7 +24,7 @@ export default function FavoritesScreen() {
           <p className="mt-1 text-xs text-[#8A8078]">اضغط على القلب في أي مكان لإضافته هنا.</p>
           <button
             onClick={() => setActiveCategory(null)}
-            className="mt-4 rounded-full bg-[#D4A03C] px-4 py-2 text-xs font-bold text-[#0D0B09]"
+            className="mt-4 rounded-full bg-[#D4A03C] px-4 py-2 text-xs font-bold text-[#0a0e1a]"
           >
             استكشف الأماكن
           </button>

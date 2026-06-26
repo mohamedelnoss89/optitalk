@@ -43,12 +43,14 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* ===== Cairo Nights Theme ===== */
+  /* ===== Cairo Nights Theme (متوافق مع ألوان opti-group) ===== */
   --color-cairo-gold: #D4A03C;
   --color-cairo-gold-light: #E8B94A;
   --color-cairo-flame: #C0623B;
   --color-cairo-teal: #2A9D8F;
-  --color-cairo-midnight: #0D0B09;
+  --color-cairo-purple: #6C5CE7;
+  --color-cairo-pink: #FD79A8;
+  --color-cairo-midnight: #0a0e1a;
   --color-cairo-cream: #F5F0E8;
   --color-cairo-smoke: #8A8078;
   --color-cairo-sand: #C4A882;
@@ -57,37 +59,37 @@
 
 :root {
   --radius: 0.75rem;
-  --background: #0D0B09;
+  --background: #0a0e1a;
   --foreground: #F5F0E8;
-  --card: #1A1612;
+  --card: #141925;
   --card-foreground: #F5F0E8;
-  --popover: #1A1612;
+  --popover: #141925;
   --popover-foreground: #F5F0E8;
   --primary: #D4A03C;
-  --primary-foreground: #0D0B09;
-  --secondary: #2A2520;
+  --primary-foreground: #0a0e1a;
+  --secondary: #1E2433;
   --secondary-foreground: #F5F0E8;
-  --muted: #2A2520;
+  --muted: #1E2433;
   --muted-foreground: #8A8078;
-  --accent: #C0623B;
+  --accent: #6C5CE7;
   --accent-foreground: #F5F0E8;
   --destructive: #C62828;
   --destructive-foreground: #F5F0E8;
-  --border: #2A2520;
-  --input: #2A2520;
+  --border: #1E2433;
+  --input: #1E2433;
   --ring: #D4A03C;
   --chart-1: #D4A03C;
-  --chart-2: #C0623B;
+  --chart-2: #6C5CE7;
   --chart-3: #2A9D8F;
-  --chart-4: #C4848E;
+  --chart-4: #FD79A8;
   --chart-5: #C4A882;
-  --sidebar: #1A1612;
+  --sidebar: #141925;
   --sidebar-foreground: #F5F0E8;
   --sidebar-primary: #D4A03C;
-  --sidebar-primary-foreground: #0D0B09;
-  --sidebar-accent: #2A2520;
+  --sidebar-primary-foreground: #0a0e1a;
+  --sidebar-accent: #1E2433;
   --sidebar-accent-foreground: #F5F0E8;
-  --sidebar-border: #2A2520;
+  --sidebar-border: #1E2433;
   --sidebar-ring: #D4A03C;
 }
 
@@ -109,7 +111,7 @@
 
 /* ===== Cairo Nights Gradient Background ===== */
 .cairo-gradient {
-  background: linear-gradient(135deg, #0D0B09 0%, #1A1612 50%, #0D0B09 100%);
+  background: linear-gradient(135deg, #0a0e1a 0%, #141925 50%, #0a0e1a 100%);
 }
 .cairo-bg-image {
   background-image: url('/background.png');
@@ -123,7 +125,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(13, 11, 9, 0.80) 0%, rgba(13, 11, 9, 0.85) 50%, rgba(13, 11, 9, 0.90) 100%);
+  background: linear-gradient(180deg, rgba(10, 14, 26, 0.82) 0%, rgba(10, 14, 26, 0.88) 50%, rgba(10, 14, 26, 0.93) 100%);
   z-index: 0;
 }
 .cairo-bg-image > * {
@@ -133,9 +135,12 @@
 .cairo-gold-gradient {
   background: linear-gradient(135deg, #D4A03C 0%, #E8B94A 50%, #C0623B 100%);
 }
+.cairo-opti-gradient {
+  background: linear-gradient(135deg, #6C5CE7 0%, #D4A03C 100%);
+}
 .cairo-card {
-  background: linear-gradient(145deg, rgba(26, 22, 18, 0.80), rgba(13, 11, 9, 0.85));
-  border: 1px solid rgba(212, 160, 60, 0.12);
+  background: linear-gradient(145deg, rgba(20, 25, 37, 0.82), rgba(10, 14, 26, 0.88));
+  border: 1px solid rgba(212, 160, 60, 0.10);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }

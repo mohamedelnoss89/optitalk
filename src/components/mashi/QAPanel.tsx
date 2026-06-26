@@ -119,7 +119,7 @@ export default function QAPanel() {
         </h2>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="flex items-center gap-1 rounded-full bg-[#D4A03C] px-3 py-1.5 text-xs font-bold text-[#0D0B09]"
+          className="flex items-center gap-1 rounded-full bg-[#D4A03C] px-3 py-1.5 text-xs font-bold text-[#0a0e1a]"
         >
           <Plus className="size-3.5" />
           اسأل سؤال
@@ -134,7 +134,7 @@ export default function QAPanel() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="space-y-2 rounded-xl border border-[#D4A03C]/20 bg-[#1A1612] p-3">
+            <div className="space-y-2 rounded-xl border border-[#D4A03C]/20 bg-[#141925] p-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-[#F5F0E8]">سؤال جديد</h3>
                 <button onClick={() => setShowForm(false)} aria-label="إغلاق">
@@ -145,19 +145,19 @@ export default function QAPanel() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="عنوان السؤال"
-                className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
               />
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="تفاصيل السؤال (اختياري)"
                 rows={3}
-                className="w-full resize-none rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                className="w-full resize-none rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
               />
               <button
                 onClick={ask}
                 disabled={submitting}
-                className="w-full rounded-lg bg-[#D4A03C] py-2 text-sm font-bold text-[#0D0B09] disabled:opacity-50"
+                className="w-full rounded-lg bg-[#D4A03C] py-2 text-sm font-bold text-[#0a0e1a] disabled:opacity-50"
               >
                 {submitting ? "جارٍ النشر..." : "انشر السؤال"}
               </button>
@@ -199,7 +199,7 @@ export default function QAPanel() {
               {q.answers.length > 0 && (
                 <div className="mt-2 space-y-1.5 border-r-2 border-[#D4A03C]/20 pr-2">
                   {q.answers.map((a) => (
-                    <div key={a.id} className="rounded-lg bg-[#0D0B09]/40 p-2">
+                    <div key={a.id} className="rounded-lg bg-[#0a0e1a]/40 p-2">
                       <p className="text-[11px] font-bold text-[#C4A882]">{a.user?.name ?? "زائر"}</p>
                       <p className="text-xs text-[#F5F0E8]">{a.content}</p>
                     </div>
@@ -213,11 +213,11 @@ export default function QAPanel() {
                     value={answerText}
                     onChange={(e) => setAnswerText(e.target.value)}
                     placeholder="اكتب إجابتك..."
-                    className="flex-1 rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-2 py-1.5 text-xs text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                    className="flex-1 rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-2 py-1.5 text-xs text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
                   />
                   <button
                     onClick={() => submitAnswer(q.id)}
-                    className="flex size-7 items-center justify-center rounded-lg bg-[#D4A03C] text-[#0D0B09]"
+                    className="flex size-7 items-center justify-center rounded-lg bg-[#D4A03C] text-[#0a0e1a]"
                     aria-label="إرسال"
                   >
                     <Send className="size-3.5" />

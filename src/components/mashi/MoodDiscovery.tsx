@@ -35,7 +35,7 @@ export default function MoodDiscovery() {
             transition={{ delay: i * 0.04 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => pickMood(m.id, m.categories)}
-            className="flex flex-col items-center gap-1.5 rounded-xl border border-[#D4A03C]/15 bg-[#1A1612] p-3 transition-colors hover:border-[#D4A03C]/40"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-[#D4A03C]/15 bg-[#141925] p-3 transition-colors hover:border-[#D4A03C]/40"
             style={{ boxShadow: `inset 0 0 0 0 ${m.color}` }}
           >
             <span

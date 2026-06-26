@@ -45,7 +45,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background cairo-bg-image">
       {/* Header */}
       <header
-        className="sticky top-0 z-30 border-b border-[#D4A03C]/12 bg-[#0D0B09]/70 backdrop-blur-2xl cairo-shadow"
+        className="sticky top-0 z-30 border-b border-[#D4A03C]/12 bg-[#0a0e1a]/70 backdrop-blur-2xl cairo-shadow"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
@@ -70,14 +70,14 @@ export default function Home() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setDocOpen(true)}
-              className="flex size-9 items-center justify-center rounded-full text-[#8A8078] hover:bg-[#1A1612] hover:text-[#F5F0E8]"
+              className="flex size-9 items-center justify-center rounded-full text-[#8A8078] hover:bg-[#141925] hover:text-[#F5F0E8]"
               aria-label="عن المشروع"
             >
               <Info className="size-4" />
             </button>
             <button
               onClick={() => setContactOpen(true)}
-              className="flex size-9 items-center justify-center rounded-full text-[#8A8078] hover:bg-[#1A1612] hover:text-[#F5F0E8]"
+              className="flex size-9 items-center justify-center rounded-full text-[#8A8078] hover:bg-[#141925] hover:text-[#F5F0E8]"
               aria-label="تواصل معنا"
             >
               <Mail className="size-4" />
@@ -103,7 +103,7 @@ export default function Home() {
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="absolute left-0 top-11 z-50 w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#1A1612] shadow-2xl"
+                        className="absolute left-0 top-11 z-50 w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
                       >
                         <div className="border-b border-[#D4A03C]/10 p-3">
                           <p className="text-xs font-bold text-[#F5F0E8]">

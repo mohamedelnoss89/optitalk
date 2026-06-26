@@ -16,7 +16,7 @@ export default function SearchBar() {
     <div className="relative z-20">
       <div
         className={cn(
-          "flex items-center gap-2 rounded-xl border border-[#D4A03C]/20 bg-[#1A1612] px-3 py-2.5 transition-all",
+          "flex items-center gap-2 rounded-xl border border-[#D4A03C]/20 bg-[#141925] px-3 py-2.5 transition-all",
           focused && "border-[#D4A03C]/50 cairo-glow"
         )}
       >
@@ -48,7 +48,7 @@ export default function SearchBar() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#1A1612] shadow-2xl"
+            className="absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
           >
             <ul className="max-h-80 overflow-y-auto">
               {results.map((p) => {

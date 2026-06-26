@@ -31,7 +31,7 @@ export default function CategoryScreen() {
         </button>
         <button
           onClick={() => setActiveCategory(null)}
-          className="flex size-7 items-center justify-center rounded-full bg-[#1A1612] text-[#8A8078]"
+          className="flex size-7 items-center justify-center rounded-full bg-[#141925] text-[#8A8078]"
           aria-label="إغلاق"
         >
           <X className="size-4" />

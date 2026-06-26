@@ -87,7 +87,7 @@ export default function ReviewSystem({ placeId }: { placeId: string }) {
       </div>
 
       {/* add review */}
-      <div className="rounded-xl border border-[#D4A03C]/15 bg-[#1A1612] p-3">
+      <div className="rounded-xl border border-[#D4A03C]/15 bg-[#141925] p-3">
         <div className="mb-2 flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
@@ -112,12 +112,12 @@ export default function ReviewSystem({ placeId }: { placeId: string }) {
           onChange={(e) => setComment(e.target.value)}
           placeholder="شاركنا تجربتك..."
           rows={2}
-          className="w-full resize-none rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+          className="w-full resize-none rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
         />
         <button
           onClick={submit}
           disabled={submitting}
-          className="mt-2 w-full rounded-lg bg-[#D4A03C] py-2 text-sm font-bold text-[#0D0B09] disabled:opacity-50"
+          className="mt-2 w-full rounded-lg bg-[#D4A03C] py-2 text-sm font-bold text-[#0a0e1a] disabled:opacity-50"
         >
           {submitting ? "جارٍ الإرسال..." : "أضف التقييم"}
         </button>
@@ -131,7 +131,7 @@ export default function ReviewSystem({ placeId }: { placeId: string }) {
           <p className="py-3 text-center text-xs text-[#8A8078]">لا توجد تقييمات بعد. كن أول من يقيّم!</p>
         ) : (
           reviews.map((r) => (
-            <div key={r.id} className="rounded-lg border border-[#D4A03C]/10 bg-[#1A1612]/60 p-3">
+            <div key={r.id} className="rounded-lg border border-[#D4A03C]/10 bg-[#141925]/60 p-3">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-xs font-bold text-[#F5F0E8]">{r.user?.name ?? "زائر"}</span>
                 <div className="flex items-center gap-0.5">

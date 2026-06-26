@@ -44,7 +44,7 @@ export default function PlaceCard({ place, index = 0 }: { place: Place; index?: 
           aria-label={fav ? "إزالة من المفضلة" : "إضافة للمفضلة"}
           className={cn(
             "absolute left-2 top-2 flex size-7 items-center justify-center rounded-full backdrop-blur-md transition-all",
-            fav ? "bg-[#C0623B] text-[#F5F0E8]" : "bg-[#0D0B09]/60 text-[#8A8078] hover:text-[#F5F0E8]"
+            fav ? "bg-[#C0623B] text-[#F5F0E8]" : "bg-[#0a0e1a]/60 text-[#8A8078] hover:text-[#F5F0E8]"
           )}
         >
           <Heart className={cn("size-3.5", fav && "fill-current")} />

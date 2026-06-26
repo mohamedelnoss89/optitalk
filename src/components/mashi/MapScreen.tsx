@@ -30,7 +30,7 @@ export default function MapScreen() {
           onClick={() => setFilter(null)}
           className={cn(
             "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
-            !filter ? "border-[#D4A03C] bg-[#D4A03C] text-[#0D0B09]" : "border-[#D4A03C]/20 bg-[#1A1612] text-[#8A8078]"
+            !filter ? "border-[#D4A03C] bg-[#D4A03C] text-[#0a0e1a]" : "border-[#D4A03C]/20 bg-[#141925] text-[#8A8078]"
           )}
         >
           الكل
@@ -41,7 +41,7 @@ export default function MapScreen() {
             onClick={() => setFilter(c.id)}
             className={cn(
               "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
-              filter === c.id ? "border-transparent text-[#F5F0E8]" : "border-[#D4A03C]/20 bg-[#1A1612] text-[#8A8078]"
+              filter === c.id ? "border-transparent text-[#F5F0E8]" : "border-[#D4A03C]/20 bg-[#141925] text-[#8A8078]"
             )}
             style={filter === c.id ? { backgroundColor: c.color } : undefined}
           >
@@ -61,7 +61,7 @@ export default function MapScreen() {
           referrerPolicy="no-referrer-when-downgrade"
           title="خريطة السيدة زينب"
         />
-        <div className="absolute top-2 right-2 rounded-lg bg-[#0D0B09]/85 px-3 py-1.5 backdrop-blur-md">
+        <div className="absolute top-2 right-2 rounded-lg bg-[#0a0e1a]/85 px-3 py-1.5 backdrop-blur-md">
           <span className="text-xs font-bold text-[#D4A03C]">السيدة زينب • القاهرة</span>
         </div>
       </div>
@@ -79,7 +79,7 @@ export default function MapScreen() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i * 0.02, 0.5) }}
                 onClick={() => setSelectedPlace(p)}
-                className="flex w-full items-center gap-3 rounded-xl border border-[#D4A03C]/12 bg-[#1A1612] p-2.5 text-right transition-colors hover:border-[#D4A03C]/30"
+                className="flex w-full items-center gap-3 rounded-xl border border-[#D4A03C]/12 bg-[#141925] p-2.5 text-right transition-colors hover:border-[#D4A03C]/30"
               >
                 {/* صورة المكان */}
                 <div className="size-10 shrink-0 overflow-hidden rounded-lg">
@@ -126,7 +126,7 @@ export default function MapScreen() {
         href="https://www.google.com/maps/search/?api=1&query=السيدة+زينب+القاهرة"
         target="_blank"
         rel="noreferrer"
-        className="flex items-center justify-center gap-2 rounded-xl border border-[#D4A03C]/30 bg-[#1A1612] py-2.5 text-sm font-bold text-[#D4A03C]"
+        className="flex items-center justify-center gap-2 rounded-xl border border-[#D4A03C]/30 bg-[#141925] py-2.5 text-sm font-bold text-[#D4A03C]"
       >
         <ExternalLink className="size-4" />
         افتح على Google Maps

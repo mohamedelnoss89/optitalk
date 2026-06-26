@@ -51,7 +51,7 @@ export default function BadgesPanel() {
                 "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center",
                 unlocked
                   ? "border-[#D4A03C]/40 bg-[#D4A03C]/10 cairo-glow"
-                  : "border-[#D4A03C]/10 bg-[#1A1612]/60 opacity-60"
+                  : "border-[#D4A03C]/10 bg-[#141925]/60 opacity-60"
               )}
             >
               <span className="relative flex size-12 items-center justify-center text-3xl">

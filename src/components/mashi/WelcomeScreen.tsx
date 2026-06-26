@@ -86,7 +86,7 @@ export default function WelcomeScreen() {
                 alt="الماشي فى السيدة زينب"
                 className="w-full h-52 object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0D0B09] via-[#0D0B09]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/30 to-transparent" />
             </motion.div>
 
             <motion.h1
@@ -124,21 +124,21 @@ export default function WelcomeScreen() {
             >
               <button
                 onClick={guest}
-                className="w-full rounded-xl bg-[#D4A03C] py-3 text-sm font-bold text-[#0D0B09] transition-transform active:scale-95 cairo-glow"
+                className="w-full rounded-xl bg-[#D4A03C] py-3 text-sm font-bold text-[#0a0e1a] transition-transform active:scale-95 cairo-glow"
               >
                 ابدأ الاستكشاف كضيف
               </button>
               <div className="flex gap-2">
                 <button
                   onClick={() => setMode("login")}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#1A1612] py-2.5 text-sm font-bold text-[#F5F0E8]"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#141925] py-2.5 text-sm font-bold text-[#F5F0E8]"
                 >
                   <LogIn className="size-4" />
                   دخول
                 </button>
                 <button
                   onClick={() => setMode("register")}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#1A1612] py-2.5 text-sm font-bold text-[#F5F0E8]"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#141925] py-2.5 text-sm font-bold text-[#F5F0E8]"
                 >
                   <UserPlus className="size-4" />
                   حساب جديد
@@ -181,7 +181,7 @@ export default function WelcomeScreen() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="اسمك الكريم"
-                      className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2.5 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                      className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2.5 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
                     />
                   </div>
                 )}
@@ -195,7 +195,7 @@ export default function WelcomeScreen() {
                     type="email"
                     dir="ltr"
                     placeholder="you@example.com"
-                    className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2.5 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                    className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2.5 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -208,14 +208,14 @@ export default function WelcomeScreen() {
                     type="password"
                     dir="ltr"
                     placeholder="••••••••"
-                    className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2.5 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                    className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2.5 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
                   />
                 </div>
 
                 <button
                   onClick={submit}
                   disabled={submitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A03C] py-3 text-sm font-bold text-[#0D0B09] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A03C] py-3 text-sm font-bold text-[#0a0e1a] disabled:opacity-50"
                 >
                   {submitting ? "جارٍ..." : mode === "login" ? "دخول" : "إنشاء الحساب"}
                 </button>

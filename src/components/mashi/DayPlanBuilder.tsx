@@ -66,7 +66,7 @@ export default function DayPlanBuilder() {
         </h2>
         <button
           onClick={() => setCreating((c) => !c)}
-          className="flex items-center gap-1 rounded-full bg-[#D4A03C] px-3 py-1.5 text-xs font-bold text-[#0D0B09]"
+          className="flex items-center gap-1 rounded-full bg-[#D4A03C] px-3 py-1.5 text-xs font-bold text-[#0a0e1a]"
         >
           <Plus className="size-3.5" />
           خطة جديدة
@@ -81,16 +81,16 @@ export default function DayPlanBuilder() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="rounded-xl border border-[#D4A03C]/20 bg-[#1A1612] p-3">
+            <div className="rounded-xl border border-[#D4A03C]/20 bg-[#141925] p-3">
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="اسم الخطة (مثل: جمعة في السيدة)"
-                className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0D0B09] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
+                className="w-full rounded-lg border border-[#D4A03C]/15 bg-[#0a0e1a] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#8A8078] focus:border-[#D4A03C]/40 focus:outline-none"
               />
               <button
                 onClick={createPlan}
-                className="mt-2 w-full rounded-lg bg-[#D4A03C] py-2 text-sm font-bold text-[#0D0B09]"
+                className="mt-2 w-full rounded-lg bg-[#D4A03C] py-2 text-sm font-bold text-[#0a0e1a]"
               >
                 إنشاء
               </button>
@@ -149,7 +149,7 @@ export default function DayPlanBuilder() {
                         {/* timeline dot */}
                         <div className="flex flex-col items-center">
                           <span
-                            className="flex size-8 items-center justify-center rounded-full text-sm font-bold text-[#0D0B09]"
+                            className="flex size-8 items-center justify-center rounded-full text-sm font-bold text-[#0a0e1a]"
                             style={{ backgroundColor: cat?.color ?? "#D4A03C" }}
                           >
                             {i + 1}
@@ -158,7 +158,7 @@ export default function DayPlanBuilder() {
                             <span className="my-1 w-0.5 flex-1 bg-[#D4A03C]/20" style={{ minHeight: "16px" }} />
                           )}
                         </div>
-                        <div className="mb-1 flex-1 rounded-lg border border-[#D4A03C]/10 bg-[#1A1612]/60 p-2">
+                        <div className="mb-1 flex-1 rounded-lg border border-[#D4A03C]/10 bg-[#141925]/60 p-2">
                           <button
                             onClick={() => setSelectedPlace(place)}
                             className="block w-full text-right"
@@ -181,7 +181,7 @@ export default function DayPlanBuilder() {
                             <button
                               onClick={() => reorderStop(plan.id, stop.placeId, "up")}
                               disabled={i === 0}
-                              className="flex size-6 items-center justify-center rounded bg-[#0D0B09]/50 text-[#8A8078] disabled:opacity-30"
+                              className="flex size-6 items-center justify-center rounded bg-[#0a0e1a]/50 text-[#8A8078] disabled:opacity-30"
                               aria-label="تحريك لأعلى"
                             >
                               <ChevronUp className="size-3" />
@@ -189,7 +189,7 @@ export default function DayPlanBuilder() {
                             <button
                               onClick={() => reorderStop(plan.id, stop.placeId, "down")}
                               disabled={i === plan.stops.length - 1}
-                              className="flex size-6 items-center justify-center rounded bg-[#0D0B09]/50 text-[#8A8078] disabled:opacity-30"
+                              className="flex size-6 items-center justify-center rounded bg-[#0a0e1a]/50 text-[#8A8078] disabled:opacity-30"
                               aria-label="تحريك لأسفل"
                             >
                               <ChevronDown className="size-3" />

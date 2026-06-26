@@ -39,11 +39,11 @@ export default function FeaturedSpot() {
           ) : (
             <span className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">{featured.emoji}</span>
           )}
-          <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#0D0B09]/80 px-2 py-0.5 text-xs font-bold text-[#D4A03C]">
+          <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#0a0e1a]/80 px-2 py-0.5 text-xs font-bold text-[#D4A03C]">
             <Star className="size-3 fill-[#D4A03C]" />
             {featured.rating}
           </div>
-          <div className="absolute left-3 top-3 rounded-full bg-[#D4A03C] px-2 py-0.5 text-[10px] font-bold text-[#0D0B09]">
+          <div className="absolute left-3 top-3 rounded-full bg-[#D4A03C] px-2 py-0.5 text-[10px] font-bold text-[#0a0e1a]">
             الأعلى تقييماً
           </div>
         </div>

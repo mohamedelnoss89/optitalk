@@ -75,7 +75,7 @@ export default function PlaceDetail() {
     <Sheet open={open} onOpenChange={(o) => !o && setSelectedPlace(null)}>
       <SheetContent
         side="bottom"
-        className="mx-auto max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t-2 border-[#D4A03C]/30 bg-[#0D0B09] p-0"
+        className="mx-auto max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t-2 border-[#D4A03C]/30 bg-[#0a0e1a] p-0"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>{place.name}</SheetTitle>
@@ -103,7 +103,7 @@ export default function PlaceDetail() {
             aria-label={fav ? "إزالة من المفضلة" : "إضافة للمفضلة"}
             className={cn(
               "absolute left-3 top-3 flex size-9 items-center justify-center rounded-full backdrop-blur-md transition-all",
-              fav ? "bg-[#C0623B] text-[#F5F0E8]" : "bg-[#0D0B09]/60 text-[#F5F0E8]"
+              fav ? "bg-[#C0623B] text-[#F5F0E8]" : "bg-[#0a0e1a]/60 text-[#F5F0E8]"
             )}
           >
             <Heart className={cn("size-4", fav && "fill-current")} />
@@ -134,7 +134,7 @@ export default function PlaceDetail() {
               {place.tags.map((t) => (
                 <span
                   key={t}
-                  className="rounded-md border border-[#D4A03C]/15 bg-[#1A1612] px-2 py-0.5 text-[11px] text-[#C4A882]"
+                  className="rounded-md border border-[#D4A03C]/15 bg-[#141925] px-2 py-0.5 text-[11px] text-[#C4A882]"
                 >
                   #{t}
                 </span>
@@ -144,15 +144,15 @@ export default function PlaceDetail() {
 
           {/* info rows */}
           <div className="space-y-2">
-            <div className="flex items-start gap-2 rounded-lg bg-[#1A1612] p-2.5">
+            <div className="flex items-start gap-2 rounded-lg bg-[#141925] p-2.5">
               <MapPin className="mt-0.5 size-4 shrink-0 text-[#C0623B]" />
               <span className="text-xs text-[#F5F0E8]">{place.address}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-lg bg-[#1A1612] p-2.5">
+            <div className="flex items-center gap-2 rounded-lg bg-[#141925] p-2.5">
               <Phone className="size-4 shrink-0 text-[#C0623B]" />
               <span className="text-xs text-[#F5F0E8]" dir="ltr">{place.phone}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-lg bg-[#1A1612] p-2.5">
+            <div className="flex items-center gap-2 rounded-lg bg-[#141925] p-2.5">
               <Clock className="size-4 shrink-0 text-[#C0623B]" />
               <span className="text-xs text-[#F5F0E8]">{place.hours}</span>
             </div>
@@ -162,7 +162,7 @@ export default function PlaceDetail() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={addToPlan}
-              className="flex items-center justify-center gap-1.5 rounded-xl bg-[#D4A03C] py-2.5 text-sm font-bold text-[#0D0B09]"
+              className="flex items-center justify-center gap-1.5 rounded-xl bg-[#D4A03C] py-2.5 text-sm font-bold text-[#0a0e1a]"
             >
               <CalendarPlus className="size-4" />
               أضف للخطة
@@ -171,7 +171,7 @@ export default function PlaceDetail() {
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.location || place.address)}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#1A1612] py-2.5 text-sm font-bold text-[#F5F0E8]"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-[#D4A03C]/30 bg-[#141925] py-2.5 text-sm font-bold text-[#F5F0E8]"
             >
               <Navigation className="size-4" />
               الاتجاهات

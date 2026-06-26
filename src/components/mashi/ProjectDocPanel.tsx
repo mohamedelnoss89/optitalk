@@ -12,7 +12,7 @@ export default function ProjectDocPanel() {
     <Sheet open={docOpen} onOpenChange={setDocOpen}>
       <SheetContent
         side="bottom"
-        className="mx-auto max-h-[88vh] w-full max-w-md rounded-t-3xl border-t-2 border-[#D4A03C]/30 bg-[#0D0B09] p-0"
+        className="mx-auto max-h-[88vh] w-full max-w-md rounded-t-3xl border-t-2 border-[#D4A03C]/30 bg-[#0a0e1a] p-0"
       >
         <SheetHeader className="border-b border-[#D4A03C]/10 p-5 pb-3">
           <SheetTitle className="flex items-center gap-2 text-lg font-bold text-[#F5F0E8]">
@@ -74,7 +74,7 @@ export default function ProjectDocPanel() {
               </p>
             </section>
 
-            <section className="rounded-xl border border-[#D4A03C]/15 bg-[#1A1612] p-3">
+            <section className="rounded-xl border border-[#D4A03C]/15 bg-[#141925] p-3">
               <p className="text-xs text-[#8A8078]">
                 <strong className="text-[#D4A03C]">ملاحظة:</strong> التطبيق يحتاج اتصالاً بالإنترنت
                 لجلب التقييمات والخطط من الخادم. المفضلة والوضع الحالي محفوظة محلياً على جهازك.
