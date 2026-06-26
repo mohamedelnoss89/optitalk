@@ -84,61 +84,60 @@ export default function Home() {
             </button>
 
             {isLoggedIn ? (
-              <div className="relative">
-                <button
-                  id="user-menu-btn"
-                  onClick={() => setUserMenu((v) => !v)}
-                  className="flex size-9 items-center justify-center rounded-full bg-[#D4A03C]/15 text-[#D4A03C]"
-                  aria-label="حسابي"
-                >
-                  <UserIcon className="size-4" />
-                </button>
-                <AnimatePresence>
-                  {userMenu && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-[90]"
-                        onClick={() => setUserMenu(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="fixed z-[100] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
-                        style={{
-                          top: "calc(env(safe-area-inset-top) + 60px)",
-                          right: "16px",
-                        }}
-                      >
-                        <div className="border-b border-[#D4A03C]/10 p-3">
-                          <p className="text-xs font-bold text-[#F5F0E8]">
-                            {currentUser?.name ?? "ضيف"}
-                          </p>
-                          {currentUser && (
-                            <p className="truncate text-[10px] text-[#8A8078]" dir="ltr">
-                              {currentUser.email}
-                            </p>
-                          )}
-                          {!currentUser && guestMode && (
-                            <p className="text-[10px] text-[#8A8078]">وضع الضيف</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={logout}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-right text-xs text-[#C62828] hover:bg-[#2A2520]"
-                        >
-                          <LogOut className="size-3.5" />
-                          تسجيل الخروج
-                        </button>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
+              <button
+                onClick={() => setUserMenu((v) => !v)}
+                className="flex size-9 items-center justify-center rounded-full bg-[#D4A03C]/15 text-[#D4A03C]"
+                aria-label="حسابي"
+              >
+                <UserIcon className="size-4" />
+              </button>
             ) : null}
           </div>
         </div>
       </header>
+
+      {/* قائمة المستخدم - بره الـ header عشان تتعرض فوق كل حاجة */}
+      <AnimatePresence>
+        {userMenu && isLoggedIn && (
+          <>
+            <div
+              className="fixed inset-0 z-[90]"
+              onClick={() => setUserMenu(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.96 }}
+              className="fixed z-[100] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
+              style={{
+                top: "calc(env(safe-area-inset-top) + 56px)",
+                right: "16px",
+              }}
+            >
+              <div className="border-b border-[#D4A03C]/10 p-3">
+                <p className="text-xs font-bold text-[#F5F0E8]">
+                  {currentUser?.name ?? "ضيف"}
+                </p>
+                {currentUser && (
+                  <p className="truncate text-[10px] text-[#8A8078]" dir="ltr">
+                    {currentUser.email}
+                  </p>
+                )}
+                {!currentUser && guestMode && (
+                  <p className="text-[10px] text-[#8A8078]">وضع الضيف</p>
+                )}
+              </div>
+              <button
+                onClick={logout}
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-right text-xs text-[#C62828] hover:bg-[#1E2433]"
+              >
+                <LogOut className="size-3.5" />
+                تسجيل الخروج
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       <main className="mx-auto w-full max-w-md flex-1 pb-24">
