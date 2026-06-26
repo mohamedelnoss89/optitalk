@@ -103,7 +103,8 @@ export default function Home() {
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="fixed right-4 top-16 z-[110] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
+                        className="fixed top-16 z-[110] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
+                        style={{ insetInlineEnd: "1rem" }}
                       >
                         <div className="border-b border-[#D4A03C]/10 p-3">
                           <p className="text-xs font-bold text-[#F5F0E8]">
