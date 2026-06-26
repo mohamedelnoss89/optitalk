@@ -15,7 +15,7 @@ export default function CategoryGrid() {
         </h3>
         <span className="text-xs text-[#8A8078]">{CATEGORIES.length} تصنيف</span>
       </div>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         {CATEGORIES.map((c, i) => {
           const count = getPlacesByCategory(c.id).length;
           return (
@@ -26,21 +26,44 @@ export default function CategoryGrid() {
               transition={{ delay: i * 0.03 }}
               whileTap={{ scale: 0.94 }}
               onClick={() => setActiveCategory(c.id)}
-              className="group relative flex flex-col items-center gap-1.5 overflow-hidden rounded-xl border border-[#D4A03C]/12 bg-[#1A1612] p-3 text-center transition-all hover:border-[#D4A03C]/40"
+              className="group relative overflow-hidden rounded-xl border border-[#D4A03C]/12 bg-[#1A1612] text-right transition-all hover:border-[#D4A03C]/40"
               aria-label={c.name}
             >
-              <div
-                className="absolute inset-x-0 top-0 h-1"
-                style={{ backgroundColor: c.color }}
-              />
-              <span
-                className="flex size-10 items-center justify-center rounded-full text-lg transition-transform group-hover:scale-110"
-                style={{ backgroundColor: c.color + "22" }}
-              >
-                {c.emoji}
-              </span>
-              <span className="text-xs font-semibold text-[#F5F0E8]">{c.name}</span>
-              <span className="text-[10px] text-[#8A8078]">{count} مكان</span>
+              {/* صورة التصنيف */}
+              <div className="relative h-20 overflow-hidden">
+                {c.image ? (
+                  <img
+                    src={c.image}
+                    alt={c.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${c.color}55, ${c.color}22)`,
+                    }}
+                  />
+                )}
+                {/* overlay داكن */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0B09] via-[#0D0B09]/50 to-transparent" />
+                {/* شريط لون التصنيف */}
+                <div
+                  className="absolute top-0 inset-x-0 h-1"
+                  style={{ backgroundColor: c.color }}
+                />
+                {/* emoji */}
+                <span className="absolute top-2 right-2 text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  {c.emoji}
+                </span>
+              </div>
+
+              {/* الاسم + العدد */}
+              <div className="p-2.5">
+                <h4 className="text-sm font-bold text-[#F5F0E8] line-clamp-1">{c.name}</h4>
+                <p className="text-[11px] text-[#8A8078]">{count} مكان</p>
+              </div>
             </motion.button>
           );
         })}

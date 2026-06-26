@@ -25,11 +25,13 @@ export interface Category {
   color: string;
   emoji: string;
   count: number;
+  image?: string;
 }
 
 export const categories: Category[] = [
   {
     "id": "gawame3",
+    "image": "/places/cat-gawame3.jpg",
     "name": "الجوامع والسياحه",
     "color": "#2A9D8F",
     "emoji": "🕌",
@@ -37,6 +39,7 @@ export const categories: Category[] = [
   },
   {
     "id": "asmak",
+    "image": "/places/cat-asmak.jpg",
     "name": "الاسماك",
     "color": "#1565C0",
     "emoji": "🐟",
@@ -44,6 +47,7 @@ export const categories: Category[] = [
   },
   {
     "id": "halawiyat",
+    "image": "/places/cat-halawiyat.jpg",
     "name": "حلويات",
     "color": "#B8862E",
     "emoji": "🍮",
@@ -51,6 +55,7 @@ export const categories: Category[] = [
   },
   {
     "id": "fool",
+    "image": "/places/cat-fool.jpg",
     "name": "الفول والطعميه",
     "color": "#8D6E63",
     "emoji": "🫘",
@@ -58,6 +63,7 @@ export const categories: Category[] = [
   },
   {
     "id": "qahwa",
+    "image": "/places/cat-qahwa.jpg",
     "name": "القهوه",
     "color": "#5D4037",
     "emoji": "☕",
@@ -65,6 +71,7 @@ export const categories: Category[] = [
   },
   {
     "id": "kabda",
+    "image": "/places/cat-kabda.jpg",
     "name": "الكبده والسجق",
     "color": "#D4A03C",
     "emoji": "🥪",
@@ -72,6 +79,7 @@ export const categories: Category[] = [
   },
   {
     "id": "koshari",
+    "image": "/places/cat-koshari.jpg",
     "name": "الكشرى",
     "color": "#F57C00",
     "emoji": "🍛",
@@ -79,6 +87,7 @@ export const categories: Category[] = [
   },
   {
     "id": "mashawat",
+    "image": "/places/cat-mashawat.jpg",
     "name": "المشويات",
     "color": "#C0623B",
     "emoji": "🔥",
@@ -86,6 +95,7 @@ export const categories: Category[] = [
   },
   {
     "id": "lahm",
+    "image": "/places/cat-lahm.jpg",
     "name": "فواكه اللحوم",
     "color": "#E65100",
     "emoji": "🥩",
@@ -93,6 +103,7 @@ export const categories: Category[] = [
   },
   {
     "id": "mustashfayat",
+    "image": "/places/cat-mustashfayat.jpg",
     "name": "مستشفايات",
     "color": "#C62828",
     "emoji": "🏥",
