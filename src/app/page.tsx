@@ -59,12 +59,11 @@ export default function Home() {
               alt="الماشي"
               className="size-9 rounded-lg object-cover border border-[#D4A03C]/30"
             />
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-base font-extrabold tracking-tight">
-                <span className="cairo-text-gold">ع الماشي</span>
-                <span className="text-[#F5F0E8] text-xs font-medium mr-1 opacity-80">فى السيدة زينب</span>
-              </span>
-              <span className="text-[9px] text-[#8A8078] mt-0.5 tracking-wide">مقدم من opti-group</span>
+            <div className="flex flex-col items-start leading-tight text-right">
+              <span className="text-sm font-extrabold cairo-text-gold">ع الماشى</span>
+              <span className="text-[10px] font-medium text-[#C4A882]">فى</span>
+              <span className="text-xs font-bold text-[#F5F0E8]">السيده زينب</span>
+              <span className="text-[8px] text-[#8A8078] mt-0.5">مقدم من opti-group</span>
             </div>
           </button>
 

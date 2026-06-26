@@ -93,18 +93,12 @@ export default function WelcomeScreen() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-4xl font-extrabold tracking-tight"
+              className="flex flex-col items-center leading-tight"
             >
-              <span className="cairo-text-gold">ع الماشي</span>
+              <span className="text-4xl font-extrabold cairo-text-gold">ع الماشى</span>
+              <span className="text-base font-medium text-[#C4A882] mt-1">فى</span>
+              <span className="text-2xl font-bold text-[#F5F0E8] mt-0.5">السيده زينب</span>
             </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-1 text-sm font-medium text-[#C4A882] tracking-wide"
-            >
-              فى السيدة زينب
-            </motion.p>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
