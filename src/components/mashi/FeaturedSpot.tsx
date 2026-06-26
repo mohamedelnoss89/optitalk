@@ -24,13 +24,21 @@ export default function FeaturedSpot() {
         className="relative w-full overflow-hidden rounded-2xl border border-[#D4A03C]/30 cairo-card p-0 text-right"
       >
         <div
-          className="relative flex h-32 items-center justify-center text-6xl"
+          className="relative flex h-32 items-center justify-center text-6xl overflow-hidden"
           style={{
             background:
               "linear-gradient(135deg, rgba(212,160,60,0.25), rgba(192,98,59,0.25))",
           }}
         >
-          <span className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">{featured.image}</span>
+          {featured.image ? (
+            <img
+              src={featured.image}
+              alt={featured.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <span className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">{featured.emoji}</span>
+          )}
           <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#0D0B09]/80 px-2 py-0.5 text-xs font-bold text-[#D4A03C]">
             <Star className="size-3 fill-[#D4A03C]" />
             {featured.rating}

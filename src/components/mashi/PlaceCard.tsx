@@ -21,12 +21,21 @@ export default function PlaceCard({ place, index = 0 }: { place: Place; index?: 
       className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#D4A03C]/15 cairo-card"
     >
       <div
-        className="relative flex h-24 items-center justify-center text-4xl"
+        className="relative flex h-24 items-center justify-center text-4xl overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${(cat?.color ?? "#D4A03C")}33, ${(cat?.color ?? "#D4A03C")}11)`,
         }}
       >
-        <span className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">{place.image}</span>
+        {place.image ? (
+          <img
+            src={place.image}
+            alt={place.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">{place.emoji}</span>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation();

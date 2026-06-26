@@ -84,12 +84,20 @@ export default function PlaceDetail() {
 
         {/* hero */}
         <div
-          className="relative flex h-40 items-center justify-center text-7xl"
+          className="relative flex h-40 items-center justify-center text-7xl overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${(cat?.color ?? "#D4A03C")}55, ${(cat?.color ?? "#D4A03C")}22)`,
           }}
         >
-          <span className="drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]">{place.image}</span>
+          {place.image ? (
+            <img
+              src={place.image}
+              alt={place.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <span className="drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]">{place.emoji}</span>
+          )}
           <button
             onClick={() => toggleFavorite(place.id)}
             aria-label={fav ? "إزالة من المفضلة" : "إضافة للمفضلة"}
