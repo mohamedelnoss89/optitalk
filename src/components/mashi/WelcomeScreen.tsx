@@ -96,7 +96,7 @@ export default function WelcomeScreen() {
               className="flex flex-col items-center leading-tight"
             >
               <span className="text-4xl font-extrabold cairo-text-gold">ع الماشى</span>
-              <span className="text-base font-medium text-[#C4A882] mt-1">فى</span>
+              <span className="text-base font-medium text-[#C4A882] mt-1 text-center w-full">فى</span>
               <span className="text-2xl font-bold text-[#F5F0E8] mt-0.5">السيده زينب</span>
             </motion.h1>
             <motion.p

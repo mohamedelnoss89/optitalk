@@ -61,7 +61,7 @@ export default function Home() {
             />
             <div className="flex flex-col items-start leading-tight text-right">
               <span className="text-sm font-extrabold cairo-text-gold">ع الماشى</span>
-              <span className="text-[10px] font-medium text-[#C4A882]">فى</span>
+              <span className="text-[10px] font-medium text-[#C4A882] text-center w-full">فى</span>
               <span className="text-xs font-bold text-[#F5F0E8]">السيده زينب</span>
               <span className="text-[8px] text-[#8A8078] mt-0.5">مقدم من opti-group</span>
             </div>
