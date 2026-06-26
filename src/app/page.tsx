@@ -100,10 +100,10 @@ export default function Home() {
                         onClick={() => setUserMenu(false)}
                       />
                       <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="absolute top-11 z-[70] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
+                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                        className="absolute bottom-11 z-[70] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
                         style={{ left: 0 }}
                       >
                         <div className="border-b border-[#D4A03C]/10 p-3">
