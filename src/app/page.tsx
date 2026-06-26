@@ -45,7 +45,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background cairo-bg-image">
       {/* Header */}
       <header
-        className="sticky top-0 z-30 border-b border-[#D4A03C]/12 bg-[#0a0e1a]/70 backdrop-blur-2xl cairo-shadow"
+        className="sticky top-0 z-50 border-b border-[#D4A03C]/12 bg-[#0a0e1a]/70 backdrop-blur-2xl cairo-shadow"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
@@ -96,14 +96,14 @@ export default function Home() {
                   {userMenu && (
                     <>
                       <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-[60]"
                         onClick={() => setUserMenu(false)}
                       />
                       <motion.div
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="absolute left-0 top-11 z-50 w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
+                        className="absolute left-0 top-11 z-[70] w-44 overflow-hidden rounded-xl border border-[#D4A03C]/20 bg-[#141925] shadow-2xl"
                       >
                         <div className="border-b border-[#D4A03C]/10 p-3">
                           <p className="text-xs font-bold text-[#F5F0E8]">
