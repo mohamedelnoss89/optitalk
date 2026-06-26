@@ -2,30 +2,18 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Star, Layers } from "lucide-react";
+import { MapPin, Star, ExternalLink } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { PLACES, getCategoryById, CATEGORIES } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export default function MapScreen() {
-  const { setSelectedPlace, setActiveCategory, activeCategory } = useStore();
+  const { setSelectedPlace } = useStore();
   const [filter, setFilter] = useState<string | null>(null);
 
   const visible = filter
     ? PLACES.filter((p) => p.category === filter)
     : PLACES;
-
-  // Bounding box for Sayyida Zainab area
-  const minLat = 30.0120;
-  const maxLat = 30.0450;
-  const minLng = 31.2300;
-  const maxLng = 31.2600;
-
-  const toXY = (lat: number, lng: number) => {
-    const x = ((lng - minLng) / (maxLng - minLng)) * 100;
-    const y = (1 - (lat - minLat) / (maxLat - minLat)) * 100;
-    return { x: Math.max(2, Math.min(98, x)), y: Math.max(2, Math.min(98, y)) };
-  };
 
   return (
     <div className="space-y-3 px-4 py-4">
@@ -62,109 +50,87 @@ export default function MapScreen() {
         ))}
       </div>
 
-      {/* custom map */}
-      <div
-        className="relative aspect-square w-full overflow-hidden rounded-2xl border border-[#D4A03C]/20"
-        style={{
-          background:
-            "linear-gradient(135deg, #1A1612 0%, #0D0B09 50%, #1A1612 100%)",
-        }}
-      >
-        {/* grid lines */}
-        <div className="absolute inset-0 opacity-10">
-          {[20, 40, 60, 80].map((n) => (
-            <div key={`v${n}`} className="absolute inset-y-0 border-l border-[#D4A03C]/30" style={{ left: `${n}%` }} />
-          ))}
-          {[20, 40, 60, 80].map((n) => (
-            <div key={`h${n}`} className="absolute inset-x-0 border-t border-[#D4A03C]/30" style={{ top: `${n}%` }} />
-          ))}
-        </div>
-
-        {/* "Nile" curve decoration */}
-        <svg className="absolute inset-0 h-full w-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <path d="M 0 30 Q 30 50 50 45 T 100 60 L 100 100 L 0 100 Z" fill="#1565C0" opacity="0.3" />
-        </svg>
-
-        {/* central label */}
-        <div className="absolute left-1/2 top-3 -translate-x-1/2 text-[10px] font-bold text-[#D4A03C]/60">
-          السيدة زينب • القاهرة
-        </div>
-
-        {/* markers */}
-        {visible.map((p, i) => {
-          const { x, y } = toXY(p.lat, p.lng);
-          const cat = getCategoryById(p.category);
-          return (
-            <motion.button
-              key={p.id}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: Math.min(i * 0.01, 0.5) }}
-              onClick={() => setSelectedPlace(p)}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${x}%`, top: `${y}%` }}
-              aria-label={p.name}
-            >
-              <span
-                className="flex size-8 items-center justify-center rounded-full text-base shadow-lg transition-transform hover:scale-125"
-                style={{
-                  backgroundColor: (cat?.color ?? "#D4A03C") + "ee",
-                  boxShadow: `0 0 12px ${(cat?.color ?? "#D4A03C")}88`,
-                }}
-              >
-                {p.image}
-              </span>
-            </motion.button>
-          );
-        })}
-
-        {/* legend */}
-        <div className="absolute bottom-2 right-2 rounded-lg bg-[#0D0B09]/80 p-1.5 backdrop-blur-sm">
-          <div className="flex items-center gap-1 text-[9px] text-[#8A8078]">
-            <Layers className="size-3" />
-            {visible.length} مكان
-          </div>
+      {/* Google Maps iframe بكل الأماكن */}
+      <div className="relative overflow-hidden rounded-2xl border border-[#D4A03C]/20 cairo-shadow">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d13821.765!2d31.2456!3d30.0314!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sar!2seg!4v1700000000000"
+          className="w-full h-80"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="خريطة السيدة زينب"
+        />
+        <div className="absolute top-2 right-2 rounded-lg bg-[#0D0B09]/85 px-3 py-1.5 backdrop-blur-md">
+          <span className="text-xs font-bold text-[#D4A03C]">السيدة زينب • القاهرة</span>
         </div>
       </div>
 
       {/* nearby list */}
       <div>
-        <h3 className="mb-2 text-sm font-bold text-[#F5F0E8]">الأماكن القريبة</h3>
-        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-          {visible.slice(0, 20).map((p) => {
+        <h3 className="mb-2 text-sm font-bold text-[#F5F0E8]">الأماكن</h3>
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
+          {visible.map((p, i) => {
             const cat = getCategoryById(p.category);
             return (
-              <button
+              <motion.button
                 key={p.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.02, 0.5) }}
                 onClick={() => setSelectedPlace(p)}
                 className="flex w-full items-center gap-3 rounded-xl border border-[#D4A03C]/12 bg-[#1A1612] p-2.5 text-right transition-colors hover:border-[#D4A03C]/30"
               >
-                <span
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg text-lg"
-                  style={{ backgroundColor: (cat?.color ?? "#D4A03C") + "22" }}
-                >
-                  {p.image}
-                </span>
+                {/* صورة المكان */}
+                <div className="size-10 shrink-0 overflow-hidden rounded-lg">
+                  {p.image ? (
+                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div
+                      className="flex w-full h-full items-center justify-center text-lg"
+                      style={{ backgroundColor: (cat?.color ?? "#D4A03C") + "22" }}
+                    >
+                      {p.emoji}
+                    </div>
+                  )}
+                </div>
+
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-[#F5F0E8]">{p.name}</span>
                   <span className="flex items-center gap-1 text-xs text-[#8A8078]">
-                    <MapPin className="size-3" />
+                    <MapPin className="size-3 shrink-0" />
                     <span className="truncate">{p.address}</span>
                   </span>
                 </span>
-                <span className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-[#D4A03C]">
-                  <Star className="size-3 fill-[#D4A03C]" />
-                  {p.rating}
+
+                <span className="flex shrink-0 items-center gap-1">
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-[#F5F0E8]"
+                    style={{ backgroundColor: (cat?.color ?? "#D4A03C") + "cc" }}
+                  >
+                    {cat?.name}
+                  </span>
+                  <span className="flex items-center gap-0.5 text-xs font-bold text-[#D4A03C]">
+                    <Star className="size-3 fill-[#D4A03C]" />
+                    {p.rating}
+                  </span>
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
 
-      {activeCategory && (
-        <p className="text-xs text-[#8A8078]">تصفية حسب: {getCategoryById(activeCategory)?.name}</p>
-      )}
+      {/* لينك لفتح Google Maps كامل */}
+      <a
+        href="https://www.google.com/maps/search/?api=1&query=السيدة+زينب+القاهرة"
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-2 rounded-xl border border-[#D4A03C]/30 bg-[#1A1612] py-2.5 text-sm font-bold text-[#D4A03C]"
+      >
+        <ExternalLink className="size-4" />
+        افتح على Google Maps
+      </a>
     </div>
   );
 }
