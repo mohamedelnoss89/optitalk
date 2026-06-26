@@ -52,7 +52,7 @@ export default function HomeScreen() {
                   {searchQuery ? `نتائج البحث (${list.length})` : "الأعلى تقييماً"}
                 </h3>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3">
                 {list.map((p, i) => (
                   <PlaceCard key={p.id} place={p} index={i} />
                 ))}

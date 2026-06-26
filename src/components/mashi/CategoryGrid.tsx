@@ -15,7 +15,7 @@ export default function CategoryGrid() {
         </h3>
         <span className="text-xs text-[#8A8078]">{CATEGORIES.length} تصنيف</span>
       </div>
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {CATEGORIES.map((c, i) => {
           const count = getPlacesByCategory(c.id).length;
           return (

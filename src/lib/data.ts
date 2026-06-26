@@ -1532,7 +1532,7 @@ export const MOODS: Mood[] = [
   { id: 'coffee', label: 'قهوة', emoji: '☕', categories: ['qahwa'] },
   { id: 'sweets', label: 'حلويات', emoji: '🍮', categories: ['halawiyat'] },
   { id: 'fish', label: 'أسماك', emoji: '🐟', categories: ['asmak'] },
-  { id: 'tour', label: 'نزهة', emoji: '🕌', categories: ['gawame3'] },
+  { id: 'tour', label: 'سياحة', emoji: '🕌', categories: ['gawame3'] },
   { id: 'liver', label: 'كبدة', emoji: '🥪', categories: ['kabda'] },
 ];
 

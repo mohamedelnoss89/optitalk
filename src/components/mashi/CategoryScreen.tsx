@@ -56,7 +56,7 @@ export default function CategoryScreen() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3">
         {places.map((p, i) => (
           <PlaceCard key={p.id} place={p} index={i} />
         ))}

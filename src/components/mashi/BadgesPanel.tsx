@@ -38,7 +38,7 @@ export default function BadgesPanel() {
           {loading ? "..." : `${earned.length} / ${BADGES.length}`}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {BADGES.map((b, i) => {
           const unlocked = isEarned(b.id);
           return (

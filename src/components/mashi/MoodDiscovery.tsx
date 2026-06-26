@@ -26,7 +26,7 @@ export default function MoodDiscovery() {
         </h3>
         <span className="text-xs text-[#8A8078]">{PLACES.length}+ مكان</span>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {MOODS.map((m, i) => (
           <motion.button
             key={m.id}
