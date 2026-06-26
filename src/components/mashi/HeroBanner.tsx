@@ -5,36 +5,54 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Sun, Moon, MapPin } from "lucide-react";
 import { PLACES } from "@/lib/data";
 
-// ===== صور الأماكن السياحية (نهاراً) =====
-const DAY_PLACES = PLACES.filter((p) => p.category === "gawame3" && p.image);
-// ===== صور القهاوى (ليلاً) =====
-const NIGHT_PLACES = PLACES.filter((p) => p.category === "qahwa" && p.image);
+// ===== بيانات النهار (سياحة) - كل مكان مع نصيحته =====
+const DAY_DATA = PLACES.filter((p) => p.category === "gawame3" && p.image).map((p, i) => ({
+  place: p,
+  tip: [
+    "ابدأ يومك بزيارة مسجد السيدة زينب وادعُ عند الضريح",
+    "زور مسجد السلطان حسن، تحفة العمارة المملوكية في القاهرة",
+    "متحف الفن الإسلامى بيفتح الصبح - أنصحك تروح بدري",
+    "سبيل أم عباس من التحف المعمارية اللي ماتقدرش تفوتها",
+    "مسجد ابن طولون أقدم مساجد القاهرة - اتمشى في فنائه",
+    "بيت الأمة سعد زغلول - تعرف على تاريخ مصر الحديث",
+    "باب زويلة من بوابات القاهرة الفاطمية التاريخية",
+    "مسجد الرفاعى فيه مقامات ملوك مصر - زوره النهارده",
+    "مسجد السيدة رقية مكان هادي للتأمل والدعاء",
+    "مسجد السيدة سكينة من الأماكن المباركة في القاهرة",
+    "مسجد السيدة عائشة - زوره واتعرف على تاريخه",
+    "مسجد السيدة نفيسة من أشهر مساجد القاهرة",
+    "مسجد ومقام زين العابدين مكان روحاني عظيم",
+    "مسجد الأمير أغا الحين من جواهر العمارة الإسلامية",
+    "مسجد الأمير قيسون تحفة فنية نادرة",
+    "مسجد الجاي اليوسفي في سوق السلاح بالدرب الأحمر",
+    "فم الخليج سور مجرى العيون من معالم القاهرة الفاطمية",
+  ][i % 17],
+}));
 
-// ===== نصايح نهارية =====
-const DAY_TIPS = [
-  "ابدأ يومك بزيارة مسجد السيدة زينب وادعُ عند الضريح",
-  "زور مسجد السلطان حسن، تحفة العمارة المملوكية في القاهرة",
-  "متحف الفن الإسلامى بيفتح الصبح - أنصحك تروح بدري",
-  "سبيل أم عباس من التحف المعمارية اللي ماتقدرش تفوتها",
-  "مسجد ابن طولون أقدم مساجد القاهرة - اتمشى في فنائه",
-  "بيت الأمة سعد زغلول - تعرف على تاريخ مصر الحديث",
-  "باب زويلة من بوابات القاهرة الفاطمية التاريخية",
-  "مسجد الرفاعى فيه مقامات ملوك مصر - زوره النهارده",
-];
+// ===== بيانات الليل (قهاوي) - كل مكان مع نصيحته =====
+const NIGHT_DATA = PLACES.filter((p) => p.category === "qahwa" && p.image).map((p, i) => ({
+  place: p,
+  tip: [
+    `جرّب قهوة ${p.name} - من أعرق قهاوي السيدة زينب`,
+    `${p.name} مكان مثالي لسهرية هادية مع أصحابك`,
+    `لو عايز قهوة بلدي أصيلة - ${p.name} اختيار ممتاز`,
+    `اجلس على ${p.name} واتفرج على ميدان السيدة زينب`,
+    `${p.name} من القهاوي اللي بتعرف الليل في السيدة زينب`,
+    `قهوتك وانت بتتمشى في الشارع من ${p.name}`,
+    `حسّ بدفء القهاوي البلدي في ${p.name}`,
+    `${p.name} مكان مناسب لقعدة ليلية مريحة`,
+    `الاسم بيقول كل حاجة - ${p.name} من القهاوي اللي بتعرف الليل`,
+    `${p.name} قهوة بتفتح النفس بالليل`,
+    `جرّب شاي ${p.name} بالنعناع - حاجة تانية خالص`,
+    `${p.name} من القهاوي اللي ليها تاريخ في المنطقة`,
+    `لو عايز هدوء بالليل - ${p.name} المكان الصح`,
+    `${p.name} قهوة البلد الأصيلة اللي بتدلل`,
+    `سهرتك مش هتكمل من غير قهوة ${p.name}`,
+    `${p.name} من القهاوي اللي بتعرف أهل السيدة زينب`,
+  ][i % 16],
+}));
 
-// ===== نصايح ليلية =====
-const NIGHT_TIPS = [
-  "قهوة بلبع من أعرق قهاوي السيدة زينب - جرّبها بالليل",
-  "اجلس على قهوة السرايا واتفرج على ميدان السيدة زينب",
-  "قهوة تفاحة مكان مثالي لسهرية هادية مع أصحابك",
-  "كافيه لوكس - قهوتك وانت بتتمشى في الشارع",
-  "قهوة لؤلؤة الجماميز من القهاوي اللي بتعرف الليل",
-  "قهوة اليل واخرة - الاسم بيقول كل حاجة",
-  "قهوة المحروسة مكان مناسب لقعدة ليلية مريحة",
-  "قهوة البيت الكبير - حسّ بدفء القهاوي البلدي",
-];
-
-const ROTATION_INTERVAL = 20000; // 20 ثانية للتجربة (تقدر تغيرها لـ 1200000 = 20 دقيقة)
+const ROTATION_INTERVAL = 300000; // 5 دقائق
 
 export default function HeroBanner() {
   const [isNight, setIsNight] = useState(false);
@@ -47,11 +65,11 @@ export default function HeroBanner() {
       setIsNight(hour >= 18 || hour < 6);
     };
     checkTime();
-    const interval = setInterval(checkTime, 60000); // كل دقيقة
+    const interval = setInterval(checkTime, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // تدوير الصور
+  // تدوير البيانات
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => prev + 1);
@@ -59,12 +77,12 @@ export default function HeroBanner() {
     return () => clearInterval(interval);
   }, []);
 
-  const places = isNight ? NIGHT_PLACES : DAY_PLACES;
-  const tips = isNight ? NIGHT_TIPS : DAY_TIPS;
-  const place = places[currentIndex % places.length] || places[0];
-  const tip = tips[currentIndex % tips.length];
+  const data = isNight ? NIGHT_DATA : DAY_DATA;
+  const currentItem = data[currentIndex % data.length] || data[0];
 
-  if (!place) return null;
+  if (!currentItem) return null;
+
+  const { place, tip } = currentItem;
 
   return (
     <motion.section
@@ -96,7 +114,7 @@ export default function HeroBanner() {
               style={{
                 background: isNight
                   ? "linear-gradient(180deg, rgba(10, 14, 26, 0.6) 0%, rgba(10, 14, 26, 0.92) 100%)"
-                  : "linear-gradient(180deg, rgba(13, 11, 9, 0.4) 0%, rgba(13, 11, 9, 0.9) 100%)",
+                  : "linear-gradient(180deg, rgba(10, 14, 26, 0.4) 0%, rgba(10, 14, 26, 0.9) 100%)",
               }}
             />
           </motion.div>
@@ -133,11 +151,11 @@ export default function HeroBanner() {
         </div>
       </div>
 
-      {/* النصيحة */}
+      {/* النصيحة - مرتبطة بنفس المكان */}
       <div className="p-4">
         <AnimatePresence mode="wait">
           <motion.div
-            key={tip}
+            key={`${place.id}-tip-${currentIndex}`}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
@@ -163,11 +181,11 @@ export default function HeroBanner() {
 
         {/* مؤشر التدوير */}
         <div className="mt-2 flex justify-center gap-1">
-          {places.slice(0, 5).map((_, i) => (
+          {data.slice(0, 5).map((_, i) => (
             <div
               key={i}
               className={`h-1 rounded-full transition-all ${
-                i === currentIndex % 5 ? "w-4 bg-[#D4A03C]" : "w-1 bg-[#D4A03C]/20"
+                i === currentIndex % Math.min(data.length, 5) ? "w-4 bg-[#D4A03C]" : "w-1 bg-[#D4A03C]/20"
               }`}
             />
           ))}
