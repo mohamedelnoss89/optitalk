@@ -52,14 +52,20 @@ export default function Home() {
           <button
             onClick={() => useStore.setState({ activeTab: "home", activeCategory: null, searchQuery: "" })}
             className="flex items-center gap-2"
-            aria-label="الماشي"
+            aria-label="الماشي فى السيدة زينب"
           >
-            <span className="flex size-8 items-center justify-center rounded-lg cairo-gold-gradient">
-              <Compass className="size-5 text-[#0D0B09]" />
-            </span>
-            <span className="text-lg font-extrabold">
-              <span className="cairo-text-gold">الماشي</span>
-            </span>
+            <img
+              src="/hero-image.jpg"
+              alt="الماشي"
+              className="size-9 rounded-lg object-cover border border-[#D4A03C]/30"
+            />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-base font-extrabold">
+                <span className="cairo-text-gold">الماشي</span>
+                <span className="text-[#F5F0E8] text-xs font-normal mr-1">فى السيدة زينب</span>
+              </span>
+              <span className="text-[9px] text-[#8A8078]">مقدم من opti-group</span>
+            </div>
           </button>
 
           <div className="flex items-center gap-1">

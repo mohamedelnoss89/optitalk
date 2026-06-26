@@ -74,54 +74,43 @@ export default function WelcomeScreen() {
             exit={{ opacity: 0, scale: 0.96 }}
             className="relative z-10 flex w-full max-w-sm flex-col items-center text-center"
           >
-            {/* صورة الواجهة */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="relative mb-6 w-full overflow-hidden rounded-3xl border border-[#D4A03C]/25 cairo-shadow-lg"
+              transition={{ delay: 0.2 }}
+              className="text-4xl font-extrabold tracking-tight"
             >
-              <img
-                src="/hero-image.jpg"
-                alt="الماشي - دليل السيدة زينب"
-                className="w-full h-56 object-cover"
-              />
-              {/* overlay متدرج */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0D0B09] via-[#0D0B09]/40 to-transparent" />
-              {/* اسم التطبيق فوق الصورة */}
-              <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center">
-                <motion.h1
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-4xl font-extrabold tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
-                >
-                  <span className="cairo-text-gold">الماشي</span>
-                </motion.h1>
-                <motion.p
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="mt-1 text-sm text-[#F5F0E8]/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]"
-                >
-                  دليل السيدة زينب بالقاهرة
-                </motion.p>
-              </div>
-            </motion.div>
-
+              <span className="cairo-text-gold">الماشي</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-1.5 text-sm text-[#8A8078]"
+            >
+              فى السيدة زينب
+            </motion.p>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-2 max-w-xs text-sm leading-relaxed text-[#C4A882]"
+              transition={{ delay: 0.4 }}
+              className="mt-4 max-w-xs text-sm leading-relaxed text-[#C4A882]"
             >
               اكتشف روح القاهرة الفاطمية. مشويات أصيلة، قهوة بلدي، جوامع تاريخية وأكثر من 80 مكاناً ينتظرك.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              className="mt-2 text-[11px] text-[#8A8078]"
+            >
+              مقدم من <span className="font-bold text-[#D4A03C]">opti-group</span>
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.5 }}
               className="mt-8 flex w-full flex-col gap-2.5"
             >
               <button
