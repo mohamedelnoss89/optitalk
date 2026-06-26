@@ -42,7 +42,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background cairo-gradient">
+    <div className="flex min-h-screen flex-col bg-background cairo-bg-image">
       {/* Header */}
       <header
         className="sticky top-0 z-30 border-b border-[#D4A03C]/15 bg-[#0D0B09]/90 backdrop-blur-xl"
