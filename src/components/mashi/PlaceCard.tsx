@@ -18,7 +18,7 @@ export default function PlaceCard({ place, index = 0 }: { place: Place; index?: 
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
       whileTap={{ scale: 0.98 }}
       onClick={() => setSelectedPlace(place)}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#D4A03C]/15 cairo-card"
+      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#D4A03C]/12 cairo-card cairo-shadow transition-all hover:border-[#D4A03C]/30 hover:cairo-glow"
     >
       <div
         className="relative flex h-24 items-center justify-center text-4xl overflow-hidden"

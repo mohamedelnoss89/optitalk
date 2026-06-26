@@ -21,7 +21,7 @@ export default function FeaturedSpot() {
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={() => setSelectedPlace(featured)}
-        className="relative w-full overflow-hidden rounded-2xl border border-[#D4A03C]/30 cairo-card p-0 text-right"
+        className="relative w-full overflow-hidden rounded-2xl border border-[#D4A03C]/25 cairo-card cairo-shadow-lg p-0 text-right"
       >
         <div
           className="relative flex h-32 items-center justify-center text-6xl overflow-hidden"

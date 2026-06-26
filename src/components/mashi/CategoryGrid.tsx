@@ -26,7 +26,7 @@ export default function CategoryGrid() {
               transition={{ delay: i * 0.03 }}
               whileTap={{ scale: 0.94 }}
               onClick={() => setActiveCategory(c.id)}
-              className="group relative overflow-hidden rounded-xl border border-[#D4A03C]/12 bg-[#1A1612] text-right transition-all hover:border-[#D4A03C]/40"
+              className="group relative overflow-hidden rounded-xl border border-[#D4A03C]/12 bg-[#1A1612] cairo-shadow text-right transition-all hover:border-[#D4A03C]/35 hover:cairo-glow"
               aria-label={c.name}
             >
               {/* صورة التصنيف */}

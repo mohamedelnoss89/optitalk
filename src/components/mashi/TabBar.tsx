@@ -20,7 +20,7 @@ export default function TabBar() {
 
   return (
     <nav
-      className="sticky bottom-0 z-30 w-full border-t border-[#D4A03C]/15 bg-[#0D0B09]/95 backdrop-blur-xl"
+      className="sticky bottom-0 z-30 w-full border-t border-[#D4A03C]/12 bg-[#0D0B09]/90 backdrop-blur-2xl cairo-shadow"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="التنقل السفلي"
     >

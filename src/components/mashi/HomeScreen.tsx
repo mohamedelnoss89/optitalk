@@ -20,7 +20,7 @@ export default function HomeScreen() {
     : [...PLACES].sort((a, b) => b.rating - a.rating).slice(0, 12);
 
   return (
-    <div className="space-y-5 px-4 py-4">
+    <div className="space-y-6 px-4 py-5">
       <SearchBar />
 
       <AnimatePresence mode="wait">

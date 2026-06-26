@@ -112,7 +112,7 @@
   background: linear-gradient(135deg, #0D0B09 0%, #1A1612 50%, #0D0B09 100%);
 }
 .cairo-bg-image {
-  background-image: url('/background.jpg');
+  background-image: url('/background.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -123,7 +123,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(13, 11, 9, 0.85) 0%, rgba(13, 11, 9, 0.92) 50%, rgba(13, 11, 9, 0.97) 100%);
+  background: linear-gradient(180deg, rgba(13, 11, 9, 0.88) 0%, rgba(13, 11, 9, 0.94) 50%, rgba(13, 11, 9, 0.98) 100%);
   z-index: 0;
 }
 .cairo-bg-image > * {
@@ -134,17 +134,25 @@
   background: linear-gradient(135deg, #D4A03C 0%, #E8B94A 50%, #C0623B 100%);
 }
 .cairo-card {
-  background: linear-gradient(145deg, rgba(26, 22, 18, 0.95), rgba(13, 11, 9, 0.95));
-  border: 1px solid rgba(212, 160, 60, 0.15);
+  background: linear-gradient(145deg, rgba(26, 22, 18, 0.92), rgba(13, 11, 9, 0.96));
+  border: 1px solid rgba(212, 160, 60, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .cairo-glow {
-  box-shadow: 0 0 20px rgba(212, 160, 60, 0.15);
+  box-shadow: 0 0 24px rgba(212, 160, 60, 0.18), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 .cairo-text-gold {
   background: linear-gradient(135deg, #D4A03C, #E8B94A);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+.cairo-shadow {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+.cairo-shadow-lg {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 160, 60, 0.05);
 }
 
 /* ===== Animations ===== */
