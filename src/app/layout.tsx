@@ -12,11 +12,11 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "الماشي — دليل السيدة زينب بالقاهرة",
+  title: "ع الماشي فى السيدة زينب",
   description:
     "اكتشف روح القاهرة الفاطمية. دليلك الذكي لأفضل مطاعم السيدة زينب، قهوتها، جوامعها وأكثر من 80 مكاناً موثقاً في 12 تصنيفاً.",
   keywords: [
-    "الماشي",
+    "ع الماشي فى السيدة زينب",
     "السيدة زينب",
     "القاهرة",
     "دليل القاهرة",
@@ -25,23 +25,23 @@ export const metadata: Metadata = {
     "كشري أبو طارق",
     "مسجد السيدة زينب",
   ],
-  authors: [{ name: "Al-Mashi Team" }],
+  authors: [{ name: "opti-group" }],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "الماشي",
+    title: "ع الماشي فى السيدة زينب",
   },
   openGraph: {
-    title: "الماشي — دليل السيدة زينب بالقاهرة",
-    description: "اكتشف روح القاهرة الفاطمية مع الماشي.",
+    title: "ع الماشي فى السيدة زينب",
+    description: "اكتشف روح القاهرة الفاطمية مع ع الماشي فى السيدة زينب.",
     type: "website",
     locale: "ar_EG",
   },
   twitter: {
     card: "summary_large_image",
-    title: "الماشي",
-    description: "دليل السيدة زينب بالقاهرة",
+    title: "ع الماشي فى السيدة زينب",
+    description: "ع الماشي فى السيدة زينب",
   },
 };
 
