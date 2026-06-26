@@ -45,7 +45,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background cairo-bg-image">
       {/* Header */}
       <header
-        className="sticky top-0 z-30 border-b border-[#D4A03C]/12 bg-[#0D0B09]/85 backdrop-blur-2xl cairo-shadow"
+        className="sticky top-0 z-30 border-b border-[#D4A03C]/12 bg-[#0D0B09]/70 backdrop-blur-2xl cairo-shadow"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
