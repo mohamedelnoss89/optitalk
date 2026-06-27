@@ -11,7 +11,7 @@ export interface Teacher {
   nameAr: string;
   gender: Gender;
   ageGroup: AgeGroup;
-  avatar: string; // emoji
+  avatar: string; // emoji - للأماكن الصغيرة
   gradient: string; // CSS gradient for avatar background
   color: string; // hex accent
   personality: string; // for AI prompt (English)
@@ -20,6 +20,8 @@ export interface Teacher {
   greetingAr: string; // welcome message (Arabic)
   teachingStyle: string; // for AI prompt (English)
   tags: string[]; // Arabic tags for UI
+  // صورة إنسان حقيقي للعرض الكبير - نستخدم Avatar API أو placeholder
+  imageUrl: string;
 }
 
 export const TEACHERS: Teacher[] = [
@@ -40,6 +42,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Patient explanation, uses simple words, repeats key phrases, asks one question at a time, gives gentle corrections with encouragement.',
     tags: ['صبور', 'هادئ', 'مثالي للمبتدئين'],
+    imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
   },
   {
     id: 'ms-sarah',
@@ -58,6 +61,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Conversational, friendly, uses emojis occasionally, references daily life, makes students laugh, asks engaging personal questions.',
     tags: ['مرحة', 'ودودة', 'أمثلة يومية'],
+    imageUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
   },
   {
     id: 'professor-david',
@@ -76,6 +80,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Grammar-focused, formal but warm, explains rules and origins, uses structured examples, gives detailed corrections with reasoning.',
     tags: ['أكاديمي', 'دقيق', 'قواعد'],
+    imageUrl: 'https://randomuser.me/api/portraits/men/52.jpg',
   },
   {
     id: 'miss-emma',
@@ -94,6 +99,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Conversation-driven, empathetic, validates effort, uses role-play scenarios, focuses on fluency over perfect grammar, encourages self-expression.',
     tags: ['محادثة', 'داعمة', 'ثقة بالنفس'],
+    imageUrl: 'https://randomuser.me/api/portraits/women/68.jpg',
   },
   {
     id: 'coach-mike',
@@ -112,6 +118,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Motivational, uses challenges and goals, sports metaphors, high energy, celebrates small wins, pushes students to try harder, keeps sessions dynamic.',
     tags: ['تحفيزي', 'نشيط', 'أهداف'],
+    imageUrl: 'https://randomuser.me/api/portraits/men/22.jpg',
   },
   {
     id: 'dr-lisa',
@@ -130,6 +137,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Professional, structured, gives precise feedback, uses advanced vocabulary appropriately, focuses on professional contexts (email, meetings, presentations), encourages clear articulation.',
     tags: ['احترافي', 'أكاديمي', 'أعمال'],
+    imageUrl: 'https://randomuser.me/api/portraits/women/40.jpg',
   },
 ];
 

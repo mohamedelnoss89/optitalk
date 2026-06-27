@@ -1,7 +1,6 @@
-// ===== OptiTalk - Messages List =====
+// ===== OptiTalk - Messages List (بدون scroll - عرض آخر رسالتين) =====
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, AlertCircle, Languages, Volume2 } from 'lucide-react';
 import type { ChatMessage } from '@/lib/store';
@@ -15,16 +14,13 @@ interface Props {
 }
 
 export function MessagesList({ messages, isThinking, onReplay, speakingId }: Props) {
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, isThinking]);
+  // نعرض آخر 4 رسايل بس (بدون scroll)
+  const recentMessages = messages.slice(-4);
 
   return (
-    <div className="flex h-full flex-col gap-2 overflow-y-auto px-3 py-3">
-      <AnimatePresence initial={false}>
-        {messages.map((m) => (
+    <div className="flex h-full flex-col justify-end gap-2 px-3 py-3">
+      <AnimatePresence initial={false} mode="popLayout">
+        {recentMessages.map((m) => (
           <MessageBubble
             key={m.id}
             msg={m}
@@ -49,8 +45,6 @@ export function MessagesList({ messages, isThinking, onReplay, speakingId }: Pro
           </div>
         </motion.div>
       )}
-
-      <div ref={endRef} />
     </div>
   );
 }

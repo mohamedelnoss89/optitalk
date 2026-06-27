@@ -1,4 +1,4 @@
-// ===== OptiTalk - Control Bar =====
+// ===== OptiTalk - Control Bar (ثابت دايماً باين) =====
 'use client';
 
 import { motion } from 'framer-motion';
@@ -40,7 +40,7 @@ export function ControlBar({
   };
 
   return (
-    <div className="border-t border-opti-primary/15 opti-glass px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="border-t border-opti-primary/15 opti-glass px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {/* Text input mode */}
       {textMode ? (
         <div className="flex items-center gap-2">
@@ -96,21 +96,21 @@ export function ControlBar({
             </div>
           )}
 
-          {/* Buttons row */}
-          <div className="flex items-center justify-center gap-3">
+          {/* Buttons row - دايماً باين */}
+          <div className="flex items-center justify-center gap-4">
             {/* End conversation */}
             <button
               onClick={onEndConversation}
-              className="flex h-12 w-12 items-center justify-center rounded-full opti-glass text-opti-error transition-all hover:scale-105 active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-full opti-glass text-opti-error transition-all hover:scale-105 active:scale-95"
               aria-label="إنهاء المحادثة"
             >
               <X className="h-5 w-5" />
             </button>
 
-            {/* Main mic / stop button */}
+            {/* Main mic / stop button - كبير وواضح دايماً */}
             <button
               onClick={isSpeaking ? onStopSpeaking : onMicToggle}
-              disabled={isAiThinking || (!speechSupported && !onSendText)}
+              disabled={isAiThinking}
               className={cn(
                 'relative flex h-16 w-16 items-center justify-center rounded-full transition-all duration-300',
                 isListening
@@ -118,7 +118,7 @@ export function ControlBar({
                   : isSpeaking
                   ? 'opti-glass-teal text-opti-accent'
                   : isAiThinking
-                  ? 'opti-glass text-opti-text/40'
+                  ? 'opti-glass text-opti-text/40 cursor-not-allowed'
                   : 'opti-primary-gradient text-white opti-glow hover:scale-105 active:scale-95'
               )}
               aria-label={isListening ? 'إيقاف الاستماع' : 'تحدث'}
@@ -142,22 +142,22 @@ export function ControlBar({
             {/* Toggle text mode */}
             <button
               onClick={() => setTextMode(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-full opti-glass text-opti-text/70 transition-all hover:scale-105 hover:text-opti-text active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-full opti-glass text-opti-text/70 transition-all hover:scale-105 hover:text-opti-text active:scale-95"
               aria-label="الكتابة"
             >
               <Keyboard className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Status hint */}
-          <div className="mt-2 text-center text-[10px] text-opti-text/45">
+          {/* Status hint - دايماً باين */}
+          <div className="mt-2 text-center text-[11px] font-medium text-opti-text/50">
             {isAiThinking
-              ? 'المدرس بيفكر...'
+              ? '⏳ المدرس بيفكر...'
               : isSpeaking
-              ? 'اضغط لإيقاف الصوت'
+              ? '🔊 اضغط لإيقاف الصوت'
               : isListening
-              ? 'تحدث الآن... اضغط للإيقاف'
-              : 'اضغط على الميكروفون وتحدث'}
+              ? '🎤 تتحدث الآن... اضغط للإيقاف'
+              : '🎙️ اضغط على الميكروفون وتحدث'}
           </div>
         </>
       )}

@@ -1,4 +1,4 @@
-// ===== OptiTalk - Teacher Avatar (كبير + تفاعلي) =====
+// ===== OptiTalk - Teacher Avatar (صورة إنسان حقيقي + تفاعلي) =====
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,17 +24,17 @@ export function TeacherAvatar({
 }: Props) {
   const sizeClass =
     size === 'xl'
-      ? 'h-32 w-32 text-7xl'
+      ? 'h-36 w-36'
       : size === 'lg'
-      ? 'h-28 w-28 text-6xl'
+      ? 'h-28 w-28'
       : size === 'sm'
-      ? 'h-12 w-12 text-2xl'
-      : 'h-20 w-20 text-4xl';
+      ? 'h-12 w-12'
+      : 'h-20 w-20';
 
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative">
-        {/* Speaking halo rings - أكبر وأوضح */}
+        {/* Speaking halo rings */}
         <AnimatePresence>
           {isSpeaking && (
             <>
@@ -42,7 +42,7 @@ export function TeacherAvatar({
                 key="ring1"
                 className={cn('absolute inset-0 rounded-full', 'border-2 border-opti-accent/50')}
                 initial={{ scale: 0.95, opacity: 0.8 }}
-                animate={{ scale: 1.5, opacity: 0 }}
+                animate={{ scale: 1.4, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
               />
@@ -50,7 +50,7 @@ export function TeacherAvatar({
                 key="ring2"
                 className={cn('absolute inset-0 rounded-full', 'border-2 border-opti-primary/40')}
                 initial={{ scale: 0.95, opacity: 0.6 }}
-                animate={{ scale: 1.8, opacity: 0 }}
+                animate={{ scale: 1.7, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut', delay: 0.4 }}
               />
@@ -58,7 +58,7 @@ export function TeacherAvatar({
                 key="ring3"
                 className={cn('absolute inset-0 rounded-full', 'border border-opti-gold/30')}
                 initial={{ scale: 0.95, opacity: 0.4 }}
-                animate={{ scale: 2.1, opacity: 0 }}
+                animate={{ scale: 2.0, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut', delay: 0.8 }}
               />
@@ -66,21 +66,21 @@ export function TeacherAvatar({
           )}
         </AnimatePresence>
 
-        {/* Glow أكبر لما بيتكلم */}
+        {/* Glow لما بيتكلم */}
         {isSpeaking && (
           <motion.div
-            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
             className="absolute inset-0 rounded-full blur-2xl opacity-50"
             style={{ background: teacher.gradient }}
           />
         )}
 
-        {/* الأفاتار - أكبر + تفاعلي */}
+        {/* الأفاتار - صورة إنسان حقيقي */}
         <motion.div
           animate={
             isSpeaking
-              ? { scale: [1, 1.05, 1], y: [0, -3, 0] }
+              ? { scale: [1, 1.04, 1] }
               : isThinking
               ? { scale: [1, 0.97, 1] }
               : isListening
@@ -93,18 +93,38 @@ export function TeacherAvatar({
             ease: 'easeInOut',
           }}
           className={cn(
-            'relative flex items-center justify-center rounded-full opti-shadow-lg overflow-hidden',
+            'relative overflow-hidden rounded-full opti-shadow-lg ring-2',
             sizeClass
           )}
-          style={{ background: teacher.gradient }}
+          style={{
+            background: teacher.gradient,
+            // ring color يعتمد على حالة المدرس
+            boxShadow: isSpeaking
+              ? `0 0 20px ${teacher.color}88`
+              : isThinking
+              ? `0 0 15px ${teacher.color}44`
+              : `0 0 10px ${teacher.color}22`,
+          }}
         >
-          <motion.span
-            animate={isSpeaking ? { y: [0, -2, 0, 2, 0] } : {}}
-            transition={{ duration: 0.3, repeat: isSpeaking ? Infinity : 0 }}
-            className="drop-shadow-lg"
-          >
-            {teacher.avatar}
-          </motion.span>
+          {/* صورة المدرس الحقيقية */}
+          <img
+            src={teacher.imageUrl}
+            alt={teacher.name}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              // fallback للـ emoji لو الصورة مش متاحة
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.style.display = 'flex';
+                parent.style.alignItems = 'center';
+                parent.style.justifyContent = 'center';
+                parent.style.fontSize = size === 'xl' ? '4rem' : '2rem';
+                parent.textContent = teacher.avatar;
+              }
+            }}
+          />
 
           {/* Thinking indicator overlay */}
           <AnimatePresence>
