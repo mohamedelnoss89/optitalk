@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# See https://help.github.com/articles/ignoring-files/ for about ignoring files.
 
 # dependencies
 node_modules
@@ -36,7 +36,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -48,7 +47,55 @@ dev.log
 dev.out.log
 test
 prompt
-
 server.log
-# Skills directory
+
+# Skills directory (internal tooling)
 /skills/
+
+# ===== OptiTalk-specific cleanups =====
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Databases (Prisma SQLite local dev)
+/db/*.db
+/db/*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Build artifacts
+*.tar.gz
+*.zip
+*.rar
+
+# Uploads / screenshots / debug images (not part of source)
+/upload/
+/tool-results/
+/agent-ctx/
+/.zscripts/
+/menu_debug.png
+/menu_final2.png
+/optisize_screenshot.png
+/user_menu_final.png
+/user_menu_fixed.png
+/user_menu_test.png
+/download/
+
+# Old / unrelated project files (keep repo focused on OptiTalk)
+/optisize_work/
+/_read_optisize/
+/al-mashi-repo/
+/examples/
+/mini-services/
+
+# Worklog (internal multi-agent log)
+/worklog.md
+
+# Caddyfile (deployment-specific)
+/Caddyfile
