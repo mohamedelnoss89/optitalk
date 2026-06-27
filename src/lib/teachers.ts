@@ -1,5 +1,6 @@
 // ===== OptiTalk - Teacher Personalities =====
 // 6 معلمين بشخصيات مختلفة لتناسب كل طالب
+// الصور من Unsplash - حجم كبير ووضوح عالي عشان تبقى زي اجتماع زوم حقيقي
 
 export type Gender = 'male' | 'female';
 export type AgeGroup = 'young' | 'adult' | 'senior';
@@ -20,8 +21,14 @@ export interface Teacher {
   greetingAr: string; // welcome message (Arabic)
   teachingStyle: string; // for AI prompt (English)
   tags: string[]; // Arabic tags for UI
-  // صورة إنسان حقيقي للعرض الكبير - نستخدم Avatar API أو placeholder
+  // صورة إنسان حقيقي - حجم كبير من Unsplash
+  // paramters: w=800 (width), q=80 (quality), fit=crop, crop=faces (يركّز على الوش)
   imageUrl: string;
+}
+
+// Helper: صورة Unsplash كبيرة بتركيز على الوش والجزء العلوي من الجسم
+function unsplashImg(photoId: string): string {
+  return `https://images.unsplash.com/photo-${photoId}?auto=format&fit=crop&w=800&q=80&crop=faces,entropy`;
 }
 
 export const TEACHERS: Teacher[] = [
@@ -42,7 +49,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Patient explanation, uses simple words, repeats key phrases, asks one question at a time, gives gentle corrections with encouragement.',
     tags: ['صبور', 'هادئ', 'مثالي للمبتدئين'],
-    imageUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    imageUrl: unsplashImg('1507003211169-0a1dd7228f2d'),
   },
   {
     id: 'ms-sarah',
@@ -56,12 +63,12 @@ export const TEACHERS: Teacher[] = [
     personality:
       'A cheerful, energetic young female teacher. Uses everyday examples, jokes, and pop culture references. Makes learning fun and relaxed.',
     personalityAr: 'مرحة، شابة، تستخدم أمثلة يومية',
-    greeting: "Hey there! I'm Ms. Sarah! 🌟 Ready to have some fun with English? Let's chat like friends. What did you do today?",
-    greetingAr: 'أهلاً! أنا مس سارة! 🌟 جاهزون نبني وقت ممتع مع الإنجليزي؟ نتكلم زي الأصحاب.',
+    greeting: "Hey there! I'm Ms. Sarah! Ready to have some fun with English? Let's chat like friends. What did you do today?",
+    greetingAr: 'أهلاً! أنا مس سارة! جاهزين نبني وقت ممتع مع الإنجليزي؟ نتكلم زي الأصحاب.',
     teachingStyle:
       'Conversational, friendly, uses emojis occasionally, references daily life, makes students laugh, asks engaging personal questions.',
     tags: ['مرحة', 'ودودة', 'أمثلة يومية'],
-    imageUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
+    imageUrl: unsplashImg('1573496359142-b8d87734a5a2'),
   },
   {
     id: 'professor-david',
@@ -80,7 +87,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Grammar-focused, formal but warm, explains rules and origins, uses structured examples, gives detailed corrections with reasoning.',
     tags: ['أكاديمي', 'دقيق', 'قواعد'],
-    imageUrl: 'https://randomuser.me/api/portraits/men/52.jpg',
+    imageUrl: unsplashImg('1519085360753-af0119f7cbe7'),
   },
   {
     id: 'miss-emma',
@@ -94,12 +101,12 @@ export const TEACHERS: Teacher[] = [
     personality:
       'A warm, friendly adult female teacher who focuses on real-life conversation. Empathetic and supportive. Makes students feel comfortable speaking.',
     personalityAr: 'ودودة، داعمة، تركّز على المحادثة',
-    greeting: "Hi, I'm Miss Emma! 💕 I'm here to help you speak English confidently. There are no mistakes here — only learning. Tell me, what would you like to talk about?",
-    greetingAr: 'أهلاً، أنا مس إيما! 💕 هنا عشان أساعدك تتكلم إنجليزي بثقة. مفيش غلط هنا — بس تعلّم.',
+    greeting: "Hi, I'm Miss Emma! I'm here to help you speak English confidently. There are no mistakes here — only learning. Tell me, what would you like to talk about?",
+    greetingAr: 'أهلاً، أنا مس إيما! هنا عشان أساعدك تتكلم إنجليزي بثقة. مفيش غلط هنا — بس تعلّم.',
     teachingStyle:
       'Conversation-driven, empathetic, validates effort, uses role-play scenarios, focuses on fluency over perfect grammar, encourages self-expression.',
     tags: ['محادثة', 'داعمة', 'ثقة بالنفس'],
-    imageUrl: 'https://randomuser.me/api/portraits/women/68.jpg',
+    imageUrl: unsplashImg('1580489944761-15a19d654956'),
   },
   {
     id: 'coach-mike',
@@ -113,12 +120,12 @@ export const TEACHERS: Teacher[] = [
     personality:
       'A motivational, energetic young male coach. Uses sports metaphors and challenges. Treats learning English like training — set goals, push hard, celebrate wins.',
     personalityAr: 'شبابي، نشيط، أسلوب تحفيزي رياضي',
-    greeting: "What's up, champ! 💪 Coach Mike here. Learning English is like training — show up, give your best, and you'll get stronger every day. Let's warm up — introduce yourself!",
-    greetingAr: 'إيه الأخبار يا بطل! 💪 أنا كوتش مايك. تعلم الإنجليزي زي التمرين — ثبت، ابذل جهدك، وهتقوى كل يوم.',
+    greeting: "What's up, champ! Coach Mike here. Learning English is like training — show up, give your best, and you'll get stronger every day. Let's warm up — introduce yourself!",
+    greetingAr: 'إيه الأخبار يا بطل! أنا كوتش مايك. تعلم الإنجليزي زي التمرين — ثبت، ابذل جهدك، وهتقوى كل يوم.',
     teachingStyle:
       'Motivational, uses challenges and goals, sports metaphors, high energy, celebrates small wins, pushes students to try harder, keeps sessions dynamic.',
     tags: ['تحفيزي', 'نشيط', 'أهداف'],
-    imageUrl: 'https://randomuser.me/api/portraits/men/22.jpg',
+    imageUrl: unsplashImg('1568602471122-7832951cc4c5'),
   },
   {
     id: 'dr-lisa',
@@ -137,7 +144,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Professional, structured, gives precise feedback, uses advanced vocabulary appropriately, focuses on professional contexts (email, meetings, presentations), encourages clear articulation.',
     tags: ['احترافي', 'أكاديمي', 'أعمال'],
-    imageUrl: 'https://randomuser.me/api/portraits/women/40.jpg',
+    imageUrl: unsplashImg('1573497019940-1c28c88b4f3e'),
   },
 ];
 

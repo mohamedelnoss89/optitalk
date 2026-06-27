@@ -26,6 +26,7 @@ interface ChatRequest {
   }[];
   conversationId?: string | null;
   userId?: string | null;
+  inputLang?: 'en' | 'ar';
 }
 
 interface AIResponse {
@@ -70,6 +71,7 @@ BILINGUAL SUPPORT - VERY IMPORTANT:
 12. Example: Student says "انا عايز اتعلم انجليزي" → You reply: "Great! You said you want to learn English. Let's practice! Try saying: 'I want to learn English.' Can you repeat that?"
 13. If the student mixes Arabic and English, respond to the meaning and gently encourage more English.
 14. Always provide Arabic translation for difficult English words in the translatedWord field.
+15. The student's speech recognition language is set to: {inputLang}. If it is "ar", the student is likely speaking Arabic and the transcript may contain Arabic text or transliterated Arabic - try your best to understand. If it is "en", the student is attempting English and may have pronunciation/grammar mistakes.
 
 You MUST respond with VALID JSON ONLY (no markdown, no code fences) in this exact format:
 {
@@ -78,7 +80,7 @@ You MUST respond with VALID JSON ONLY (no markdown, no code fences) in this exac
   "translatedWord": "englishWord = الترجمة العربية, or null if no difficult word was used"
 }`;
 
-function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user']): string {
+function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user'], inputLang: 'en' | 'ar' = 'en'): string {
   return SYSTEM_PROMPT_TEMPLATE
     .replaceAll('{teacherName}', teacher.name)
     .replaceAll('{userName}', user.name || 'student')
@@ -86,7 +88,8 @@ function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user']): string 
     .replaceAll('{userGender}', user.gender || 'unknown')
     .replaceAll('{userLevel}', user.level || 'beginner')
     .replaceAll('{teacherPersonality}', teacher.personality)
-    .replaceAll('{teacherTeachingStyle}', teacher.teachingStyle);
+    .replaceAll('{teacherTeachingStyle}', teacher.teachingStyle)
+    .replaceAll('{inputLang}', inputLang);
 }
 
 function extractJson(content: string): AIResponse {
@@ -138,7 +141,7 @@ function extractJson(content: string): AIResponse {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ChatRequest;
-    const { message, teacher, user, conversationHistory } = body;
+    const { message, teacher, user, conversationHistory, inputLang } = body;
 
     if (!message || !teacher || !user) {
       return NextResponse.json(
@@ -147,7 +150,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = buildSystemPrompt(teacher, user);
+    const systemPrompt = buildSystemPrompt(teacher, user, inputLang ?? 'en');
 
     // Build messages for the AI
     const recentHistory = (conversationHistory || []).slice(-10); // keep last 10 turns

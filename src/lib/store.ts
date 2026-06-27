@@ -46,6 +46,8 @@ interface AppState {
   cameraEnabled: boolean;
   micEnabled: boolean;
   showAchievement: string | null;
+  // لغة التعرف على الصوت: 'en' (إنجليزي افتراضي) أو 'ar' (عربي)
+  speechLang: 'en' | 'ar';
 
   // Actions: Onboarding
   setUser: (u: OptiUser) => void;
@@ -72,6 +74,7 @@ interface AppState {
   setScreen: (s: Screen) => void;
   setCameraEnabled: (v: boolean) => void;
   setMicEnabled: (v: boolean) => void;
+  setSpeechLang: (l: 'en' | 'ar') => void;
 
   // Reset
   resetAll: () => void;
@@ -104,6 +107,7 @@ export const useStore = create<AppState>()(
       cameraEnabled: false,
       micEnabled: false,
       showAchievement: null,
+      speechLang: 'en',
 
       // Actions: Onboarding
       setUser: (u) => set({ user: u }),
@@ -170,6 +174,7 @@ export const useStore = create<AppState>()(
       setScreen: (s) => set({ currentScreen: s }),
       setCameraEnabled: (v) => set({ cameraEnabled: v }),
       setMicEnabled: (v) => set({ micEnabled: v }),
+      setSpeechLang: (l) => set({ speechLang: l }),
 
       // Reset
       resetAll: () =>
@@ -191,6 +196,7 @@ export const useStore = create<AppState>()(
           cameraEnabled: false,
           micEnabled: false,
           showAchievement: null,
+          speechLang: 'en',
         }),
     }),
     {
@@ -205,6 +211,7 @@ export const useStore = create<AppState>()(
         lastActiveDate: s.lastActiveDate,
         messagesCount: s.messagesCount,
         currentScreen: s.currentScreen,
+        speechLang: s.speechLang,
       }),
     }
   )

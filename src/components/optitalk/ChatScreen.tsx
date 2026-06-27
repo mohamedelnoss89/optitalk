@@ -28,6 +28,7 @@ export function ChatScreen() {
     streak,
     achievements,
     showAchievement,
+    speechLang,
     addMessage,
     clearMessages,
     setListening,
@@ -36,6 +37,7 @@ export function ChatScreen() {
     setCameraEnabled,
     setScreen,
     setShowAchievement,
+    setSpeechLang,
     addPoints,
     bumpPerfectStreak,
     resetPerfectStreak,
@@ -48,9 +50,10 @@ export function ChatScreen() {
   const convIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Speech recognition
+  // Speech recognition - يدعم العربية والإنجليزية
+  const recognitionLang = speechLang === 'ar' ? 'ar-EG' : 'en-US';
   const recognition = useSpeechRecognition({
-    lang: 'en-US',
+    lang: recognitionLang,
     onFinal: (transcript) => {
       setListening(false);
       void handleSendMessage(transcript);
@@ -155,6 +158,7 @@ export function ChatScreen() {
             user,
             conversationHistory: history,
             conversationId: convIdRef.current,
+            inputLang: speechLang,
           }),
         });
 
@@ -203,7 +207,7 @@ export function ChatScreen() {
         setAiThinking(false);
       }
     },
-    [user, selectedTeacher, messages, addMessage, addPoints, setAiThinking, synthesis, speakText, resetPerfectStreak, bumpPerfectStreak]
+    [user, selectedTeacher, messages, addMessage, addPoints, setAiThinking, synthesis, speakText, resetPerfectStreak, bumpPerfectStreak, speechLang]
   );
 
   // ===== Mic toggle =====
@@ -345,6 +349,8 @@ export function ChatScreen() {
           isAiThinking={isAiThinking}
           speechSupported={recognition.supported}
           interim={recognition.interim}
+          speechLang={speechLang}
+          onToggleLang={() => setSpeechLang(speechLang === 'ar' ? 'en' : 'ar')}
           onMicToggle={handleMicToggle}
           onStopSpeaking={handleStopSpeaking}
           onEndConversation={handleEnd}

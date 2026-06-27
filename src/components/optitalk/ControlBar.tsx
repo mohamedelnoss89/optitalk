@@ -1,8 +1,8 @@
-// ===== OptiTalk - Control Bar (ثابت دايماً باين) =====
+// ===== OptiTalk - Control Bar (ثابت دايماً باين + زرار لغة) =====
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Square, X, Keyboard, Send } from 'lucide-react';
+import { Mic, MicOff, Square, X, Keyboard, Send, Languages } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,8 @@ interface Props {
   isAiThinking: boolean;
   speechSupported: boolean;
   interim: string;
+  speechLang: 'en' | 'ar';
+  onToggleLang: () => void;
   onMicToggle: () => void;
   onStopSpeaking: () => void;
   onEndConversation: () => void;
@@ -24,6 +26,8 @@ export function ControlBar({
   isAiThinking,
   speechSupported,
   interim,
+  speechLang,
+  onToggleLang,
   onMicToggle,
   onStopSpeaking,
   onEndConversation,
@@ -53,7 +57,7 @@ export function ControlBar({
                 handleSend();
               }
             }}
-            placeholder="اكتب رسالتك بالإنجليزي..."
+            placeholder={speechLang === 'ar' ? 'اكتب بالعربي أو الإنجليزي...' : 'Type in English or Arabic...'}
             autoFocus
             className="flex-1 rounded-xl opti-glass border border-opti-primary/20 bg-transparent px-4 py-2.5 text-sm text-opti-text placeholder:text-opti-text/35 focus:border-opti-primary/50 focus:outline-none"
           />
@@ -89,15 +93,15 @@ export function ControlBar({
                   <span className="opti-wave-bar h-3" style={{ animationDelay: '100ms' }} />
                   <span className="opti-wave-bar h-3" style={{ animationDelay: '200ms' }} />
                 </div>
-                <span className="text-[11px] text-opti-text/70">
-                  {interim || 'استمع... تكلم الآن'}
+                <span className="text-[11px] text-opti-text/70" dir={speechLang === 'ar' ? 'rtl' : 'ltr'}>
+                  {interim || (speechLang === 'ar' ? 'استمع... اتكلم بالعربي' : 'Listening... speak now')}
                 </span>
               </div>
             </div>
           )}
 
           {/* Buttons row - دايماً باين */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-3">
             {/* End conversation */}
             <button
               onClick={onEndConversation}
@@ -105,6 +109,25 @@ export function ControlBar({
               aria-label="إنهاء المحادثة"
             >
               <X className="h-5 w-5" />
+            </button>
+
+            {/* Toggle language (عربي/إنجليزي) */}
+            <button
+              onClick={onToggleLang}
+              disabled={isListening || isAiThinking}
+              className={cn(
+                'relative flex h-11 w-11 flex-col items-center justify-center rounded-full transition-all hover:scale-105 active:scale-95 disabled:opacity-40',
+                speechLang === 'ar'
+                  ? 'opti-glass-teal text-opti-accent'
+                  : 'opti-glass text-opti-text/70'
+              )}
+              aria-label={speechLang === 'ar' ? 'تغيير للإنجليزي' : 'تغيير للعربي'}
+              title={speechLang === 'ar' ? 'الميكروفون عربي - اضغط للإنجليزي' : 'Mic is English - tap for Arabic'}
+            >
+              <Languages className="h-4 w-4" />
+              <span className="text-[8px] font-black leading-none mt-0.5">
+                {speechLang === 'ar' ? 'ع' : 'EN'}
+              </span>
             </button>
 
             {/* Main mic / stop button - كبير وواضح دايماً */}
@@ -147,6 +170,11 @@ export function ControlBar({
             >
               <Keyboard className="h-5 w-5" />
             </button>
+
+            {/* Toggle camera */}
+            <div className="flex h-11 w-11 items-center justify-center">
+              {/* مكان فارغ عشان نظم المسافة - ممكن يحت كاميرا بعدين */}
+            </div>
           </div>
 
           {/* Status hint - دايماً باين */}
@@ -156,8 +184,12 @@ export function ControlBar({
               : isSpeaking
               ? '🔊 اضغط لإيقاف الصوت'
               : isListening
-              ? '🎤 تتحدث الآن... اضغط للإيقاف'
-              : '🎙️ اضغط على الميكروفون وتحدث'}
+              ? speechLang === 'ar'
+                ? '🎤 بتتكلم بالعربي... اضغط للإيقاف'
+                : '🎤 Speaking in English... tap to stop'
+              : speechLang === 'ar'
+              ? '🎙️ الميكروفون عربي - اضغط وتكلم'
+              : '🎙️ Mic is English - tap & speak'}
           </div>
         </>
       )}
