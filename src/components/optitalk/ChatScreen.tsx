@@ -286,42 +286,40 @@ export function ChatScreen() {
   return (
     <div className="relative flex h-[100dvh] flex-col opti-gradient overflow-hidden">
       {/* ===== Header ===== */}
-      <header className="z-20 opti-glass border-b border-opti-primary/15 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4">
-          {/* Teacher info */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleEnd}
-              className="flex h-9 w-9 items-center justify-center rounded-xl opti-glass text-opti-text/70 transition-colors hover:text-opti-error"
-              aria-label="إنهاء"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-            <div>
-              <div className="text-sm font-black text-opti-text leading-tight">
-                {selectedTeacher.nameAr}
-              </div>
-              <div className="text-[10px] text-opti-text/55">{selectedTeacher.name}</div>
+      <header className="z-20 opti-glass border-b border-opti-primary/15 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="mx-auto flex max-w-md items-center justify-between px-3">
+          {/* Left: End button */}
+          <button
+            onClick={handleEnd}
+            className="flex h-8 w-8 items-center justify-center rounded-xl opti-glass text-opti-text/70 transition-colors hover:text-opti-error"
+            aria-label="إنهاء"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+
+          {/* Center: Teacher name */}
+          <div className="text-center">
+            <div className="text-sm font-black text-opti-text leading-tight">
+              {selectedTeacher.nameAr}
             </div>
+            <div className="text-[9px] text-opti-text/50">{selectedTeacher.name}</div>
           </div>
 
-          {/* Stats */}
-          <div className="flex items-center gap-2">
+          {/* Right: Stats + Settings */}
+          <div className="flex items-center gap-1.5">
             <StatPill
-              icon={<Flame className="h-3.5 w-3.5" />}
+              icon={<Flame className="h-3 w-3" />}
               value={streak}
-              label="يوم"
               color="text-opti-error"
             />
             <StatPill
-              icon={<Trophy className="h-3.5 w-3.5" />}
+              icon={<Trophy className="h-3 w-3" />}
               value={points}
-              label="نقطة"
               color="text-opti-gold"
             />
             <button
               onClick={() => setShowSettings(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl opti-glass text-opti-text/70 transition-colors hover:text-opti-text"
+              className="flex h-8 w-8 items-center justify-center rounded-xl opti-glass text-opti-text/70 transition-colors hover:text-opti-text"
               aria-label="الإعدادات"
             >
               <Settings2 className="h-4 w-4" />
@@ -330,56 +328,99 @@ export function ChatScreen() {
         </div>
       </header>
 
-      {/* ===== Top: Teacher + Camera ===== */}
-      <section className="relative z-10 flex items-start justify-between gap-3 px-4 py-3">
-        {/* Teacher side */}
-        <div className="flex flex-1 flex-col items-center gap-2">
+      {/* ===== Top Half: Teacher (كأنه إنسان بيتكلم) ===== */}
+      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-3">
+        {/* خلفية متدرجة للمدرس */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            background: `radial-gradient(circle at 50% 40%, ${selectedTeacher.color}33, transparent 70%)`,
+          }}
+        />
+
+        {/* الأفاتار الكبير */}
+        <div className="relative z-10">
           <TeacherAvatar
             teacher={selectedTeacher}
             isSpeaking={isSpeaking}
             isThinking={isAiThinking}
-            size="md"
+            isListening={isListening}
+            size="xl"
           />
-          {/* Listening indicator */}
-          <AnimatePresence>
-            {isListening && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1.5 rounded-full opti-glass-teal px-2.5 py-1"
-              >
-                <div className="flex gap-0.5">
-                  <span className="opti-wave-bar h-2.5" style={{ animationDelay: '0ms' }} />
-                  <span className="opti-wave-bar h-2.5" style={{ animationDelay: '120ms' }} />
-                  <span className="opti-wave-bar h-2.5" style={{ animationDelay: '240ms' }} />
-                </div>
-                <span className="text-[9px] font-bold text-opti-accent">سمعتك</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
-        {/* Student camera */}
-        <div className="flex flex-col items-center gap-2">
+        {/* مؤشر الاستماع */}
+        <AnimatePresence>
+          {isListening && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="mt-4 flex items-center gap-2 rounded-full opti-glass-teal px-4 py-1.5"
+            >
+              <div className="flex gap-0.5">
+                <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
+                <span className="opti-wave-bar h-3" style={{ animationDelay: '120ms' }} />
+                <span className="opti-wave-bar h-3" style={{ animationDelay: '240ms' }} />
+              </div>
+              <span className="text-[10px] font-bold text-opti-accent">سمعتك... تكلم</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* النص اللي المدرس بيقوله دلوقتي */}
+        <AnimatePresence>
+          {(isSpeaking || isAiThinking) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mt-3 max-w-[90%] rounded-2xl opti-glass border border-opti-primary/15 px-4 py-2"
+            >
+              {isAiThinking ? (
+                <div className="flex items-center gap-2 text-sm text-opti-text/70">
+                  <div className="flex gap-1">
+                    <span className="opti-wave-bar h-2.5" style={{ animationDelay: '0ms' }} />
+                    <span className="opti-wave-bar h-2.5" style={{ animationDelay: '150ms' }} />
+                    <span className="opti-wave-bar h-2.5" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  المدرس بيفكر...
+                </div>
+              ) : (
+                <p className="text-center text-sm font-medium text-opti-text leading-relaxed">
+                  {messages.filter((m) => m.role === 'assistant').slice(-1)[0]?.content || '...'}
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+
+      {/* ===== Divider ===== */}
+      <div className="relative z-10 mx-auto h-px w-[90%] max-w-md bg-gradient-to-r from-transparent via-opti-primary/30 to-transparent" />
+
+      {/* ===== Bottom Half: Student Camera + Messages ===== */}
+      <section className="relative z-10 flex flex-1 flex-col px-2 py-2">
+        {/* Student Camera - في النص تحت */}
+        <div className="flex justify-center py-2">
           <StudentCamera
             enabled={cameraEnabled}
             onToggle={handleToggleCamera}
             compact
           />
         </div>
-      </section>
 
-      {/* ===== Messages ===== */}
-      <section className="relative z-10 mx-auto w-full max-w-md flex-1 overflow-hidden px-2">
-        <div className="h-full rounded-2xl opti-glass border border-opti-primary/10">
-          <MessagesList
-            messages={messages}
-            isThinking={isAiThinking}
-            onReplay={handleReplay}
-            speakingId={speakingId}
-          />
-          <div ref={messagesEndRef} />
+        {/* Messages - تحت الكاميرا */}
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full rounded-2xl opti-glass border border-opti-primary/10">
+            <MessagesList
+              messages={messages}
+              isThinking={isAiThinking}
+              onReplay={handleReplay}
+              speakingId={speakingId}
+            />
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       </section>
 
@@ -434,21 +475,16 @@ export function ChatScreen() {
 function StatPill({
   icon,
   value,
-  label,
   color,
 }: {
   icon: React.ReactNode;
   value: number;
-  label: string;
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-xl opti-glass px-2.5 py-1.5">
+    <div className="flex items-center gap-1 rounded-lg opti-glass px-2 py-1">
       <span className={color}>{icon}</span>
-      <div className="flex flex-col leading-none">
-        <span className="text-xs font-black text-opti-text">{value}</span>
-        <span className="text-[8px] text-opti-text/50">{label}</span>
-      </div>
+      <span className="text-xs font-black text-opti-text">{value}</span>
     </div>
   );
 }
