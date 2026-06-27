@@ -328,45 +328,14 @@ export function ChatScreen() {
         </div>
       </header>
 
-      {/* ===== Top Half: Teacher (كأنه إنسان بيتكلم) ===== */}
-      <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-3">
-        {/* خلفية متدرجة للمدرس */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            background: `radial-gradient(circle at 50% 40%, ${selectedTeacher.color}33, transparent 70%)`,
-          }}
+      {/* ===== Top Half: Teacher (يملأ النص العلوي - كأنه إنسان قدامك) ===== */}
+      <section className="relative z-10 flex flex-1 flex-col overflow-hidden">
+        <TeacherAvatar
+          teacher={selectedTeacher}
+          isSpeaking={isSpeaking}
+          isThinking={isAiThinking}
+          isListening={isListening}
         />
-
-        {/* الأفاتار الكبير */}
-        <div className="relative z-10">
-          <TeacherAvatar
-            teacher={selectedTeacher}
-            isSpeaking={isSpeaking}
-            isThinking={isAiThinking}
-            isListening={isListening}
-            size="xl"
-          />
-        </div>
-
-        {/* مؤشر الاستماع */}
-        <AnimatePresence>
-          {isListening && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="mt-4 flex items-center gap-2 rounded-full opti-glass-teal px-4 py-1.5"
-            >
-              <div className="flex gap-0.5">
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '120ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '240ms' }} />
-              </div>
-              <span className="text-[10px] font-bold text-opti-accent">سمعتك... تكلم</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* النص اللي المدرس بيقوله دلوقتي */}
         <AnimatePresence>
@@ -375,10 +344,10 @@ export function ChatScreen() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="mt-3 max-w-[90%] rounded-2xl opti-glass border border-opti-primary/15 px-4 py-2"
+              className="mx-auto mb-2 max-w-[90%] rounded-2xl opti-glass border border-opti-primary/15 px-4 py-2"
             >
               {isAiThinking ? (
-                <div className="flex items-center gap-2 text-sm text-opti-text/70">
+                <div className="flex items-center justify-center gap-2 text-sm text-opti-text/70">
                   <div className="flex gap-1">
                     <span className="opti-wave-bar h-2.5" style={{ animationDelay: '0ms' }} />
                     <span className="opti-wave-bar h-2.5" style={{ animationDelay: '150ms' }} />
