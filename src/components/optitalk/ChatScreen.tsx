@@ -285,116 +285,60 @@ export function ChatScreen() {
 
   return (
     <div className="relative flex h-[100dvh] flex-col opti-gradient overflow-hidden">
-      {/* ===== Header ===== */}
-      <header className="z-20 opti-glass border-b border-opti-primary/15 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <div className="mx-auto flex max-w-md items-center justify-between px-3">
-          {/* Left: End button */}
-          <button
-            onClick={handleEnd}
-            className="flex h-8 w-8 items-center justify-center rounded-xl opti-glass text-opti-text/70 transition-colors hover:text-opti-error"
-            aria-label="إنهاء"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-
-          {/* Center: Teacher name */}
-          <div className="text-center">
-            <div className="text-sm font-black text-opti-text leading-tight">
-              {selectedTeacher.nameAr}
-            </div>
-            <div className="text-[9px] text-opti-text/50">{selectedTeacher.name}</div>
-          </div>
-
-          {/* Right: Stats + Settings */}
-          <div className="flex items-center gap-1.5">
-            <StatPill
-              icon={<Flame className="h-3 w-3" />}
-              value={streak}
-              color="text-opti-error"
-            />
-            <StatPill
-              icon={<Trophy className="h-3 w-3" />}
-              value={points}
-              color="text-opti-gold"
-            />
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-xl opti-glass text-opti-text/70 transition-colors hover:text-opti-text"
-              aria-label="الإعدادات"
-            >
-              <Settings2 className="h-4 w-4" />
-            </button>
-          </div>
+      {/* ===== Header (صغير فوق) ===== */}
+      <header className="z-20 flex items-center justify-between px-3 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))]">
+        <button
+          onClick={handleEnd}
+          className="flex h-7 w-7 items-center justify-center rounded-lg opti-glass text-opti-text/60 hover:text-opti-error"
+          aria-label="إنهاء"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <StatPill icon={<Flame className="h-3 w-3" />} value={streak} color="text-opti-error" />
+          <StatPill icon={<Trophy className="h-3 w-3" />} value={points} color="text-opti-gold" />
         </div>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="flex h-7 w-7 items-center justify-center rounded-lg opti-glass text-opti-text/60 hover:text-opti-text"
+          aria-label="الإعدادات"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
       </header>
 
-      {/* ===== Top Half: Teacher (يملأ النص العلوي - كأنه إنسان قدامك) ===== */}
-      <section className="relative z-10 flex flex-1 flex-col overflow-hidden">
+      {/* ===== المدرس - 35% من الشاشة ===== */}
+      <section className="relative z-10" style={{ height: '35%' }}>
         <TeacherAvatar
           teacher={selectedTeacher}
           isSpeaking={isSpeaking}
           isThinking={isAiThinking}
           isListening={isListening}
         />
-
-        {/* النص اللي المدرس بيقوله دلوقتي */}
-        <AnimatePresence>
-          {(isSpeaking || isAiThinking) && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="mx-auto mb-2 max-w-[90%] rounded-2xl opti-glass border border-opti-primary/15 px-4 py-2"
-            >
-              {isAiThinking ? (
-                <div className="flex items-center justify-center gap-2 text-sm text-opti-text/70">
-                  <div className="flex gap-1">
-                    <span className="opti-wave-bar h-2.5" style={{ animationDelay: '0ms' }} />
-                    <span className="opti-wave-bar h-2.5" style={{ animationDelay: '150ms' }} />
-                    <span className="opti-wave-bar h-2.5" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  المدرس بيفكر...
-                </div>
-              ) : (
-                <p className="text-center text-sm font-medium text-opti-text leading-relaxed">
-                  {messages.filter((m) => m.role === 'assistant').slice(-1)[0]?.content || '...'}
-                </p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </section>
 
-      {/* ===== Divider ===== */}
-      <div className="relative z-10 mx-auto h-px w-[90%] max-w-md bg-gradient-to-r from-transparent via-opti-primary/30 to-transparent" />
+      {/* ===== الطالب - 35% من الشاشة ===== */}
+      <section className="relative z-10 flex items-center justify-center" style={{ height: '35%' }}>
+        <StudentCamera
+          enabled={cameraEnabled}
+          onToggle={handleToggleCamera}
+          compact={false}
+        />
+      </section>
 
-      {/* ===== Bottom Half: Student Camera + Messages ===== */}
-      <section className="relative z-10 flex flex-1 flex-col px-2 py-2">
-        {/* Student Camera - في النص تحت */}
-        <div className="flex justify-center py-2">
-          <StudentCamera
-            enabled={cameraEnabled}
-            onToggle={handleToggleCamera}
-            compact
+      {/* ===== باقي الشاشة: محادثة + تحكم - 30% ===== */}
+      <section className="relative z-10 flex flex-1 flex-col">
+        {/* المحادثة */}
+        <div className="flex-1 overflow-hidden px-2">
+          <MessagesList
+            messages={messages}
+            isThinking={isAiThinking}
+            onReplay={handleReplay}
+            speakingId={speakingId}
           />
         </div>
 
-        {/* Messages - تحت الكاميرا */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full rounded-2xl opti-glass border border-opti-primary/10">
-            <MessagesList
-              messages={messages}
-              isThinking={isAiThinking}
-              onReplay={handleReplay}
-              speakingId={speakingId}
-            />
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Control bar ===== */}
-      <section className="relative z-20 mx-auto w-full max-w-md">
+        {/* زرار التحكم */}
         <ControlBar
           isListening={isListening}
           isSpeaking={isSpeaking}

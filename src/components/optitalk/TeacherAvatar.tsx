@@ -1,4 +1,4 @@
-// ===== OptiTalk - Teacher Avatar (كبير + يملأ الشاشة + وجه متحرك بـ CSS) =====
+// ===== OptiTalk - Teacher Avatar (اجتماع Zoom - المدرس بيتكلم ويتحرك) =====
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,189 +20,180 @@ export function TeacherAvatar({
   isListening = false,
 }: Props) {
   const [imgError, setImgError] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
-  // تحديد لون الخلفية حسب الحالة
-  const bgGlow = isSpeaking
-    ? teacher.color
-    : isThinking
-    ? '#8A8078'
-    : isListening
-    ? '#00CEC9'
-    : teacher.color;
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden">
-      {/* خلفية متوهجة كبيرة */}
+    <div className="relative h-full w-full overflow-hidden">
+      {/* خلفية متوهجة */}
       <motion.div
         animate={{
-          scale: isSpeaking ? [1, 1.1, 1] : 1,
-          opacity: isSpeaking ? [0.3, 0.5, 0.3] : 0.15,
+          opacity: isSpeaking ? [0.2, 0.4, 0.2] : 0.1,
         }}
-        transition={{
-          duration: 0.6,
-          repeat: isSpeaking ? Infinity : 0,
-          ease: 'easeInOut',
-        }}
+        transition={{ duration: 0.8, repeat: isSpeaking ? Infinity : 0 }}
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 50% 35%, ${bgGlow}44, transparent 60%)`,
+          background: `radial-gradient(ellipse at 50% 30%, ${teacher.color}33, transparent 70%)`,
         }}
       />
 
-      {/* halo rings لما بيتكلم */}
-      <AnimatePresence>
-        {isSpeaking && (
-          <>
-            <motion.span
-              className="absolute top-[20%] h-48 w-48 rounded-full border-2"
-              style={{ borderColor: teacher.color + '40' }}
-              initial={{ scale: 0.9, opacity: 0.6 }}
-              animate={{ scale: 1.5, opacity: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
-            />
-            <motion.span
-              className="absolute top-[20%] h-48 w-48 rounded-full border-2"
-              style={{ borderColor: teacher.color + '30' }}
-              initial={{ scale: 0.9, opacity: 0.4 }}
-              animate={{ scale: 1.8, opacity: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut', delay: 0.5 }}
-            />
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* الوجه الكبير - يملأ النص العلوي */}
-      <motion.div
-        animate={
-          isSpeaking
-            ? { scale: [1, 1.03, 1], y: [0, -2, 0] }
-            : isThinking
-            ? { scale: [1, 0.98, 1] }
-            : { scale: 1 }
-        }
-        transition={{
-          duration: isSpeaking ? 0.4 : 1.5,
-          repeat: isSpeaking || isThinking ? Infinity : 0,
-          ease: 'easeInOut',
-        }}
-        className="relative z-10"
-      >
-        {/* إطار الصورة - كبير وبيملأ المساحة */}
-        <div
-          className="relative overflow-hidden rounded-3xl"
+      {/* المدرس - يملأ 35% من الشاشة (زي Zoom) */}
+      <div className="relative flex h-full w-full items-center justify-center">
+        <motion.div
+          animate={
+            isSpeaking
+              ? {
+                  scale: [1, 1.02, 1],
+                  y: [0, -3, 0],
+                  rotate: [0, -0.5, 0, 0.5, 0],
+                }
+              : isThinking
+              ? { scale: [1, 0.99, 1] }
+              : isListening
+              ? { scale: [1, 1.01, 1] }
+              : { scale: 1 }
+          }
+          transition={{
+            duration: isSpeaking ? 0.5 : 2,
+            repeat: isSpeaking || isThinking || isListening ? Infinity : 0,
+            ease: 'easeInOut',
+          }}
+          className="relative"
           style={{
-            width: '200px',
-            height: '200px',
-            boxShadow: isSpeaking
-              ? `0 0 40px ${teacher.color}66, 0 0 80px ${teacher.color}33`
-              : `0 8px 32px rgba(0,0,0,0.4)`,
-            border: `3px solid ${teacher.color}40`,
+            width: '100%',
+            height: '100%',
+            maxWidth: '320px',
           }}
         >
-          {/* الصورة الحقيقية */}
+          {/* الصورة الكبيرة - المدرس واقف */}
           {!imgError ? (
-            <img
-              src={teacher.imageUrl}
-              alt={teacher.name}
-              className="h-full w-full object-cover"
-              onError={() => setImgError(true)}
-            />
+            <div className="relative h-full w-full overflow-hidden rounded-2xl" style={{ boxShadow: isSpeaking ? `0 0 30px ${teacher.color}55` : '0 4px 20px rgba(0,0,0,0.3)' }}>
+              <img
+                src={teacher.imageUrl}
+                alt={teacher.name}
+                className="h-full w-full object-cover"
+                style={{ objectPosition: 'center 20%' }}
+                onError={() => setImgError(true)}
+              />
+
+              {/* overlay متدرج من تحت */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/60 to-transparent" />
+
+              {/* overlay متدرج من فوق */}
+              <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent" />
+
+              {/* الشفايف المتحركة لما بيتكلم */}
+              {isSpeaking && (
+                <motion.div
+                  className="absolute"
+                  style={{
+                    bottom: '30%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                  }}
+                  animate={{ scaleY: [1, 0.2, 1, 0.4, 1, 0.3, 1] }}
+                  transition={{ duration: 0.35, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <div
+                    style={{
+                      width: '24px',
+                      height: '8px',
+                      background: 'rgba(0,0,0,0.1)',
+                      borderRadius: '50%',
+                    }}
+                  />
+                </motion.div>
+              )}
+
+              {/* اسم المدرس فوق على الشمال */}
+              <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-[#0a0e1a]/80 px-3 py-1 backdrop-blur-md">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: teacher.color }}
+                />
+                <span className="text-[11px] font-bold text-opti-text">{teacher.name}</span>
+              </div>
+
+              {/* ONLINE badge */}
+              <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-opti-success/20 px-2 py-0.5 backdrop-blur-md">
+                <motion.span
+                  className="h-1.5 w-1.5 rounded-full bg-opti-success"
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <span className="text-[8px] font-bold text-opti-success">LIVE</span>
+              </div>
+
+              {/* حالة المدرس تحت */}
+              <div className="absolute bottom-3 inset-x-0 flex justify-center">
+                <motion.div
+                  key={isSpeaking ? 's' : isThinking ? 't' : isListening ? 'l' : 'r'}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 rounded-full bg-[#0a0e1a]/80 px-3 py-1 backdrop-blur-md"
+                >
+                  {isSpeaking ? (
+                    <>
+                      <div className="flex gap-0.5">
+                        <span className="opti-wave-bar h-2.5" style={{ animationDelay: '0ms' }} />
+                        <span className="opti-wave-bar h-2.5" style={{ animationDelay: '80ms' }} />
+                        <span className="opti-wave-bar h-2.5" style={{ animationDelay: '160ms' }} />
+                      </div>
+                      <span className="text-[10px] font-bold text-opti-accent">بيتكلم</span>
+                    </>
+                  ) : isThinking ? (
+                    <span className="text-[10px] font-medium text-opti-text/60">🤔 بيفكر</span>
+                  ) : isListening ? (
+                    <span className="text-[10px] font-bold text-opti-accent">👂 بيسمعك</span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-opti-text/50">✅ جاهز</span>
+                  )}
+                </motion.div>
+              </div>
+
+              {/* Thinking overlay */}
+              <AnimatePresence>
+                {isThinking && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center bg-[#0a0e1a]/50 backdrop-blur-sm"
+                  >
+                    <div className="flex gap-1.5">
+                      <span className="opti-wave-bar h-4" style={{ animationDelay: '0ms' }} />
+                      <span className="opti-wave-bar h-4" style={{ animationDelay: '150ms' }} />
+                      <span className="opti-wave-bar h-4" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
-            /* fallback - emoji كبير على gradient */
+            /* fallback - emoji كبير */
             <div
-              className="flex h-full w-full items-center justify-center text-8xl"
+              className="flex h-full w-full items-center justify-center rounded-2xl text-8xl"
               style={{ background: teacher.gradient }}
             >
               {teacher.avatar}
             </div>
           )}
 
-          {/* overlay متدرج من تحت */}
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/50 to-transparent" />
-
-          {/* الشفايف المتحركة لما بيتكلم - overlay على الصورة */}
-          {isSpeaking && mounted && (
-            <motion.div
-              className="absolute bottom-[35%] left-1/2 -translate-x-1/2"
-              animate={{ scaleY: [1, 0.3, 1, 0.5, 1] }}
-              transition={{ duration: 0.3, repeat: Infinity, ease: 'easeInOut' }}
-              style={{
-                width: '30px',
-                height: '12px',
-                background: 'rgba(0,0,0,0.15)',
-                borderRadius: '50%',
-              }}
-            />
-          )}
-
-          {/* Thinking overlay */}
+          {/* halo rings لما بيتكلم */}
           <AnimatePresence>
-            {isThinking && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 flex items-center justify-center bg-[#0a0e1a]/70 backdrop-blur-sm"
-              >
-                <div className="flex gap-1.5">
-                  <span className="opti-wave-bar h-4" style={{ animationDelay: '0ms' }} />
-                  <span className="opti-wave-bar h-4" style={{ animationDelay: '150ms' }} />
-                  <span className="opti-wave-bar h-4" style={{ animationDelay: '300ms' }} />
-                </div>
-              </motion.div>
+            {isSpeaking && (
+              <>
+                <motion.span
+                  className="absolute inset-0 rounded-2xl border-2"
+                  style={{ borderColor: teacher.color + '30' }}
+                  initial={{ scale: 1, opacity: 0.5 }}
+                  animate={{ scale: 1.08, opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
+                />
+              </>
             )}
           </AnimatePresence>
-
-          {/* Online dot */}
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-[#0a0e1a]/80 px-2 py-0.5">
-            <motion.span
-              className="h-2 w-2 rounded-full bg-opti-success"
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-            <span className="text-[9px] font-bold text-opti-success">ONLINE</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* اسم المدرس وحالته تحت الصورة */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 mt-4 text-center"
-      >
-        <div className="text-lg font-black text-opti-text">{teacher.name}</div>
-        <motion.div
-          key={isSpeaking ? 'speaking' : isThinking ? 'thinking' : isListening ? 'listening' : 'ready'}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-center gap-1.5 mt-1"
-        >
-          {isSpeaking ? (
-            <>
-              {/* Wave bars متحركة */}
-              <div className="flex gap-0.5">
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '80ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '160ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '240ms' }} />
-              </div>
-              <span className="text-xs font-bold text-opti-accent">بيتكلم...</span>
-            </>
-          ) : isThinking ? (
-            <span className="text-xs font-medium text-opti-text/60">🤔 بيفكر...</span>
-          ) : isListening ? (
-            <span className="text-xs font-bold text-opti-accent">👂 بيسمعك...</span>
-          ) : (
-            <span className="text-xs font-medium text-opti-text/50">✅ جاهز للمحادثة</span>
-          )}
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }

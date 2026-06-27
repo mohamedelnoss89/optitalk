@@ -75,7 +75,7 @@ export function StudentCamera({ enabled, onToggle, compact = false }: Props) {
       <div
         className={cn(
           'relative overflow-hidden rounded-2xl opti-glass border border-opti-primary/15',
-          compact ? 'aspect-[3/4] w-24' : 'aspect-[3/4] w-full max-w-[180px]'
+          compact ? 'aspect-[3/4] w-24' : 'h-full w-full max-w-[320px] aspect-[3/4]'
         )}
       >
         {enabled ? (
