@@ -1,166 +1,210 @@
-// ===== Al-Mashi Zustand Store =====
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Place } from "./data";
+// ===== OptiTalk - Zustand Store =====
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import type { Teacher, Level } from './teachers';
 
-export type TabKey = "home" | "map" | "plans" | "qa" | "favorites";
-
-export interface CurrentUser {
+export interface ChatMessage {
   id: string;
-  name: string;
-  email: string;
-}
-
-export interface PlanStop {
-  placeId: string;
-  order: number;
-  duration: number; // minutes
-}
-
-export interface DayPlan {
-  id: string;
-  name: string;
-  date: string;
-  stops: PlanStop[];
-}
-
-export interface QaItem {
-  id: string;
-  userId: string;
-  userName: string;
-  title: string;
+  role: 'user' | 'assistant';
   content: string;
-  category: string;
-  createdAt: string;
-  answers: { id: string; userId: string; userName: string; content: string; createdAt: string }[];
+  correction?: string | null;
+  translatedWord?: string | null;
+  createdAt: number;
 }
+
+export interface OptiUser {
+  name: string;
+  age: string; // age group value
+  gender: 'male' | 'female';
+  level: Level;
+}
+
+export type Screen = 'welcome' | 'onboarding' | 'chat';
 
 interface AppState {
-  // navigation
-  activeTab: TabKey;
-  setActiveTab: (tab: TabKey) => void;
+  // Onboarding
+  user: OptiUser | null;
+  selectedTeacher: Teacher | null;
 
-  // search & filter
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  activeCategory: string | null;
-  setActiveCategory: (c: string | null) => void;
-  activeMood: string | null;
-  setActiveMood: (m: string | null) => void;
+  // Chat
+  messages: ChatMessage[];
+  isListening: boolean;
+  isSpeaking: boolean;
+  isAiThinking: boolean;
+  conversationId: string | null;
 
-  // selected place
-  selectedPlace: Place | null;
-  setSelectedPlace: (p: Place | null) => void;
+  // Progress
+  points: number;
+  streak: number;
+  achievements: string[];
+  lastActiveDate: string | null;
+  messagesCount: number;
+  perfectStreak: number; // consecutive messages without corrections
 
-  // favorites
-  favorites: string[];
-  toggleFavorite: (id: string) => void;
-  isFavorite: (id: string) => boolean;
+  // UI
+  currentScreen: Screen;
+  cameraEnabled: boolean;
+  micEnabled: boolean;
+  showAchievement: string | null;
 
-  // user
-  currentUser: CurrentUser | null;
-  setCurrentUser: (u: CurrentUser | null) => void;
-  guestMode: boolean;
-  setGuestMode: (g: boolean) => void;
+  // Actions: Onboarding
+  setUser: (u: OptiUser) => void;
+  setTeacher: (t: Teacher | null) => void;
 
-  // place reviews (client-side cache keyed by placeId → average rating)
-  placeReviews: Record<string, number>;
-  setPlaceReview: (placeId: string, rating: number) => void;
+  // Actions: Chat
+  addMessage: (m: ChatMessage) => void;
+  clearMessages: () => void;
+  setConversationId: (id: string | null) => void;
+  setListening: (v: boolean) => void;
+  setSpeaking: (v: boolean) => void;
+  setAiThinking: (v: boolean) => void;
 
-  // day plans (local UI cache; persisted in DB on submit)
-  dayPlans: DayPlan[];
-  addDayPlan: (plan: DayPlan) => void;
-  removeDayPlan: (id: string) => void;
-  addStopToPlan: (planId: string, stop: PlanStop) => void;
-  removeStopFromPlan: (planId: string, placeId: string) => void;
-  reorderStop: (planId: string, placeId: string, direction: "up" | "down") => void;
+  // Actions: Progress
+  addPoints: (n: number) => void;
+  bumpStreak: () => void;
+  addAchievement: (id: string) => void;
+  bumpMessagesCount: () => void;
+  bumpPerfectStreak: () => void;
+  resetPerfectStreak: () => void;
+  setShowAchievement: (id: string | null) => void;
 
-  // ui sheets
-  contactOpen: boolean;
-  setContactOpen: (o: boolean) => void;
-  docOpen: boolean;
-  setDocOpen: (o: boolean) => void;
+  // Actions: UI
+  setScreen: (s: Screen) => void;
+  setCameraEnabled: (v: boolean) => void;
+  setMicEnabled: (v: boolean) => void;
+
+  // Reset
+  resetAll: () => void;
 }
 
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      activeTab: "home",
-      setActiveTab: (tab) => set({ activeTab: tab }),
+      // Onboarding
+      user: null,
+      selectedTeacher: null,
 
-      searchQuery: "",
-      setSearchQuery: (q) => set({ searchQuery: q }),
-      activeCategory: null,
-      setActiveCategory: (c) => set({ activeCategory: c }),
-      activeMood: null,
-      setActiveMood: (m) => set({ activeMood: m }),
+      // Chat
+      messages: [],
+      isListening: false,
+      isSpeaking: false,
+      isAiThinking: false,
+      conversationId: null,
 
-      selectedPlace: null,
-      setSelectedPlace: (p) => set({ selectedPlace: p }),
+      // Progress
+      points: 0,
+      streak: 0,
+      achievements: [],
+      lastActiveDate: null,
+      messagesCount: 0,
+      perfectStreak: 0,
 
-      favorites: [],
-      toggleFavorite: (id) => {
-        const cur = get().favorites;
-        const exists = cur.includes(id);
-        set({ favorites: exists ? cur.filter((f) => f !== id) : [...cur, id] });
+      // UI
+      currentScreen: 'welcome',
+      cameraEnabled: false,
+      micEnabled: false,
+      showAchievement: null,
+
+      // Actions: Onboarding
+      setUser: (u) => set({ user: u }),
+      setTeacher: (t) => set({ selectedTeacher: t }),
+
+      // Actions: Chat
+      addMessage: (m) => {
+        set((s) => ({ messages: [...s.messages, m] }));
+        if (m.role === 'user') {
+          get().bumpMessagesCount();
+        }
       },
-      isFavorite: (id) => get().favorites.includes(id),
+      clearMessages: () => set({ messages: [], conversationId: null }),
+      setConversationId: (id) => set({ conversationId: id }),
+      setListening: (v) => set({ isListening: v }),
+      setSpeaking: (v) => set({ isSpeaking: v }),
+      setAiThinking: (v) => set({ isAiThinking: v }),
 
-      currentUser: null,
-      setCurrentUser: (u) => set({ currentUser: u }),
-      guestMode: false,
-      setGuestMode: (g) => set({ guestMode: g }),
-
-      placeReviews: {},
-      setPlaceReview: (placeId, rating) =>
-        set({ placeReviews: { ...get().placeReviews, [placeId]: rating } }),
-
-      dayPlans: [],
-      addDayPlan: (plan) => set({ dayPlans: [plan, ...get().dayPlans] }),
-      removeDayPlan: (id) => set({ dayPlans: get().dayPlans.filter((p) => p.id !== id) }),
-      addStopToPlan: (planId, stop) =>
-        set({
-          dayPlans: get().dayPlans.map((p) =>
-            p.id === planId
-              ? { ...p, stops: [...p.stops, stop].sort((a, b) => a.order - b.order) }
-              : p
-          ),
-        }),
-      removeStopFromPlan: (planId, placeId) =>
-        set({
-          dayPlans: get().dayPlans.map((p) =>
-            p.id === planId ? { ...p, stops: p.stops.filter((s) => s.placeId !== placeId) } : p
-          ),
-        }),
-      reorderStop: (planId, placeId, direction) => {
-        const plans = get().dayPlans.map((p) => {
-          if (p.id !== planId) return p;
-          const stops = [...p.stops].sort((a, b) => a.order - b.order);
-          const idx = stops.findIndex((s) => s.placeId === placeId);
-          if (idx < 0) return p;
-          const swap = direction === "up" ? idx - 1 : idx + 1;
-          if (swap < 0 || swap >= stops.length) return p;
-          const tmpOrder = stops[idx].order;
-          stops[idx].order = stops[swap].order;
-          stops[swap].order = tmpOrder;
-          return { ...p, stops: stops.sort((a, b) => a.order - b.order) };
-        });
-        set({ dayPlans: plans });
+      // Actions: Progress
+      addPoints: (n) => set((s) => ({ points: s.points + n })),
+      bumpStreak: () => {
+        const today = new Date().toISOString().slice(0, 10);
+        const last = get().lastActiveDate;
+        if (last === today) return; // already counted today
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        const newStreak = last === yesterday ? get().streak + 1 : 1;
+        set({ streak: newStreak, lastActiveDate: today });
       },
+      addAchievement: (id) => {
+        if (get().achievements.includes(id)) return;
+        set((s) => ({ achievements: [...s.achievements, id], showAchievement: id }));
+      },
+      bumpMessagesCount: () => {
+        const newCount = get().messagesCount + 1;
+        set({ messagesCount: newCount });
+        // Auto-award message-based achievements
+        const { addAchievement, addPoints } = get();
+        if (newCount === 1) {
+          addAchievement('first-conversation');
+          addPoints(10);
+        }
+        if (newCount === 10) {
+          addAchievement('ten-messages');
+          addPoints(20);
+        }
+        if (newCount === 50) {
+          addAchievement('fifty-messages');
+          addPoints(50);
+        }
+      },
+      bumpPerfectStreak: () => {
+        const newStreak = get().perfectStreak + 1;
+        set({ perfectStreak: newStreak });
+        if (newStreak === 5) {
+          const { addAchievement, addPoints } = get();
+          addAchievement('perfect-grammar');
+          addPoints(25);
+        }
+      },
+      resetPerfectStreak: () => set({ perfectStreak: 0 }),
+      setShowAchievement: (id) => set({ showAchievement: id }),
 
-      contactOpen: false,
-      setContactOpen: (o) => set({ contactOpen: o }),
-      docOpen: false,
-      setDocOpen: (o) => set({ docOpen: o }),
+      // Actions: UI
+      setScreen: (s) => set({ currentScreen: s }),
+      setCameraEnabled: (v) => set({ cameraEnabled: v }),
+      setMicEnabled: (v) => set({ micEnabled: v }),
+
+      // Reset
+      resetAll: () =>
+        set({
+          user: null,
+          selectedTeacher: null,
+          messages: [],
+          conversationId: null,
+          isListening: false,
+          isSpeaking: false,
+          isAiThinking: false,
+          points: 0,
+          streak: 0,
+          achievements: [],
+          lastActiveDate: null,
+          messagesCount: 0,
+          perfectStreak: 0,
+          currentScreen: 'welcome',
+          cameraEnabled: false,
+          micEnabled: false,
+          showAchievement: null,
+        }),
     }),
     {
-      name: "al-mashi-store",
+      name: 'optitalk-store',
+      storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
-        favorites: s.favorites,
-        currentUser: s.currentUser,
-        guestMode: s.guestMode,
-        placeReviews: s.placeReviews,
-        dayPlans: s.dayPlans,
+        user: s.user,
+        selectedTeacher: s.selectedTeacher,
+        points: s.points,
+        streak: s.streak,
+        achievements: s.achievements,
+        lastActiveDate: s.lastActiveDate,
+        messagesCount: s.messagesCount,
+        currentScreen: s.currentScreen,
       }),
     }
   )

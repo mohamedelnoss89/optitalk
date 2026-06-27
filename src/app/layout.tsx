@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
 
 const cairo = Cairo({
   variable: "--font-geist-sans",
@@ -12,45 +11,43 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "ع الماشي فى السيدة زينب",
+  title: "OptiTalk - تعلّم الإنجليزية بالمحادثة",
   description:
-    "اكتشف روح القاهرة الفاطمية. دليلك الذكي لأفضل مطاعم السيدة زينب، قهوتها، جوامعها وأكثر من 80 مكاناً موثقاً في 12 تصنيفاً.",
+    "تطبيق تعليم اللغة الإنجليزية بالمحادثة الحية مع مدرس AI. اختار مدرسك، تحدث بصوتك، واحصل على تصحيح فوري.",
   keywords: [
-    "ع الماشي فى السيدة زينب",
-    "السيدة زينب",
-    "القاهرة",
-    "دليل القاهرة",
-    "مطاعم السيدة زينب",
-    "قهوة بلبع",
-    "كشري أبو طارق",
-    "مسجد السيدة زينب",
+    "OptiTalk",
+    "تعلم الإنجليزية",
+    "محادثة إنجليزي",
+    "مدرس AI",
+    "تحسين النطق",
+    "opti-group",
   ],
   authors: [{ name: "opti-group" }],
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ع الماشي فى السيدة زينب",
+    title: "OptiTalk",
   },
   openGraph: {
-    title: "ع الماشي فى السيدة زينب",
-    description: "اكتشف روح القاهرة الفاطمية مع ع الماشي فى السيدة زينب.",
+    title: "OptiTalk - تعلّم الإنجليزية بالمحادثة",
+    description: "تعلّم الإنجليزية بالمحادثة الحية مع مدرسك AI الشخصي.",
     type: "website",
     locale: "ar_EG",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ع الماشي فى السيدة زينب",
-    description: "ع الماشي فى السيدة زينب",
+    title: "OptiTalk",
+    description: "تعلّم الإنجليزية بالمحادثة الحية مع مدرسك AI",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0D0B09",
+  themeColor: "#0a0e1a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -66,7 +63,6 @@ export default function RootLayout({
       >
         {children}
         <SonnerToaster position="top-center" richColors closeButton />
-        <Toaster />
       </body>
     </html>
   );

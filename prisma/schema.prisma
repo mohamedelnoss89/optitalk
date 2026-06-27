@@ -1,4 +1,4 @@
-// ===== Al-Mashi - Sayyida Zainab Guide =====
+// ===== OptiTalk - AI English Conversation Tutor =====
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,116 +10,96 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  phone     String?
+  email     String?  @unique
+  name      String
+  age       Int
+  gender    String   // "male" | "female"
+  level     String   // "beginner" | "intermediate" | "advanced"
   avatar    String?
+  teacherId String
   points    Int      @default(0)
+  streak    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reviews     Review[]
-  dayPlans    DayPlan[]
-  badges      UserBadge[]
-  questions   Question[]
-  answers     Answer[]
-  reports     Report[]
+  conversations Conversation[]
+  achievements  UserAchievement[]
+  lessons       LessonProgress[]
 }
 
-model Review {
+model Conversation {
   id        String   @id @default(cuid())
   userId    String
-  placeId   String
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now())
+  teacherId String
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId])
 }
 
-model DayPlan {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  date      String
-  createdAt DateTime @default(now())
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  role            String   // "user" | "assistant"
+  content         String
+  correction      String?
+  translatedWord  String?
+  createdAt       DateTime @default(now())
 
-  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stops PlanStop[]
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
 }
 
-model PlanStop {
-  id       String @id @default(cuid())
-  planId   String
-  placeId  String
-  order    Int
-  duration Int
-
-  plan DayPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-}
-
-model Badge {
+model Achievement {
   id          String   @id @default(cuid())
   name        String
   description String
   icon        String
   requirement String
-  createdAt DateTime @default(now())
-
-  users UserBadge[]
-}
-
-model UserBadge {
-  id       String   @id @default(cuid())
-  userId   String
-  badgeId  String
-  earnedAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, badgeId])
-}
-
-model Question {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  content   String?
-  category  String
-  createdAt DateTime @default(now())
-
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers Answer[]
-}
-
-model Answer {
-  id         String   @id @default(cuid())
-  questionId String
-  userId     String
-  content    String
-  createdAt  DateTime @default(now())
-
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
-}
-
-model Report {
-  id          String   @id @default(cuid())
-  userId      String?
-  placeId     String
-  reason      String
-  description String?
+  points      Int      @default(0)
   createdAt   DateTime @default(now())
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id        String   @id @default(cuid())
+  userId    String
+  achievementId String
+  earnedAt  DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  level       String   // "beginner" | "intermediate" | "advanced"
+  title       String
+  description String
+  content     String
+  order       Int
+  createdAt   DateTime @default(now())
+
+  progress LessonProgress[]
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  completed   Boolean   @default(false)
+  score       Int       @default(0)
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
 }
