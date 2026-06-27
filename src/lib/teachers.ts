@@ -26,9 +26,9 @@ export interface Teacher {
   imageUrl: string;
 }
 
-// Helper: صورة Unsplash كبيرة بتركيز على الوش والجزء العلوي من الجسم
-function unsplashImg(photoId: string): string {
-  return `https://images.unsplash.com/photo-${photoId}?auto=format&fit=crop&w=800&q=80&crop=faces,entropy`;
+// Helper: صورة محلية في public/teachers/ (تم توليدها بـ AI - بورتريه عمودي احترافي)
+function teacherImg(filename: string): string {
+  return `/teachers/${filename}`;
 }
 
 export const TEACHERS: Teacher[] = [
@@ -49,7 +49,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Patient explanation, uses simple words, repeats key phrases, asks one question at a time, gives gentle corrections with encouragement.',
     tags: ['صبور', 'هادئ', 'مثالي للمبتدئين'],
-    imageUrl: unsplashImg('1507003211169-0a1dd7228f2d'),
+    imageUrl: teacherImg('mr-james.png'),
   },
   {
     id: 'ms-sarah',
@@ -68,7 +68,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Conversational, friendly, uses emojis occasionally, references daily life, makes students laugh, asks engaging personal questions.',
     tags: ['مرحة', 'ودودة', 'أمثلة يومية'],
-    imageUrl: unsplashImg('1573496359142-b8d87734a5a2'),
+    imageUrl: teacherImg('ms-sarah.png'),
   },
   {
     id: 'professor-david',
@@ -87,7 +87,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Grammar-focused, formal but warm, explains rules and origins, uses structured examples, gives detailed corrections with reasoning.',
     tags: ['أكاديمي', 'دقيق', 'قواعد'],
-    imageUrl: unsplashImg('1519085360753-af0119f7cbe7'),
+    imageUrl: teacherImg('professor-david.png'),
   },
   {
     id: 'miss-emma',
@@ -106,7 +106,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Conversation-driven, empathetic, validates effort, uses role-play scenarios, focuses on fluency over perfect grammar, encourages self-expression.',
     tags: ['محادثة', 'داعمة', 'ثقة بالنفس'],
-    imageUrl: unsplashImg('1580489944761-15a19d654956'),
+    imageUrl: teacherImg('miss-emma.png'),
   },
   {
     id: 'coach-mike',
@@ -125,7 +125,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Motivational, uses challenges and goals, sports metaphors, high energy, celebrates small wins, pushes students to try harder, keeps sessions dynamic.',
     tags: ['تحفيزي', 'نشيط', 'أهداف'],
-    imageUrl: unsplashImg('1568602471122-7832951cc4c5'),
+    imageUrl: teacherImg('coach-mike.png'),
   },
   {
     id: 'dr-lisa',
@@ -144,7 +144,7 @@ export const TEACHERS: Teacher[] = [
     teachingStyle:
       'Professional, structured, gives precise feedback, uses advanced vocabulary appropriately, focuses on professional contexts (email, meetings, presentations), encourages clear articulation.',
     tags: ['احترافي', 'أكاديمي', 'أعمال'],
-    imageUrl: unsplashImg('1573497019940-1c28c88b4f3e'),
+    imageUrl: teacherImg('dr-lisa.png'),
   },
 ];
 

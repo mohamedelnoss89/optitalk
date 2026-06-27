@@ -200,8 +200,8 @@ export const useStore = create<AppState>()(
         }),
     }),
     {
-      name: 'optitalk-store-v2',
-      version: 2,
+      name: 'optitalk-store-v3',
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         user: s.user,
