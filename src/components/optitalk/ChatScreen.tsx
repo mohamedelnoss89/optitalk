@@ -69,23 +69,40 @@ export function ChatScreen() {
   });
 
   // Speech synthesis — pick voice matching teacher gender
-  // ملاحظة: في بعض المتصفحات speechSynthesis مش بيدعم الصوت (headless, autoplay policy)
-  // فبنعتمد على fallback vis speaking state
+  // متوافق مع الموبايل: بـ unlock على أول user interaction
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
     onStart: () => {
-      // Audio started - real speaking
       setSpeaking(true);
     },
     onEnd: () => {
-      // Audio ended - but only clear if we didn't set a fallback timeout
-      // We let the fallback timer handle clearing to ensure visual mouth movement
-      // even when audio doesn't actually play
+      setSpeaking(false);
+      setSpeakingId(null);
     },
   });
+
+  // ===== Unlock speech on first user interaction (iOS Safari) =====
+  useEffect(() => {
+    if (!synthesis.supported) return;
+    const unlock = () => {
+      synthesis.unlock();
+      // Remove listeners after first unlock
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+    window.addEventListener('click', unlock);
+    window.addEventListener('touchstart', unlock);
+    window.addEventListener('keydown', unlock);
+    return () => {
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, [synthesis]);
 
   // ===== Speak helper =====
   const speakText = useCallback(
@@ -115,11 +132,13 @@ export function ChatScreen() {
       createdAt: Date.now(),
     };
     addMessage(greeting);
-    // Speak the greeting after a brief delay - with visual fallback
-    setTimeout(() => {
+    // Speak the greeting — try immediately, with retries for mobile
+    // (mobile browsers may block speech until user has interacted with the page)
+    const trySpeak = (attempt: number) => {
       speakText(greeting.content, greeting.id);
+      // Fallback visual: keep "Speaking" state for the estimated duration
       const wordCount = greeting.content.split(/\s+/).length;
-      const estimatedDuration = Math.max(2500, wordCount * 350);
+      const estimatedDuration = Math.max(3000, wordCount * 350);
       setSpeaking(true);
       setSpeakingId(greeting.id);
       setTimeout(() => {
@@ -128,7 +147,10 @@ export function ChatScreen() {
           setSpeakingId(null);
         }
       }, estimatedDuration);
-    }, 400);
+    };
+
+    // First attempt after short delay
+    setTimeout(() => trySpeak(1), 400);
   }, [selectedTeacher]);
 
   // ===== Cleanup speech on unmount =====
@@ -243,6 +265,9 @@ export function ChatScreen() {
 
   // ===== Mic toggle =====
   const handleMicToggle = useCallback(() => {
+    // Unlock speech synthesis on this user gesture (mobile fix)
+    synthesis.unlock();
+
     if (!recognition.supported) {
       toast.error('المتصفح مش بيدعم التعرف على الصوت. استخدم الكتابة');
       return;
@@ -291,8 +316,10 @@ export function ChatScreen() {
   // ===== Replay a message =====
   const handleReplay = useCallback(
     (msg: ChatMessage) => {
+      // Unlock speech on this user gesture (mobile fix)
+      synthesis.unlock();
       speakText(msg.content, msg.id);
-      // Fallback: force speaking state (handles no-audio case)
+      // Fallback visual: keep "Speaking" state for the estimated duration
       const wordCount = msg.content.split(/\s+/).length;
       const estimatedDuration = Math.max(2000, wordCount * 350);
       setSpeaking(true);
@@ -304,7 +331,7 @@ export function ChatScreen() {
         }
       }, estimatedDuration);
     },
-    [speakText, setSpeaking, setSpeakingId]
+    [speakText, setSpeaking, setSpeakingId, synthesis]
   );
 
   // ===== Toggle camera =====
