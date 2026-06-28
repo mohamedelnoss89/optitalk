@@ -69,17 +69,21 @@ export function ChatScreen() {
   });
 
   // Speech synthesis — pick voice matching teacher gender
+  // ملاحظة: في بعض المتصفحات speechSynthesis مش بيدعم الصوت (headless, autoplay policy)
+  // فبنعتمد على fallback vis speaking state
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
     onStart: () => {
+      // Audio started - real speaking
       setSpeaking(true);
     },
     onEnd: () => {
-      setSpeaking(false);
-      setSpeakingId(null);
+      // Audio ended - but only clear if we didn't set a fallback timeout
+      // We let the fallback timer handle clearing to ensure visual mouth movement
+      // even when audio doesn't actually play
     },
   });
 
@@ -111,8 +115,20 @@ export function ChatScreen() {
       createdAt: Date.now(),
     };
     addMessage(greeting);
-    // Speak the greeting after a brief delay
-    setTimeout(() => speakText(greeting.content, greeting.id), 400);
+    // Speak the greeting after a brief delay - with visual fallback
+    setTimeout(() => {
+      speakText(greeting.content, greeting.id);
+      const wordCount = greeting.content.split(/\s+/).length;
+      const estimatedDuration = Math.max(2500, wordCount * 350);
+      setSpeaking(true);
+      setSpeakingId(greeting.id);
+      setTimeout(() => {
+        if (useStore.getState().isSpeaking) {
+          setSpeaking(false);
+          setSpeakingId(null);
+        }
+      }, estimatedDuration);
+    }, 400);
   }, [selectedTeacher]);
 
   // ===== Cleanup speech on unmount =====
@@ -189,8 +205,23 @@ export function ChatScreen() {
           bumpPerfectStreak();
         }
 
-        // Speak the reply
-        setTimeout(() => speakText(aiMsg.content, aiMsg.id), 150);
+        // Speak the reply - visually mark as speaking even if audio fails
+        setTimeout(() => {
+          speakText(aiMsg.content, aiMsg.id);
+          // Fallback: force speaking state for at least the duration of the message
+          // (in case speechSynthesis is not supported or blocked by browser)
+          const wordCount = aiMsg.content.split(/\s+/).length;
+          const estimatedDuration = Math.max(2000, wordCount * 350); // ~350ms per word
+          setSpeaking(true);
+          setSpeakingId(aiMsg.id);
+          // Clear after estimated duration if still speaking (handles no-audio case)
+          setTimeout(() => {
+            if (useStore.getState().isSpeaking) {
+              setSpeaking(false);
+              setSpeakingId(null);
+            }
+          }, estimatedDuration);
+        }, 150);
       } catch (err) {
         console.error('[OptiTalk] Chat error:', err);
         toast.error('مشكلة في الاتصال بالمدرس. حاول تاني');
@@ -311,8 +342,8 @@ export function ChatScreen() {
         </button>
       </header>
 
-      {/* ===== المدرس - فوق (35% من الشاشة) ===== */}
-      <section className="relative z-10" style={{ height: '35%' }}>
+      {/* ===== المدرس - فوق (50% من الشاشة) ===== */}
+      <section className="relative z-10" style={{ height: '50%' }}>
         <TeacherAvatar
           teacher={selectedTeacher}
           isSpeaking={isSpeaking}
@@ -321,41 +352,42 @@ export function ChatScreen() {
         />
       </section>
 
-      {/* ===== المحادثة + التحكم - في النص (30%) ===== */}
-      <section className="relative z-10 flex flex-1 flex-col">
-        {/* المحادثة */}
-        <div className="flex-1 overflow-hidden px-2">
-          <MessagesList
-            messages={messages}
-            isThinking={isAiThinking}
-            onReplay={handleReplay}
-            speakingId={speakingId}
-          />
-        </div>
-
-        {/* زرار التحكم */}
-        <ControlBar
-          isListening={isListening}
-          isSpeaking={isSpeaking}
-          isAiThinking={isAiThinking}
-          speechSupported={recognition.supported}
-          interim={recognition.interim}
-          speechLang={speechLang}
-          onToggleLang={() => setSpeechLang(speechLang === 'ar' ? 'en' : 'ar')}
-          onMicToggle={handleMicToggle}
-          onStopSpeaking={handleStopSpeaking}
-          onEndConversation={handleEnd}
-          onSendText={(text) => void handleSendMessage(text)}
-        />
-      </section>
-
-      {/* ===== الطالب - تحت (35% من الشاشة) ===== */}
-      <section className="relative z-10 flex items-center justify-center" style={{ height: '35%' }}>
+      {/* ===== الطالب - تحت (50% من الشاشة) ===== */}
+      <section className="relative z-10 flex-1 overflow-hidden">
         <StudentCamera
           enabled={cameraEnabled}
           onToggle={handleToggleCamera}
           compact={false}
         />
+
+        {/* ===== آخر رسالة - overlay فوق كاميرا الطالب ===== */}
+        {messages.length > 0 && (
+          <div className="pointer-events-none absolute top-2 left-2 right-2 z-20">
+            <LastMessageBubble
+              message={messages[messages.length - 1]}
+              isThinking={isAiThinking}
+              speakingId={speakingId}
+              onReplay={handleReplay}
+            />
+          </div>
+        )}
+
+        {/* ===== التحكم - overlaid تحت في آخر الشاشة ===== */}
+        <div className="absolute bottom-0 inset-x-0 z-30">
+          <ControlBar
+            isListening={isListening}
+            isSpeaking={isSpeaking}
+            isAiThinking={isAiThinking}
+            speechSupported={recognition.supported}
+            interim={recognition.interim}
+            speechLang={speechLang}
+            onToggleLang={() => setSpeechLang(speechLang === 'ar' ? 'en' : 'ar')}
+            onMicToggle={handleMicToggle}
+            onStopSpeaking={handleStopSpeaking}
+            onEndConversation={handleEnd}
+            onSendText={(text) => void handleSendMessage(text)}
+          />
+        </div>
       </section>
 
       {/* ===== Settings sheet ===== */}
@@ -388,6 +420,76 @@ export function ChatScreen() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ===== آخر رسالة - overlay فوق كاميرا الطالب =====
+function LastMessageBubble({
+  message,
+  isThinking,
+  speakingId,
+  onReplay,
+}: {
+  message: ChatMessage;
+  isThinking: boolean;
+  speakingId: string | null;
+  onReplay: (m: ChatMessage) => void;
+}) {
+  const isUser = message.role === 'user';
+  const isSpeaking = speakingId === message.id;
+
+  return (
+    <motion.div
+      key={message.id}
+      initial={{ opacity: 0, y: -10, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.25 }}
+      className="pointer-events-auto mx-auto max-w-[90%]"
+    >
+      <div
+        className={cn(
+          'rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-lg backdrop-blur-md',
+          isUser
+            ? 'rounded-br-md opti-primary-gradient text-white'
+            : 'rounded-bl-md bg-black/70 text-white border border-white/15'
+        )}
+      >
+        <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wide opacity-70">
+          {isUser ? 'You' : 'Teacher'}
+          {isThinking && !isUser && ' • typing...'}
+        </div>
+        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+
+        {/* تصحيح */}
+        {!isUser && message.correction && (
+          <div className="mt-1.5 rounded-lg bg-opti-gold/15 border border-opti-gold/30 px-2 py-1.5">
+            <div className="text-[9px] font-bold text-opti-gold">تصحيح</div>
+            <p className="text-[11px] text-opti-text/90" dir="rtl">{message.correction}</p>
+          </div>
+        )}
+
+        {/* ترجمة */}
+        {!isUser && message.translatedWord && (
+          <div className="mt-1 text-[10px] text-white/70" dir="rtl">
+            🌐 {message.translatedWord}
+          </div>
+        )}
+
+        {/* زرار استمع تاني */}
+        {!isUser && (
+          <button
+            onClick={() => onReplay(message)}
+            className={cn(
+              'mt-1.5 flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold transition-all hover:bg-white/20',
+              isSpeaking && 'text-opti-accent'
+            )}
+          >
+            <Volume2 className={cn('h-2.5 w-2.5', isSpeaking && 'animate-pulse')} />
+            {isSpeaking ? 'speaking...' : 'replay'}
+          </button>
+        )}
+      </div>
+    </motion.div>
   );
 }
 
