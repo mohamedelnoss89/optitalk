@@ -1,8 +1,6 @@
-// ===== OptiTalk - Text-to-Speech Hook (Mobile-friendly) =====
-// متوافق مع iOS Safari و Android Chrome
-// - بـ unlock speechSynthesis بعد أول user interaction
-// - بيستخدم pause/resume hack عشان iOS ميبطلّش الكلام
-// - بيحمي من interrupted errors
+// ===== OptiTalk - TTS Hook (Mobile-friendly Audio API + Web Speech fallback) =====
+// يعتمد على Audio element + /api/tts endpoint عشان يشتغل على كل المتصفحات
+// Web Speech API كـ fallback بس
 
 'use client';
 
@@ -26,209 +24,201 @@ interface UseSpeechSynthesisReturn {
   unlock: () => void;
 }
 
-function pickVoice(
-  voices: SpeechSynthesisVoice[],
-  lang: string,
-  preferGender?: 'male' | 'female'
-): SpeechSynthesisVoice | null {
-  if (!voices.length) return null;
-
-  const langVoices = voices.filter((v) =>
-    v.lang.toLowerCase().startsWith(lang.split('-')[0].toLowerCase())
-  );
-  const pool = langVoices.length ? langVoices : voices;
-
-  // iOS voices keywords
-  const femaleHints = ['female', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 'serena', 'zira', 'susan', 'allison', 'ava', 'sally', 'fiona', 'veena', 'amelie', 'anna', 'ellen', 'kyoko', 'yuna', 'tina'];
-  const maleHints = ['male', 'daniel', 'alex', 'fred', 'tom', 'david', 'george', 'mark', 'oliver', 'aaron', 'arthur', 'gordon', 'james', 'rishi', 'diego', 'jorge', 'juan'];
-
-  if (preferGender === 'female') {
-    const f = pool.find((v) =>
-      femaleHints.some((h) => v.name.toLowerCase().includes(h))
-    );
-    if (f) return f;
+// ===== Split text into chunks <= 1024 chars for TTS API =====
+function splitTextIntoChunks(text: string, maxLen = 1000): string[] {
+  if (text.length <= maxLen) return [text];
+  const chunks: string[] = [];
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  let cur = '';
+  for (const s of sentences) {
+    if ((cur + s).length <= maxLen) {
+      cur += s;
+    } else {
+      if (cur) chunks.push(cur.trim());
+      cur = s;
+    }
   }
-  if (preferGender === 'male') {
-    const m = pool.find((v) =>
-      maleHints.some((h) => v.name.toLowerCase().includes(h))
-    );
-    if (m) return m;
-  }
-
-  // Prefer Google / natural / enhanced voices
-  const preferred = pool.find((v) =>
-    v.name.toLowerCase().includes('google') ||
-    v.name.toLowerCase().includes('natural') ||
-    v.name.toLowerCase().includes('enhanced') ||
-    v.name.toLowerCase().includes('premium')
-  );
-  return preferred || pool[0];
+  if (cur) chunks.push(cur.trim());
+  return chunks;
 }
 
 export function useSpeechSynthesis(
   opts: UseSpeechSynthesisOptions = {}
 ): UseSpeechSynthesisReturn {
-  const { lang = 'en-US', rate = 0.9, pitch = 1, volume = 1, preferGender, onEnd, onStart } = opts;
+  const { rate = 0.95, preferGender, onEnd, onStart } = opts;
   const [supported] = useState(() =>
     typeof window !== 'undefined' && 'speechSynthesis' in window
   );
   const [speaking, setSpeaking] = useState(false);
-  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const onEndRef = useRef(onEnd);
   const onStartRef = useRef(onStart);
-  const unlockedRef = useRef(false);
-  const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const queueRef = useRef<string[]>([]);
+  const isPlayingRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     onEndRef.current = onEnd;
     onStartRef.current = onStart;
   }, [onEnd, onStart]);
 
-  // ===== Load voices (iOS fire async) =====
+  // ===== Create audio element once =====
   useEffect(() => {
-    if (!supported) return;
-
-    const loadVoices = () => {
-      voicesRef.current = window.speechSynthesis.getVoices();
-    };
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-
-    // iOS needs a kick after delay
-    const t = setTimeout(loadVoices, 250);
-    const t2 = setTimeout(loadVoices, 1000);
+    if (typeof window === 'undefined') return;
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.preload = 'auto';
+    audioRef.current = audio;
 
     return () => {
-      clearTimeout(t);
-      clearTimeout(t2);
       try {
-        window.speechSynthesis.onvoiceschanged = null;
-        window.speechSynthesis.cancel();
+        audio.pause();
+        audio.src = '';
       } catch {
         // ignore
       }
+      audioRef.current = null;
     };
-  }, [supported]);
+  }, []);
 
-  // ===== Unlock: call inside user gesture to enable speech on iOS =====
-  const unlock = useCallback(() => {
-    if (!supported || unlockedRef.current) return;
+  // ===== Play next chunk from queue =====
+  const playNextChunk = useCallback(async () => {
+    if (cancelledRef.current) {
+      isPlayingRef.current = false;
+      return;
+    }
+    const next = queueRef.current.shift();
+    if (!next) {
+      isPlayingRef.current = false;
+      setSpeaking(false);
+      onEndRef.current?.();
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio) {
+      isPlayingRef.current = false;
+      return;
+    }
+
     try {
-      // iOS requires a real utterance attempt inside the gesture
-      const u = new SpeechSynthesisUtterance('');
-      u.volume = 0;
-      u.rate = 1;
-      window.speechSynthesis.speak(u);
-      window.speechSynthesis.cancel();
-      unlockedRef.current = true;
-    } catch {
-      // ignore
-    }
-  }, [supported]);
+      // Build TTS URL
+      const params = new URLSearchParams({
+        text: next,
+        speed: String(rate),
+      });
+      if (preferGender) params.set('gender', preferGender);
+      const url = `/api/tts?${params.toString()}`;
 
-  // ===== Keep-alive: iOS pauses speech after ~10s, this resumes it =====
-  const startKeepAlive = useCallback(() => {
-    if (keepAliveRef.current) return;
-    keepAliveRef.current = setInterval(() => {
-      if (!window.speechSynthesis.speaking) {
-        if (keepAliveRef.current) {
-          clearInterval(keepAliveRef.current);
-          keepAliveRef.current = null;
+      audio.src = url;
+      audio.volume = 1;
+
+      audio.onplay = () => {
+        if (!cancelledRef.current) {
+          onStartRef.current?.();
         }
-        return;
-      }
-      // iOS hack: pause + resume keeps it alive
-      try {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      } catch {
-        // ignore
-      }
-    }, 8000);
-  }, []);
+      };
 
-  const stopKeepAlive = useCallback(() => {
-    if (keepAliveRef.current) {
-      clearInterval(keepAliveRef.current);
-      keepAliveRef.current = null;
+      audio.onended = () => {
+        // Play next chunk
+        playNextChunk();
+      };
+
+      audio.onerror = () => {
+        console.warn('[OptiTalk TTS] Audio error, skipping chunk');
+        playNextChunk();
+      };
+
+      // Set play promise (mobile requires play() inside user gesture or after)
+      await audio.play();
+    } catch (err) {
+      console.warn('[OptiTalk TTS] play() failed:', err);
+      // Try to play next chunk
+      playNextChunk();
     }
-  }, []);
+  }, [rate, preferGender]);
 
+  // ===== Speak: split text and queue chunks =====
   const speak = useCallback(
     (text: string) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      if (typeof window === 'undefined') return;
       if (!text.trim()) return;
 
-      // Cancel any ongoing speech
-      try {
-        window.speechSynthesis.cancel();
-      } catch {
-        // ignore
+      // Cancel current
+      cancelledRef.current = true;
+      const audio = audioRef.current;
+      if (audio) {
+        try {
+          audio.pause();
+          audio.src = '';
+        } catch {
+          // ignore
+        }
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = rate;
-      utterance.pitch = pitch;
-      utterance.volume = volume;
+      // Reset for new speech
+      cancelledRef.current = false;
+      queueRef.current = splitTextIntoChunks(text);
+      isPlayingRef.current = true;
+      setSpeaking(true);
 
-      const voice = pickVoice(voicesRef.current, lang, preferGender);
-      if (voice) utterance.voice = voice;
-
-      utterance.onstart = () => {
-        setSpeaking(true);
-        onStartRef.current?.();
-        startKeepAlive();
-      };
-      utterance.onend = () => {
-        setSpeaking(false);
-        stopKeepAlive();
-        onEndRef.current?.();
-      };
-      utterance.onerror = (e) => {
-        console.warn('[OptiTalk] TTS error:', (e as SpeechSynthesisErrorEvent).error);
-        setSpeaking(false);
-        stopKeepAlive();
-        // don't call onEnd — let fallback timer handle it
-      };
-
-      currentUtteranceRef.current = utterance;
-
-      // CRITICAL: iOS Safari requires speak() to be called synchronously
-      // in the same call stack as the user gesture. No setTimeout.
-      try {
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        console.error('[OptiTalk] speak() failed:', err);
-        setSpeaking(false);
-      }
+      // Start playing
+      playNextChunk();
     },
-    [lang, rate, pitch, volume, preferGender, startKeepAlive, stopKeepAlive]
+    [playNextChunk]
   );
 
   const cancel = useCallback(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      // ignore
-    }
-    stopKeepAlive();
-    setSpeaking(false);
-  }, [stopKeepAlive]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopKeepAlive();
+    cancelledRef.current = true;
+    queueRef.current = [];
+    isPlayingRef.current = false;
+    const audio = audioRef.current;
+    if (audio) {
       try {
-        window.speechSynthesis.cancel();
+        audio.pause();
+        audio.src = '';
       } catch {
         // ignore
       }
-    };
-  }, [stopKeepAlive]);
+    }
+    setSpeaking(false);
+  }, []);
 
-  return { supported, speaking, speak, cancel, unlock };
+  // ===== Unlock: required for iOS Safari to allow audio playback =====
+  const unlock = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    // Play a tiny silent audio to unlock the audio context
+    try {
+      audio.muted = true;
+      audio.play().then(() => {
+        audio.pause();
+        audio.muted = false;
+        audio.currentTime = 0;
+      }).catch(() => {
+        audio.muted = false;
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      const audio = audioRef.current;
+      if (audio) {
+        try {
+          audio.pause();
+          audio.src = '';
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  return { supported: true, speaking, speak, cancel, unlock };
 }
