@@ -292,8 +292,19 @@ export function ChatScreen() {
   const handleReplay = useCallback(
     (msg: ChatMessage) => {
       speakText(msg.content, msg.id);
+      // Fallback: force speaking state (handles no-audio case)
+      const wordCount = msg.content.split(/\s+/).length;
+      const estimatedDuration = Math.max(2000, wordCount * 350);
+      setSpeaking(true);
+      setSpeakingId(msg.id);
+      setTimeout(() => {
+        if (useStore.getState().isSpeaking) {
+          setSpeaking(false);
+          setSpeakingId(null);
+        }
+      }, estimatedDuration);
     },
-    [speakText]
+    [speakText, setSpeaking, setSpeakingId]
   );
 
   // ===== Toggle camera =====
