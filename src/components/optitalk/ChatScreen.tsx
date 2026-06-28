@@ -311,7 +311,7 @@ export function ChatScreen() {
         </button>
       </header>
 
-      {/* ===== المدرس - 35% من الشاشة ===== */}
+      {/* ===== المدرس - فوق (35% من الشاشة) ===== */}
       <section className="relative z-10" style={{ height: '35%' }}>
         <TeacherAvatar
           teacher={selectedTeacher}
@@ -321,16 +321,7 @@ export function ChatScreen() {
         />
       </section>
 
-      {/* ===== الطالب - 35% من الشاشة ===== */}
-      <section className="relative z-10 flex items-center justify-center" style={{ height: '35%' }}>
-        <StudentCamera
-          enabled={cameraEnabled}
-          onToggle={handleToggleCamera}
-          compact={false}
-        />
-      </section>
-
-      {/* ===== باقي الشاشة: محادثة + تحكم - 30% ===== */}
+      {/* ===== المحادثة + التحكم - في النص (30%) ===== */}
       <section className="relative z-10 flex flex-1 flex-col">
         {/* المحادثة */}
         <div className="flex-1 overflow-hidden px-2">
@@ -355,6 +346,15 @@ export function ChatScreen() {
           onStopSpeaking={handleStopSpeaking}
           onEndConversation={handleEnd}
           onSendText={(text) => void handleSendMessage(text)}
+        />
+      </section>
+
+      {/* ===== الطالب - تحت (35% من الشاشة) ===== */}
+      <section className="relative z-10 flex items-center justify-center" style={{ height: '35%' }}>
+        <StudentCamera
+          enabled={cameraEnabled}
+          onToggle={handleToggleCamera}
+          compact={false}
         />
       </section>
 
