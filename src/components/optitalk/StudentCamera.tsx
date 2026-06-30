@@ -71,13 +71,8 @@ export function StudentCamera({ enabled, onToggle, compact = false }: Props) {
   }, [enabled]);
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div
-        className={cn(
-          'relative overflow-hidden rounded-2xl opti-glass border border-opti-primary/15',
-          compact ? 'aspect-[3/4] w-24' : 'h-full w-full max-w-[320px] aspect-[3/4]'
-        )}
-      >
+    <div className="relative h-full w-full overflow-hidden bg-[#05070d]">
+      <div className="relative h-full w-full overflow-hidden">
         {enabled ? (
           <>
             <video
@@ -93,12 +88,12 @@ export function StudentCamera({ enabled, onToggle, compact = false }: Props) {
               </div>
             )}
             {error && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[#0a0e1a]/85 p-2 text-center">
-                <CameraOff className="h-5 w-5 text-opti-error" />
-                <span className="text-[9px] text-opti-text/70">{error}</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#0a0e1a]/90 p-2 text-center">
+                <CameraOff className="h-6 w-6 text-opti-error" />
+                <span className="text-[10px] text-opti-text/70">{error}</span>
               </div>
             )}
-            {/* Live indicator */}
+            {/* LIVE indicator */}
             {!error && !loading && (
               <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-[#0a0e1a]/70 px-1.5 py-0.5">
                 <motion.span
@@ -109,29 +104,35 @@ export function StudentCamera({ enabled, onToggle, compact = false }: Props) {
                 <span className="text-[8px] font-bold text-opti-text">LIVE</span>
               </div>
             )}
+            {/* "You" badge */}
+            {!error && !loading && (
+              <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-[#0a0e1a]/70 px-2 py-1 backdrop-blur-md border border-white/10">
+                <span className="text-[10px] font-bold text-white">You</span>
+                <span className="text-[8px] text-white/60">• طالب</span>
+              </div>
+            )}
           </>
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 p-2">
-            <CameraOff className="h-6 w-6 text-opti-text/40" />
-            <span className="text-[9px] text-opti-text/50 text-center">الكاميرا مطفية</span>
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#05070d] p-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full opti-glass">
+              <CameraOff className="h-8 w-8 text-opti-text/40" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-opti-text/70">الكاميرا مطفية</div>
+              <div className="mt-1 text-[10px] text-opti-text/40">فعلها عشان المدرس يشوفك</div>
+            </div>
+            {onToggle && (
+              <button
+                onClick={onToggle}
+                className="flex items-center gap-1.5 rounded-full opti-primary-gradient px-4 py-2 text-[11px] font-bold text-white transition-all hover:scale-105 active:scale-95"
+              >
+                <CameraIcon className="h-3 w-3" />
+                فعّل الكاميرا
+              </button>
+            )}
           </div>
         )}
       </div>
-
-      {onToggle && (
-        <button
-          onClick={onToggle}
-          className={cn(
-            'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold transition-all',
-            enabled
-              ? 'opti-glass-teal text-opti-accent'
-              : 'opti-glass text-opti-text/60 hover:text-opti-text'
-          )}
-        >
-          {enabled ? <CameraIcon className="h-3 w-3" /> : <CameraOff className="h-3 w-3" />}
-          {enabled ? 'كاميرا تعمل' : 'فعّل الكاميرا'}
-        </button>
-      )}
     </div>
   );
 }
