@@ -1,9 +1,8 @@
-// ===== OptiTalk - Teacher Avatar (3D realistic - صورة ثابتة + حركة على الوش) =====
-// الصورة ثابتة تماماً - الرمش والبؤ overlays على وش الشخصية بالظبط
+// ===== OptiTalk - Teacher Avatar (صورة ثابتة بسيطة) =====
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useState } from 'react';
 import type { Teacher } from '@/lib/teachers';
 
 interface Props {
@@ -13,48 +12,6 @@ interface Props {
   isListening?: boolean;
 }
 
-// موضع العين والبؤ لكل مدرس (بناءً على الصورة المولّدة)
-// النسب بالمقارنة بصندوق الصورة
-interface FaceFeatures {
-  // منطقة العين (يسار الصورة = يمين المشاهد)
-  leftEye: { x: number; y: number; w: number; h: number };
-  rightEye: { x: number; y: number; w: number; h: number };
-  mouth: { x: number; y: number; w: number; h: number };
-}
-
-const FACE_FEATURES: Record<string, FaceFeatures> = {
-  'mr-james': {
-    leftEye:  { x: 38, y: 30, w: 10, h: 4 },
-    rightEye: { x: 52, y: 30, w: 10, h: 4 },
-    mouth:    { x: 41, y: 42, w: 18, h: 5 },
-  },
-  'ms-sarah': {
-    leftEye:  { x: 38, y: 31, w: 10, h: 4 },
-    rightEye: { x: 52, y: 31, w: 10, h: 4 },
-    mouth:    { x: 42, y: 43, w: 16, h: 5 },
-  },
-  'professor-david': {
-    leftEye:  { x: 38, y: 30, w: 10, h: 4 },
-    rightEye: { x: 52, y: 30, w: 10, h: 4 },
-    mouth:    { x: 42, y: 44, w: 16, h: 5 },
-  },
-  'miss-emma': {
-    leftEye:  { x: 38, y: 31, w: 10, h: 4 },
-    rightEye: { x: 52, y: 31, w: 10, h: 4 },
-    mouth:    { x: 42, y: 43, w: 16, h: 5 },
-  },
-  'coach-mike': {
-    leftEye:  { x: 38, y: 30, w: 10, h: 4 },
-    rightEye: { x: 52, y: 30, w: 10, h: 4 },
-    mouth:    { x: 42, y: 43, w: 16, h: 5 },
-  },
-  'dr-lisa': {
-    leftEye:  { x: 38, y: 31, w: 10, h: 4 },
-    rightEye: { x: 52, y: 31, w: 10, h: 4 },
-    mouth:    { x: 42, y: 43, w: 16, h: 5 },
-  },
-};
-
 export function TeacherAvatar({
   teacher,
   isSpeaking,
@@ -62,74 +19,23 @@ export function TeacherAvatar({
   isListening = false,
 }: Props) {
   const [imgError, setImgError] = useState(false);
-  const [blinkKey, setBlinkKey] = useState(0);
-
-  const features = FACE_FEATURES[teacher.id] || FACE_FEATURES['mr-james'];
-
-  // ===== رمش عشوائي كل 2.5-4 ثانية =====
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    let active = true;
-    function scheduleBlink() {
-      const delay = 2500 + Math.random() * 1500;
-      timer = setTimeout(() => {
-        if (!active) return;
-        setBlinkKey((k) => k + 1);
-        scheduleBlink();
-      }, delay);
-    }
-    scheduleBlink();
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, []);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-[#0a0e1a] via-[#0e1330] to-[#1a1f3a]">
-      {/* ===== خلفية متوهجة (ثابتة) ===== */}
+      {/* ===== خلفية خفيفة ===== */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse 75% 55% at 50% 35%, ${teacher.color}33, transparent 70%)`,
-          opacity: isSpeaking ? 0.4 : 0.15,
-          transition: 'opacity 0.6s',
+          background: `radial-gradient(ellipse 75% 55% at 50% 35%, ${teacher.color}22, transparent 70%)`,
         }}
       />
-
-      {/* ===== particles خفيفة في الخلفية (ثابتة الحركة) ===== */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              left: `${10 + i * 15}%`,
-              top: `${20 + (i % 3) * 25}%`,
-              width: 2 + (i % 2),
-              height: 2 + (i % 2),
-              background: teacher.color,
-              filter: 'blur(1px)',
-            }}
-            animate={{
-              opacity: [0.15, 0.6, 0.15],
-              scale: [1, 1.4, 1],
-            }}
-            transition={{
-              duration: 3 + i * 0.4,
-              repeat: Infinity,
-              delay: i * 0.5,
-            }}
-          />
-        ))}
-      </div>
 
       {/* ===== الصورة - ثابتة تماماً ===== */}
       <div className="absolute inset-0 flex items-end justify-center">
         {!imgError ? (
           <div className="relative h-full w-full overflow-hidden">
             <img
-              src={`/teachers-3d/${teacher.id}.png`}
+              src={`/teachers/${teacher.id}.png`}
               alt={teacher.name}
               className="h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
@@ -148,89 +54,6 @@ export function TeacherAvatar({
               className="absolute inset-0 pointer-events-none"
               style={{ boxShadow: 'inset 0 0 100px 30px rgba(0,0,0,0.55)' }}
             />
-
-            {/* ===== رمش العين - overlay على وش الشخصية ===== */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`blink-${blinkKey}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: blinkKey > 0 ? [0, 1, 0] : 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18, ease: 'easeInOut' }}
-                className="absolute pointer-events-none"
-                style={{
-                  left: `${features.leftEye.x}%`,
-                  top: `${features.leftEye.y}%`,
-                  width: `${features.leftEye.w}%`,
-                  height: `${features.leftEye.h}%`,
-                  background: 'linear-gradient(to bottom, transparent 0%, rgba(60,40,30,0.85) 50%, transparent 100%)',
-                  borderRadius: '50%',
-                }}
-              />
-            </AnimatePresence>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`blink-r-${blinkKey}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: blinkKey > 0 ? [0, 1, 0] : 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18, ease: 'easeInOut' }}
-                className="absolute pointer-events-none"
-                style={{
-                  left: `${features.rightEye.x}%`,
-                  top: `${features.rightEye.y}%`,
-                  width: `${features.rightEye.w}%`,
-                  height: `${features.rightEye.h}%`,
-                  background: 'linear-gradient(to bottom, transparent 0%, rgba(60,40,30,0.85) 50%, transparent 100%)',
-                  borderRadius: '50%',
-                }}
-              />
-            </AnimatePresence>
-
-            {/* ===== البؤ - بيتحرك لما بيتكلم (overlay واضح) ===== */}
-            {isSpeaking && (
-              <motion.div
-                className="absolute pointer-events-none"
-                style={{
-                  left: `${features.mouth.x}%`,
-                  top: `${features.mouth.y}%`,
-                  width: `${features.mouth.w}%`,
-                  height: `${features.mouth.h * 2}%`,
-                }}
-                animate={{
-                  scaleY: [1, 0.2, 1.8, 0.3, 1.4, 0.4, 1.2, 0.5, 1],
-                  opacity: [0.7, 1, 0.7, 1, 0.7, 0.9, 0.7, 0.9, 0.7],
-                }}
-                transition={{
-                  duration: 0.55,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    background: `radial-gradient(ellipse at center, ${teacher.color} 0%, ${teacher.color}99 40%, transparent 80%)`,
-                    borderRadius: '50%',
-                    filter: 'blur(0.5px)',
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {/* ===== glow خفيف لما بيتكلم ===== */}
-            {isSpeaking && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0.2, 0.45, 0.2] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `radial-gradient(ellipse 55% 35% at 50% 40%, ${teacher.color}25, transparent 60%)`,
-                }}
-              />
-            )}
           </div>
         ) : (
           /* fallback */
