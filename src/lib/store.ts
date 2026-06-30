@@ -48,6 +48,11 @@ interface AppState {
   showAchievement: string | null;
   // لغة التعرف على الصوت: 'en' (إنجليزي افتراضي) أو 'ar' (عربي)
   speechLang: 'en' | 'ar';
+  // إعدادات إضافية
+  audioRate: number;
+  autoSpeak: boolean;
+  showCorrections: boolean;
+  showTranslations: boolean;
 
   // Actions: Onboarding
   setUser: (u: OptiUser) => void;
@@ -75,6 +80,10 @@ interface AppState {
   setCameraEnabled: (v: boolean) => void;
   setMicEnabled: (v: boolean) => void;
   setSpeechLang: (l: 'en' | 'ar') => void;
+  setAudioRate: (r: number) => void;
+  setAutoSpeak: (v: boolean) => void;
+  setShowCorrections: (v: boolean) => void;
+  setShowTranslations: (v: boolean) => void;
 
   // Reset
   resetAll: () => void;
@@ -108,6 +117,10 @@ export const useStore = create<AppState>()(
       micEnabled: false,
       showAchievement: null,
       speechLang: 'en',
+      audioRate: 0.95,
+      autoSpeak: true,
+      showCorrections: true,
+      showTranslations: true,
 
       // Actions: Onboarding
       setUser: (u) => set({ user: u }),
@@ -175,6 +188,10 @@ export const useStore = create<AppState>()(
       setCameraEnabled: (v) => set({ cameraEnabled: v }),
       setMicEnabled: (v) => set({ micEnabled: v }),
       setSpeechLang: (l) => set({ speechLang: l }),
+      setAudioRate: (r) => set({ audioRate: Math.min(2.0, Math.max(0.5, r)) }),
+      setAutoSpeak: (v) => set({ autoSpeak: v }),
+      setShowCorrections: (v) => set({ showCorrections: v }),
+      setShowTranslations: (v) => set({ showTranslations: v }),
 
       // Reset
       resetAll: () =>
