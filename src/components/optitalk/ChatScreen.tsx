@@ -312,8 +312,8 @@ export function ChatScreen() {
         </button>
       </header>
 
-      {/* ===== المدرس - 35% من الشاشة ===== */}
-      <section className="relative z-10" style={{ height: '35%' }}>
+      {/* ===== المدرس - 50% من الشاشة (النصف الأعلى) ===== */}
+      <section className="relative z-10 shrink-0" style={{ height: '50%', flexShrink: 0 }}>
         <TeacherAvatar
           teacher={selectedTeacher}
           isSpeaking={isSpeaking}
@@ -322,19 +322,19 @@ export function ChatScreen() {
         />
       </section>
 
-      {/* ===== الطالب - 35% من الشاشة ===== */}
-      <section className="relative z-10 flex items-center justify-center" style={{ height: '35%' }}>
-        <StudentCamera
-          enabled={cameraEnabled}
-          onToggle={handleToggleCamera}
-          compact={false}
-        />
-      </section>
+      {/* ===== الطالب + المحادثة + التحكم - 50% (النصف السفلي) ===== */}
+      <section className="relative z-10 flex flex-col overflow-hidden" style={{ height: '50%', flexShrink: 0 }}>
+        {/* كاميرا الطالب */}
+        <div className="relative flex-1 min-h-0">
+          <StudentCamera
+            enabled={cameraEnabled}
+            onToggle={handleToggleCamera}
+            compact={false}
+          />
+        </div>
 
-      {/* ===== باقي الشاشة: محادثة + تحكم - 30% ===== */}
-      <section className="relative z-10 flex flex-1 flex-col">
         {/* المحادثة */}
-        <div className="flex-1 overflow-hidden px-2">
+        <div className="overflow-hidden px-2 shrink-0" style={{ height: '90px' }}>
           <MessagesList
             messages={messages}
             isThinking={isAiThinking}
