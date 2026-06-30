@@ -312,8 +312,8 @@ export function ChatScreen() {
         </button>
       </header>
 
-      {/* ===== المدرس - 50% من الشاشة (النصف الأعلى) ===== */}
-      <section className="relative z-10 shrink-0" style={{ height: '50%', flexShrink: 0 }}>
+      {/* ===== المدرس - 35% من الشاشة ===== */}
+      <section className="relative z-10 shrink-0" style={{ height: '35%', flexShrink: 0 }}>
         <TeacherAvatar
           teacher={selectedTeacher}
           isSpeaking={isSpeaking}
@@ -322,8 +322,8 @@ export function ChatScreen() {
         />
       </section>
 
-      {/* ===== الطالب + المحادثة + التحكم - 50% (النصف السفلي) ===== */}
-      <section className="relative z-10 flex flex-col overflow-hidden" style={{ height: '50%', flexShrink: 0 }}>
+      {/* ===== الطالب + المحادثة + التحكم - 65% ===== */}
+      <section className="relative z-10 flex flex-col overflow-hidden" style={{ height: '65%', flexShrink: 0 }}>
         {/* كاميرا الطالب */}
         <div className="relative flex-1 min-h-0">
           <StudentCamera
