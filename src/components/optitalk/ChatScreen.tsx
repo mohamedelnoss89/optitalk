@@ -12,6 +12,7 @@ import { TeacherAvatar } from './TeacherAvatar';
 import { StudentCamera } from './StudentCamera';
 import { MessagesList } from './MessagesList';
 import { ControlBar } from './ControlBar';
+import { SettingsSheet } from './SettingsSheet';
 import { ACHIEVEMENTS } from '@/lib/teachers';
 import { cn } from '@/lib/utils';
 
@@ -312,7 +313,7 @@ export function ChatScreen() {
       </header>
 
       {/* ===== المدرس - 35% من الشاشة ===== */}
-      <section className="relative z-10" style={{ height: '35%' }}>
+      <section className="relative z-10 shrink-0" style={{ height: '35%', flexShrink: 0 }}>
         <TeacherAvatar
           teacher={selectedTeacher}
           isSpeaking={isSpeaking}
@@ -321,19 +322,19 @@ export function ChatScreen() {
         />
       </section>
 
-      {/* ===== الطالب - 35% من الشاشة ===== */}
-      <section className="relative z-10 flex items-center justify-center" style={{ height: '35%' }}>
-        <StudentCamera
-          enabled={cameraEnabled}
-          onToggle={handleToggleCamera}
-          compact={false}
-        />
-      </section>
+      {/* ===== الطالب + المحادثة + التحكم - 65% ===== */}
+      <section className="relative z-10 flex flex-col overflow-hidden" style={{ height: '65%', flexShrink: 0 }}>
+        {/* كاميرا الطالب */}
+        <div className="relative flex-1 min-h-0">
+          <StudentCamera
+            enabled={cameraEnabled}
+            onToggle={handleToggleCamera}
+            compact={false}
+          />
+        </div>
 
-      {/* ===== باقي الشاشة: محادثة + تحكم - 30% ===== */}
-      <section className="relative z-10 flex flex-1 flex-col">
         {/* المحادثة */}
-        <div className="flex-1 overflow-hidden px-2">
+        <div className="overflow-hidden px-2 shrink-0" style={{ height: '90px' }}>
           <MessagesList
             messages={messages}
             isThinking={isAiThinking}
@@ -359,23 +360,14 @@ export function ChatScreen() {
       </section>
 
       {/* ===== Settings sheet ===== */}
-      <AnimatePresence>
-        {showSettings && (
-          <SettingsSheet
-            onClose={() => setShowSettings(false)}
-            onReset={() => {
-              setShowSettings(false);
-              handleEnd();
-            }}
-            cameraEnabled={cameraEnabled}
-            onToggleCamera={handleToggleCamera}
-            points={points}
-            streak={streak}
-            achievements={achievements}
-            teacherName={selectedTeacher.nameAr}
-          />
-        )}
-      </AnimatePresence>
+      <SettingsSheet
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        onReset={() => {
+          setShowSettings(false);
+          handleEnd();
+        }}
+      />
 
       {/* ===== Achievement popup ===== */}
       <AnimatePresence>
@@ -405,110 +397,6 @@ function StatPill({
       <span className={color}>{icon}</span>
       <span className="text-xs font-black text-opti-text">{value}</span>
     </div>
-  );
-}
-
-function SettingsSheet({
-  onClose,
-  onReset,
-  cameraEnabled,
-  onToggleCamera,
-  points,
-  streak,
-  achievements,
-  teacherName,
-}: {
-  onClose: () => void;
-  onReset: () => void;
-  cameraEnabled: boolean;
-  onToggleCamera: () => void;
-  points: number;
-  streak: number;
-  achievements: string[];
-  teacherName: string;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#0a0e1a]/70 backdrop-blur-sm"
-    >
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-3xl opti-glass border-t border-opti-primary/20 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-      >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-opti-text/20" />
-
-        <h3 className="mb-4 text-lg font-black text-opti-text">الإعدادات</h3>
-
-        {/* Stats summary */}
-        <div className="mb-4 grid grid-cols-3 gap-2">
-          <MiniStat value={points} label="نقطة" color="text-opti-gold" />
-          <MiniStat value={streak} label="streak" color="text-opti-error" />
-          <MiniStat value={achievements.length} label="إنجاز" color="text-opti-accent" />
-        </div>
-
-        {/* Camera toggle */}
-        <button
-          onClick={onToggleCamera}
-          className={cn(
-            'mb-2 flex w-full items-center justify-between rounded-xl px-4 py-3 transition-all',
-            cameraEnabled ? 'opti-glass-teal' : 'opti-glass'
-          )}
-        >
-          <span className="text-sm font-semibold text-opti-text">الكاميرا</span>
-          <span
-            className={cn(
-              'rounded-full px-3 py-1 text-xs font-bold',
-              cameraEnabled ? 'bg-opti-accent text-[#0a0e1a]' : 'bg-opti-text/15 text-opti-text/60'
-            )}
-          >
-            {cameraEnabled ? 'تعمل' : 'مطفية'}
-          </span>
-        </button>
-
-        {/* Achievements preview */}
-        <div className="mb-4">
-          <div className="mb-2 text-xs font-bold text-opti-text/70">الإنجازات</div>
-          <div className="grid grid-cols-4 gap-2">
-            {ACHIEVEMENTS.map((a) => {
-              const earned = achievements.includes(a.id);
-              return (
-                <div
-                  key={a.id}
-                  className={cn(
-                    'flex flex-col items-center gap-1 rounded-xl p-2 text-center',
-                    earned ? 'opti-glass-teal' : 'opti-glass opacity-40 grayscale'
-                  )}
-                >
-                  <span className="text-2xl">{a.icon}</span>
-                  <span className="text-[8px] leading-tight text-opti-text/70">{a.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* End session */}
-        <button
-          onClick={onReset}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-opti-error/15 px-4 py-3 text-sm font-bold text-opti-error transition-all hover:bg-opti-error/25"
-        >
-          <LogOut className="h-4 w-4" />
-          إنهاء المحادثة والعودة
-        </button>
-
-        <div className="mt-3 text-center text-[10px] text-opti-text/40">
-          المدرس: {teacherName} • OptiTalk من opti-group
-        </div>
-      </motion.div>
-    </motion.div>
   );
 }
 

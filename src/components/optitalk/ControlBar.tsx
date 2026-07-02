@@ -177,19 +177,19 @@ export function ControlBar({
             </div>
           </div>
 
-          {/* Status hint - دايماً باين */}
+          {/* Status hint */}
           <div className="mt-2 text-center text-[11px] font-medium text-opti-text/50">
             {isAiThinking
-              ? '⏳ المدرس بيفكر...'
+              ? 'المدرس بيفكر...'
               : isSpeaking
-              ? '🔊 اضغط لإيقاف الصوت'
+              ? 'اضغط لإيقاف الصوت'
               : isListening
               ? speechLang === 'ar'
-                ? '🎤 بتتكلم بالعربي... اضغط للإيقاف'
-                : '🎤 Speaking in English... tap to stop'
+                ? 'بتتكلم بالعربي — اضغط للإيقاف'
+                : 'Speaking in English — tap to stop'
               : speechLang === 'ar'
-              ? '🎙️ الميكروفون عربي - اضغط وتكلم'
-              : '🎙️ Mic is English - tap & speak'}
+              ? 'الميكروفون عربي — اضغط وتكلم'
+              : 'Mic is English — tap & speak'}
           </div>
         </>
       )}
