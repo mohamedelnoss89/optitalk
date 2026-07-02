@@ -48,13 +48,13 @@ export function WelcomeScreen() {
       >
         <div className="relative flex h-32 w-32 items-center justify-center">
           {/* Halo */}
-          <div className="absolute inset-0 rounded-[2rem] opti-primary-gradient opacity-25 blur-2xl" />
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-[2rem] opti-primary-gradient opti-glow">
-            <span className="text-6xl font-black text-white drop-shadow-lg">O</span>
-            <span className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full opti-gold-gradient opti-glow-gold text-sm font-black text-[#0a0e1a]">
-              T
-            </span>
-          </div>
+          <div className="absolute inset-0 rounded-[2rem] opacity-30 blur-2xl" style={{ background: 'radial-gradient(circle, #6C5CE7 0%, transparent 70%)' }} />
+          {/* الشعار */}
+          <img
+            src="/logo.png"
+            alt="OptiTalk"
+            className="relative h-28 w-28 rounded-[1.5rem] object-cover opti-glow"
+          />
         </div>
       </motion.div>
 
