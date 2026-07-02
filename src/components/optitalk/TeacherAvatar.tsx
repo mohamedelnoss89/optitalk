@@ -35,7 +35,7 @@ export function TeacherAvatar({
         {!imgError ? (
           <div className="relative h-full w-full overflow-hidden">
             <img
-              src={`/teachers/${teacher.id}.png`}
+              src={teacher.imageUrl || `/teachers/${teacher.id}.png`}
               alt={teacher.name}
               className="h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
