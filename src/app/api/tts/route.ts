@@ -9,9 +9,14 @@ import ZAI from 'z-ai-web-dev-sdk';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// Voice mapping based on gender
+// jam = English gentleman (male, clear)
+// tongtong = warm (female, clear and warm)
+// xiaochen = calm professional (male, deeper)
+// luodo = expressive (female, more dynamic)
 const VOICE_MAP: Record<string, string> = {
   male: 'jam',
-  female: 'chuichui',
+  female: 'tongtong',
 };
 
 function cleanText(text: string): string {
