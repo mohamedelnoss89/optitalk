@@ -596,12 +596,23 @@ function TeacherCard({
           <Check className="h-3.5 w-3.5" strokeWidth={3} />
         </div>
       )}
-      <div
-        className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
-        style={{ background: teacher.gradient }}
-      >
-        {teacher.avatar}
-      </div>
+      {teacher.imageUrl ? (
+        <img
+          src={teacher.imageUrl}
+          alt={teacher.name}
+          className="h-14 w-14 rounded-2xl object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      ) : (
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
+          style={{ background: teacher.gradient }}
+        >
+          {teacher.avatar}
+        </div>
+      )}
       <div className="mt-2 text-xs font-bold text-opti-text">{teacher.nameAr}</div>
       <div className="text-[10px] text-opti-text/55">{teacher.name}</div>
       <div className="mt-1.5 flex flex-wrap justify-center gap-1">
@@ -642,12 +653,23 @@ function FriendCard({
           <Check className="h-3.5 w-3.5" strokeWidth={3} />
         </div>
       )}
-      <div
-        className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
-        style={{ background: friend.gradient }}
-      >
-        {friend.avatar}
-      </div>
+      {friend.imageUrl ? (
+        <img
+          src={friend.imageUrl}
+          alt={friend.name}
+          className="h-14 w-14 rounded-2xl object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      ) : (
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
+          style={{ background: friend.gradient }}
+        >
+          {friend.avatar}
+        </div>
+      )}
       <div className="mt-2 text-xs font-bold text-opti-text">{friend.nameAr}</div>
       <div className="text-[10px] text-opti-text/55">{friend.name}</div>
       <div className="mt-1.5 flex flex-wrap justify-center gap-1">
