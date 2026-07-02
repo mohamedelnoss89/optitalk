@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { TEACHERS, AGE_GROUPS, LEVELS, type Teacher, type Level } from '@/lib/teachers';
+import { FRIENDS, type Friend } from '@/lib/friends';
 import { cn } from '@/lib/utils';
 
 type Step = 1 | 2 | 3;
@@ -39,9 +40,11 @@ export function OnboardingScreen() {
 
   // Step 2 state
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [companionMode, setCompanionMode] = useState<'teacher' | 'friend'>('teacher');
 
   const canProceedStep1 = name.trim() && age && gender && level;
-  const canProceedStep2 = !!selectedTeacher;
+  const canProceedStep2 = companionMode === 'teacher' ? !!selectedTeacher : !!selectedFriend;
 
   const requestMediaPermissions = async () => {
     let cam = false;
@@ -76,7 +79,31 @@ export function OnboardingScreen() {
       gender: gender as 'male' | 'female',
       level: level as Level,
     });
-    setTeacher(selectedTeacher);
+    if (companionMode === 'teacher') {
+      setTeacher(selectedTeacher);
+    } else {
+      // نحول الصديق لـ Teacher format
+      const friend = selectedFriend;
+      if (friend) {
+        setTeacher({
+          id: friend.id,
+          name: friend.name,
+          nameAr: friend.nameAr,
+          gender: friend.gender,
+          ageGroup: friend.age === 'young' ? 'young' : 'adult',
+          avatar: friend.avatar,
+          gradient: friend.gradient,
+          color: friend.color,
+          personality: friend.personality,
+          personalityAr: friend.personalityAr,
+          greeting: friend.greeting,
+          greetingAr: friend.greetingAr,
+          teachingStyle: friend.conversationStyle,
+          tags: friend.tags,
+          imageUrl: friend.imageUrl,
+        });
+      }
+    }
     await requestMediaPermissions();
     useStore.getState().bumpStreak();
     toast.success('يلا نبدأ! 🎉');
@@ -245,22 +272,72 @@ export function OnboardingScreen() {
               >
                 <StepHeader
                   icon={<Users className="h-5 w-5" />}
-                  title="اختار مدرسك"
-                  subtitle="كل مدرس له أسلوب مختلف — اختار اللي يناسبك"
+                  title={companionMode === 'teacher' ? 'اختار مدرسك' : 'اختار صديقك'}
+                  subtitle={
+                    companionMode === 'teacher'
+                      ? 'كل مدرس له أسلوب مختلف — اختار اللي يناسبك'
+                      : 'أصدقاء تتكلم معاهم كأصحاب — محادثة ودية وغير رسمية'
+                  }
                 />
 
-                <div className="grid grid-cols-2 gap-3">
-                  {TEACHERS.map((t) => (
-                    <TeacherCard
-                      key={t.id}
-                      teacher={t}
-                      selected={selectedTeacher?.id === t.id}
-                      onSelect={() => setSelectedTeacher(t)}
-                    />
-                  ))}
+                {/* تبديل بين المدرسين والأصدقاء */}
+                <div className="mb-4 flex gap-2 rounded-2xl opti-glass p-1.5">
+                  <button
+                    onClick={() => setCompanionMode('teacher')}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all',
+                      companionMode === 'teacher'
+                        ? 'opti-primary-gradient text-white'
+                        : 'text-opti-text/60'
+                    )}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    مدرسين
+                  </button>
+                  <button
+                    onClick={() => setCompanionMode('friend')}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all',
+                      companionMode === 'friend'
+                        ? 'opti-primary-gradient text-white'
+                        : 'text-opti-text/60'
+                    )}
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    أصدقاء
+                  </button>
                 </div>
 
-                {selectedTeacher && (
+                {/* قائمة المدرسين */}
+                {companionMode === 'teacher' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {TEACHERS.map((t) => (
+                      <TeacherCard
+                        key={t.id}
+                        teacher={t}
+                        selected={selectedTeacher?.id === t.id}
+                        onSelect={() => setSelectedTeacher(t)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* قائمة الأصدقاء */}
+                {companionMode === 'friend' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {FRIENDS.map((f) => (
+                      <FriendCard
+                        key={f.id}
+                        friend={f}
+                        selected={selectedFriend?.id === f.id}
+                        onSelect={() => setSelectedFriend(f)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* معاينة المدرس المختار */}
+                {companionMode === 'teacher' && selectedTeacher && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -279,6 +356,32 @@ export function OnboardingScreen() {
                         </div>
                         <div className="text-[11px] leading-relaxed text-opti-text/70 mt-0.5">
                           {selectedTeacher.greetingAr}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* معاينة الصديق المختار */}
+                {companionMode === 'friend' && selectedFriend && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 rounded-2xl opti-glass-teal p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl"
+                        style={{ background: selectedFriend.gradient }}
+                      >
+                        {selectedFriend.avatar}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-opti-text">
+                          {selectedFriend.nameAr} ({selectedFriend.name})
+                        </div>
+                        <div className="text-[11px] leading-relaxed text-opti-text/70 mt-0.5">
+                          {selectedFriend.greetingAr}
                         </div>
                       </div>
                     </div>
@@ -506,6 +609,52 @@ function TeacherCard({
           <span
             key={tag}
             className="rounded-full bg-opti-primary/15 px-1.5 py-0.5 text-[9px] font-medium text-opti-text/75"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </button>
+  );
+}
+
+function FriendCard({
+  friend,
+  selected,
+  onSelect,
+}: {
+  friend: Friend;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      className={cn(
+        'relative flex flex-col items-center rounded-2xl border p-4 text-center transition-all',
+        selected
+          ? 'border-opti-accent bg-opti-accent/10 opti-glow-accent'
+          : 'border-opti-accent/15 opti-glass hover:border-opti-accent/40'
+      )}
+    >
+      {selected && (
+        <div className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full opti-accent-gradient text-[#0a0e1a]">
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        </div>
+      )}
+      <div
+        className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl"
+        style={{ background: friend.gradient }}
+      >
+        {friend.avatar}
+      </div>
+      <div className="mt-2 text-xs font-bold text-opti-text">{friend.nameAr}</div>
+      <div className="text-[10px] text-opti-text/55">{friend.name}</div>
+      <div className="mt-1.5 flex flex-wrap justify-center gap-1">
+        {friend.tags.slice(0, 2).map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full bg-opti-accent/15 px-1.5 py-0.5 text-[9px] font-medium text-opti-text/75"
           >
             {tag}
           </span>
