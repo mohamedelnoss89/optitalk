@@ -1,8 +1,8 @@
-// ===== OptiTalk - Teacher Avatar (صورة ثابتة بسيطة) =====
+// ===== OptiTalk - Teacher Avatar (فيديو متحرك + صورة ثابتة fallback) =====
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Teacher } from '@/lib/teachers';
 
 interface Props {
@@ -19,6 +19,40 @@ export function TeacherAvatar({
   isListening = false,
 }: Props) {
   const [imgError, setImgError] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [videoAvailable, setVideoAvailable] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // ===== تحقق من وجود فيديو للمدرس/الصديق =====
+  useEffect(() => {
+    async function checkVideo() {
+      try {
+        const res = await fetch(`/videos/${teacher.id}.mp4`, { method: 'HEAD' });
+        setVideoAvailable(res.ok);
+      } catch {
+        setVideoAvailable(false);
+      }
+    }
+    checkVideo();
+  }, [teacher.id]);
+
+  // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام =====
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoAvailable) return;
+
+    if (isSpeaking) {
+      // تشغيل الفيديو بشكل loop
+      video.loop = true;
+      video.muted = true; // الصوت من TTS مش من الفيديو
+      video.play().catch(() => {});
+    } else {
+      // إيقاف الفيديو وتثبيت الإطار
+      video.pause();
+      // رجوع لبداية الفيديو (إطار الابتسامة)
+      video.currentTime = 0;
+    }
+  }, [isSpeaking, videoAvailable]);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-[#0a0e1a] via-[#0e1330] to-[#1a1f3a]">
@@ -30,9 +64,42 @@ export function TeacherAvatar({
         }}
       />
 
-      {/* ===== الصورة - ثابتة تماماً ===== */}
+      {/* ===== الشخصية (فيديو أو صورة) ===== */}
       <div className="absolute inset-0 flex items-end justify-center">
-        {!imgError ? (
+        {videoAvailable && !videoError ? (
+          /* ===== فيديو متحرك ===== */
+          <div className="relative h-full w-full overflow-hidden">
+            <video
+              ref={videoRef}
+              src={`/videos/${teacher.id}.mp4`}
+              className="h-full w-full object-cover select-none"
+              style={{ objectPosition: 'center 20%' }}
+              onError={() => setVideoError(true)}
+              playsInline
+              preload="auto"
+              autoPlay={false}
+              muted
+            />
+
+            {/* ===== gradient من تحت ===== */}
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/70 to-transparent pointer-events-none" />
+
+            {/* ===== gradient خفيف من فوق ===== */}
+            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent pointer-events-none" />
+
+            {/* ===== vignette ===== */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ boxShadow: 'inset 0 0 100px 30px rgba(0,0,0,0.55)' }}
+            />
+
+            {/* ===== overlay داكن لما المدرس مش بيتكلم (يبقى ثابت) ===== */}
+            {!isSpeaking && (
+              <div className="absolute inset-0 bg-[#0a0e1a]/20 pointer-events-none" />
+            )}
+          </div>
+        ) : !imgError ? (
+          /* ===== صورة ثابتة (fallback) ===== */
           <div className="relative h-full w-full overflow-hidden">
             <img
               src={teacher.imageUrl || `/teachers/${teacher.id}.png`}
@@ -56,7 +123,7 @@ export function TeacherAvatar({
             />
           </div>
         ) : (
-          /* fallback */
+          /* fallback - emoji */
           <div
             className="flex h-full w-full flex-col items-center justify-center gap-3"
             style={{ background: teacher.gradient }}
