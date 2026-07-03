@@ -68,7 +68,10 @@ export function useSpeechSynthesis(
       const audio = audioRef.current;
       if (!audio) return;
 
-      // أوقف أي صوت حالي
+      // أوقف أي صوت حالي واطلب isSpeaking = false فوراً
+      // ده ضروري عشان الفيديو يقف قبل ما الصوت الجديد يبدأ
+      setSpeaking(false);
+      onEndRef.current?.();
       try {
         audio.onplay = null;
         audio.onended = null;
