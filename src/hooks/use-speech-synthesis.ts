@@ -1,5 +1,5 @@
-// ===== OptiTalk - TTS Hook (تزامن مثالي بين الصوت والفيديو) =====
-// isSpeaking بيتتحكم فيه BOS من audio events — مفيش أي تدخل خارجي
+// ===== OptiTalk - TTS Hook (تحميل الصوت الأول وبعدين تشغيل) =====
+// القاعدة: حمّل الصوت كامل → شغّله → الفيديو يبدأ معاه بالظبط
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
@@ -34,15 +34,12 @@ export function useSpeechSynthesis(
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onEndRef = useRef(onEnd);
   const onStartRef = useRef(onStart);
-  // flag عشان نمنع أي setSpeaking يتدخل أثناء التشغيل
-  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     onEndRef.current = onEnd;
     onStartRef.current = onStart;
   }, [onEnd, onStart]);
 
-  // ===== Create audio element once =====
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const audio = new Audio();
@@ -60,9 +57,7 @@ export function useSpeechSynthesis(
     };
   }, []);
 
-  // ===== Speak =====
-  // القاعدة الذهبية: isSpeaking = true بس من onplay، false بس من onended/onerror
-  // مفيش setSpeaking(false) في speak() نفسها — ده كان بيسبب تداخل
+  // ===== Speak: حمّل الصوت الأول وبعدين شغّله =====
   const speak = useCallback(
     (text: string) => {
       if (typeof window === 'undefined') return;
@@ -71,9 +66,9 @@ export function useSpeechSynthesis(
       const audio = audioRef.current;
       if (!audio) return;
 
-      // أوقف أي صوت حالي (بس من غير setSpeaking — onpause مش هيتنادى)
-      isPlayingRef.current = false;
+      // أوقف أي صوت حالي
       try {
+        audio.oncanplay = null;
         audio.onplay = null;
         audio.onended = null;
         audio.onerror = null;
@@ -81,6 +76,9 @@ export function useSpeechSynthesis(
       } catch {
         // ignore
       }
+
+      // تأكد إن isSpeaking = false
+      setSpeaking(false);
 
       // تنظيف النص
       const clean = text
@@ -100,46 +98,53 @@ export function useSpeechSynthesis(
       if (preferGender) params.set('gender', preferGender);
       const url = `/api/tts?${params.toString()}`;
 
+      // 1. اضبط src
       audio.src = url;
       audio.volume = 1;
 
-      // === onplay: الصوت بدأ فعلياً → isSpeaking = true ===
-      audio.onplay = () => {
-        if (!isPlayingRef.current) {
-          isPlayingRef.current = true;
+      // 2. استني لحد ما الصوت يتحمّل بالكامل (canplay)
+      audio.oncanplay = () => {
+        // الصوت جاهز للتشغيل → اضبط handlers
+        audio.oncanplay = null;
+
+        audio.onplay = () => {
           setSpeaking(true);
           onStartRef.current?.();
-        }
+        };
+
+        audio.onended = () => {
+          setSpeaking(false);
+          onEndRef.current?.();
+        };
+
+        audio.onerror = () => {
+          setSpeaking(false);
+          onEndRef.current?.();
+        };
+
+        // 3. شغّل الصوت (هيبدأ فوراً لأنه متحمّل)
+        audio.play().catch(() => {
+          setSpeaking(false);
+        });
       };
 
-      // === onended: الصوت خلص → isSpeaking = false ===
-      audio.onended = () => {
-        isPlayingRef.current = false;
-        setSpeaking(false);
-        onEndRef.current?.();
-      };
-
-      // === onerror: فيه مشكلة → isSpeaking = false ===
+      // لو فيه error أثناء التحميل
       audio.onerror = () => {
-        isPlayingRef.current = false;
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // تشغيل الصوت
-      audio.play().catch(() => {
-        isPlayingRef.current = false;
-        setSpeaking(false);
-      });
+      // ابدأ تحميل الصوت
+      audio.load();
     },
     [rate, preferGender]
   );
 
   const cancel = useCallback(() => {
-    isPlayingRef.current = false;
     const audio = audioRef.current;
     if (audio) {
       try {
+        audio.oncanplay = null;
         audio.onplay = null;
         audio.onended = null;
         audio.onerror = null;
@@ -153,7 +158,6 @@ export function useSpeechSynthesis(
     onEndRef.current?.();
   }, []);
 
-  // ===== Unlock =====
   const unlock = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
