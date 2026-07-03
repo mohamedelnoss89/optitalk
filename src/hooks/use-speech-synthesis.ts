@@ -1,4 +1,5 @@
-// ===== OptiTalk - TTS Hook (بسيط - isSpeaking بيتتحكم فيه بس من audio events) =====
+// ===== OptiTalk - TTS Hook (تزامن مثالي بين الصوت والفيديو) =====
+// isSpeaking بيتتحكم فيه BOS من audio events — مفيش أي تدخل خارجي
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
@@ -33,6 +34,8 @@ export function useSpeechSynthesis(
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onEndRef = useRef(onEnd);
   const onStartRef = useRef(onStart);
+  // flag عشان نمنع أي setSpeaking يتدخل أثناء التشغيل
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     onEndRef.current = onEnd;
@@ -43,7 +46,6 @@ export function useSpeechSynthesis(
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
     audioRef.current = audio;
 
@@ -58,8 +60,9 @@ export function useSpeechSynthesis(
     };
   }, []);
 
-  // ===== Speak: نولّد الصوت ونشغّله =====
-  // isSpeaking بيتتحكم فيه BOS من onplay و onended — مفيش أي حاجة تانية
+  // ===== Speak =====
+  // القاعدة الذهبية: isSpeaking = true بس من onplay، false بس من onended/onerror
+  // مفيش setSpeaking(false) في speak() نفسها — ده كان بيسبب تداخل
   const speak = useCallback(
     (text: string) => {
       if (typeof window === 'undefined') return;
@@ -68,10 +71,8 @@ export function useSpeechSynthesis(
       const audio = audioRef.current;
       if (!audio) return;
 
-      // أوقف أي صوت حالي واطلب isSpeaking = false فوراً
-      // ده ضروري عشان الفيديو يقف قبل ما الصوت الجديد يبدأ
-      setSpeaking(false);
-      onEndRef.current?.();
+      // أوقف أي صوت حالي (بس من غير setSpeaking — onpause مش هيتنادى)
+      isPlayingRef.current = false;
       try {
         audio.onplay = null;
         audio.onended = null;
@@ -102,26 +103,32 @@ export function useSpeechSynthesis(
       audio.src = url;
       audio.volume = 1;
 
-      // === isSpeaking = true بس لما الصوت يبدأ فعلاً ===
+      // === onplay: الصوت بدأ فعلياً → isSpeaking = true ===
       audio.onplay = () => {
-        setSpeaking(true);
-        onStartRef.current?.();
+        if (!isPlayingRef.current) {
+          isPlayingRef.current = true;
+          setSpeaking(true);
+          onStartRef.current?.();
+        }
       };
 
-      // === isSpeaking = false لما الصوت يخلص ===
+      // === onended: الصوت خلص → isSpeaking = false ===
       audio.onended = () => {
+        isPlayingRef.current = false;
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // === isSpeaking = false لو حصل error ===
+      // === onerror: فيه مشكلة → isSpeaking = false ===
       audio.onerror = () => {
+        isPlayingRef.current = false;
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // تشغيل
+      // تشغيل الصوت
       audio.play().catch(() => {
+        isPlayingRef.current = false;
         setSpeaking(false);
       });
     },
@@ -129,6 +136,7 @@ export function useSpeechSynthesis(
   );
 
   const cancel = useCallback(() => {
+    isPlayingRef.current = false;
     const audio = audioRef.current;
     if (audio) {
       try {

@@ -1,4 +1,4 @@
-// ===== OptiTalk - Teacher Avatar (فيديو متحرك + صورة ثابتة fallback) =====
+// ===== OptiTalk - Teacher Avatar (فيديو + صورة — تزامن مثالي) =====
 'use client';
 
 import { motion } from 'framer-motion';
@@ -21,32 +21,28 @@ export function TeacherAvatar({
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام فقط =====
+  // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام =====
+  // الفيديو بيتحرك بس لما isSpeaking = true (اللي بيت set من audio.onplay)
   useEffect(() => {
     const video = videoRef.current;
     if (!video || videoError) return;
 
     if (isSpeaking) {
-      // المدرس بدأ يتكلم → شغّل الفيديو من الأول
-      // delay بسيط عشان نتأكد إن الصوت بدأ فعلاً
+      // الصوت بدأ فعلياً → شغّل الفيديو
       video.currentTime = 0;
       video.muted = true;
       video.loop = true;
-      // استني 500ms قبل ما تشغل الفيديو عشان الصوت يبدأ فعلياً من السماعات
-      const timer = setTimeout(() => {
-        video.play().catch(() => {});
-      }, 500);
-      return () => clearTimeout(timer);
+      video.play().catch(() => {});
     } else {
-      // المدرس سكت → وقف الفيديو وارجع لأول إطار
+      // الصوت وقف → وقف الفيديو
       video.pause();
       video.currentTime = 0;
-      video.muted = true;
       video.loop = false;
     }
   }, [isSpeaking, videoError]);
 
   const videoSrc = `/videos/${teacher.id}.mp4`;
+  const imageSrc = teacher.imageUrl || `/teachers/${teacher.id}.png`;
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-[#0a0e1a] via-[#0e1330] to-[#1a1f3a]">
@@ -61,23 +57,35 @@ export function TeacherAvatar({
       {/* ===== الشخصية ===== */}
       <div className="absolute inset-0 flex items-end justify-center">
         <div className="relative h-full w-full overflow-hidden">
-          {/* ===== فيديو متحرك (بيشتغل بس لما بيتكلم) ===== */}
+          {/* ===== فيديو (دائماً موجود في DOM، بس متوقف لما مش بيتكلم) ===== */}
           {!videoError && (
             <video
               ref={videoRef}
               src={videoSrc}
-              className="h-full w-full object-cover select-none"
+              className="absolute inset-0 h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
               onError={() => setVideoError(true)}
               playsInline
-              preload="auto"
+              preload="metadata"
             />
           )}
 
-          {/* ===== صورة ثابتة (تظهر لو الفيديو فشل أو المدرس مش بيتكلم) ===== */}
-          {(videoError || !isSpeaking) && (
+          {/* ===== صورة ثابتة (تظهر فوق الفيديو لما مش بيتكلم) ===== */}
+          {/* لما isSpeaking = true، الصورة بتختفي والفيديو بيظهر */}
+          {(videoError || !isSpeaking) && !videoError && (
             <img
-              src={teacher.imageUrl || `/teachers/${teacher.id}.png`}
+              src={imageSrc}
+              alt={teacher.name}
+              className="absolute inset-0 h-full w-full object-cover select-none z-10"
+              style={{ objectPosition: 'center 20%' }}
+              draggable={false}
+            />
+          )}
+
+          {/* fallback صورة لو الفيديو فشل */}
+          {videoError && (
+            <img
+              src={imageSrc}
               alt={teacher.name}
               className="absolute inset-0 h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
@@ -86,21 +94,21 @@ export function TeacherAvatar({
           )}
 
           {/* ===== gradient من تحت ===== */}
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/70 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/70 to-transparent pointer-events-none z-20" />
 
           {/* ===== gradient خفيف من فوق ===== */}
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent pointer-events-none z-20" />
 
           {/* ===== vignette ===== */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none z-20"
             style={{ boxShadow: 'inset 0 0 100px 30px rgba(0,0,0,0.55)' }}
           />
         </div>
       </div>
 
       {/* ===== اسم المدرس ===== */}
-      <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-md border border-white/10 z-20">
+      <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-md border border-white/10 z-30">
         <div
           className="h-2 w-2 rounded-full"
           style={{ background: teacher.color, boxShadow: `0 0 8px ${teacher.color}` }}
@@ -111,7 +119,7 @@ export function TeacherAvatar({
       </div>
 
       {/* ===== LIVE indicator ===== */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 backdrop-blur-md border border-red-500/30 z-20">
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 backdrop-blur-md border border-red-500/30 z-30">
         <motion.span
           className="h-1.5 w-1.5 rounded-full bg-red-500"
           animate={{ opacity: [1, 0.3, 1] }}
@@ -121,7 +129,7 @@ export function TeacherAvatar({
       </div>
 
       {/* ===== حالة المدرس ===== */}
-      <div className="absolute bottom-3 inset-x-0 flex justify-center px-4 pointer-events-none z-20">
+      <div className="absolute bottom-3 inset-x-0 flex justify-center px-4 pointer-events-none z-30">
         <motion.div
           key={isSpeaking ? 's' : isThinking ? 't' : isListening ? 'l' : 'r'}
           initial={{ opacity: 0, y: 6, scale: 0.95 }}
