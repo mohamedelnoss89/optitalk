@@ -28,10 +28,15 @@ export function TeacherAvatar({
 
     if (isSpeaking) {
       // المدرس بدأ يتكلم → شغّل الفيديو من الأول
+      // delay بسيط عشان نتأكد إن الصوت بدأ فعلاً
       video.currentTime = 0;
       video.muted = true;
       video.loop = true;
-      video.play().catch(() => {});
+      // استني 150ms قبل ما تشغل الفيديو عشان الصوت يبدأ الأول
+      const timer = setTimeout(() => {
+        video.play().catch(() => {});
+      }, 150);
+      return () => clearTimeout(timer);
     } else {
       // المدرس سكت → وقف الفيديو وارجع لأول إطار
       video.pause();
