@@ -86,6 +86,8 @@ export function useSpeechSynthesis(
   const playNextChunk = useCallback(async () => {
     if (cancelledRef.current) {
       isPlayingRef.current = false;
+      setSpeaking(false);
+      onEndRef.current?.();
       return;
     }
     const next = queueRef.current.shift();
@@ -99,11 +101,12 @@ export function useSpeechSynthesis(
     const audio = audioRef.current;
     if (!audio) {
       isPlayingRef.current = false;
+      setSpeaking(false);
+      onEndRef.current?.();
       return;
     }
 
     try {
-      // Build TTS URL
       const params = new URLSearchParams({
         text: next,
         speed: String(rate),
@@ -114,6 +117,7 @@ export function useSpeechSynthesis(
       audio.src = url;
       audio.volume = 1;
 
+      // onStart يتنادي بس لما الصوت يبدأ فعلاً (مش قبل كده)
       audio.onplay = () => {
         if (!cancelledRef.current) {
           onStartRef.current?.();
@@ -121,7 +125,7 @@ export function useSpeechSynthesis(
       };
 
       audio.onended = () => {
-        // Play next chunk
+        // كمّل التشغيل بدون إيقاف isSpeaking
         playNextChunk();
       };
 
@@ -130,11 +134,9 @@ export function useSpeechSynthesis(
         playNextChunk();
       };
 
-      // Set play promise (mobile requires play() inside user gesture or after)
       await audio.play();
     } catch (err) {
       console.warn('[OptiTalk TTS] play() failed:', err);
-      // Try to play next chunk
       playNextChunk();
     }
   }, [rate, preferGender]);
@@ -152,16 +154,19 @@ export function useSpeechSynthesis(
         try {
           audio.pause();
           audio.src = '';
+          audio.onplay = null;
+          audio.onended = null;
+          audio.onerror = null;
         } catch {
           // ignore
         }
       }
 
       // Reset for new speech
+      // ملحوظة: مش بنعمل setSpeaking(true) هنا — هنعملها لما الصوت يبدأ فعلاً
       cancelledRef.current = false;
       queueRef.current = splitTextIntoChunks(text);
       isPlayingRef.current = true;
-      setSpeaking(true);
 
       // Start playing
       playNextChunk();
