@@ -29,13 +29,15 @@ export function TeacherAvatar({
     if (isSpeaking) {
       // المدرس بدأ يتكلم → شغّل الفيديو من الأول
       video.currentTime = 0;
-      video.loop = true;
       video.muted = true;
+      video.loop = true;
       video.play().catch(() => {});
     } else {
       // المدرس سكت → وقف الفيديو وارجع لأول إطار
       video.pause();
       video.currentTime = 0;
+      video.muted = true;
+      video.loop = false;
     }
   }, [isSpeaking, videoError]);
 
@@ -64,8 +66,6 @@ export function TeacherAvatar({
               onError={() => setVideoError(true)}
               playsInline
               preload="auto"
-              muted
-              loop
             />
           )}
 
