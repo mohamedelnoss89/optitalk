@@ -32,10 +32,10 @@ export function TeacherAvatar({
       video.currentTime = 0;
       video.muted = true;
       video.loop = true;
-      // استني 150ms قبل ما تشغل الفيديو عشان الصوت يبدأ الأول
+      // استني 500ms قبل ما تشغل الفيديو عشان الصوت يبدأ فعلياً من السماعات
       const timer = setTimeout(() => {
         video.play().catch(() => {});
-      }, 150);
+      }, 500);
       return () => clearTimeout(timer);
     } else {
       // المدرس سكت → وقف الفيديو وارجع لأول إطار
