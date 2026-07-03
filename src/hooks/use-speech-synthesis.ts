@@ -67,14 +67,15 @@ export function useSpeechSynthesis(
       const audio = audioRef.current;
       if (!audio) return;
 
-      // Cancel any current playback
+      // Cancel any current playback وأوقف isSpeaking فوراً
+      setSpeaking(false);
+      onEndRef.current?.();
       try {
-        audio.pause();
-        audio.src = '';
         audio.onplay = null;
         audio.onended = null;
         audio.onerror = null;
-        audio.onpause = null;
+        audio.pause();
+        audio.src = '';
       } catch {
         // ignore
       }
@@ -88,10 +89,10 @@ export function useSpeechSynthesis(
 
       if (!clean) return;
 
-      // truncate لـ 1000 حرف (حد الـ API)
+      // truncate لـ 1000 حرف
       const truncated = clean.length > 1000 ? clean.slice(0, 1000) : clean;
 
-      // بناء URL واحد للصوت كامل
+      // بناء URL
       const params = new URLSearchParams({
         text: truncated,
         speed: String(rate),
@@ -99,30 +100,26 @@ export function useSpeechSynthesis(
       if (preferGender) params.set('gender', preferGender);
       const url = `/api/tts?${params.toString()}`;
 
+      // حمّل الصوت الأول وبعدين شغّله
+      // كده isSpeaking مش هتبقى true إلا لما الصوت يبدأ فعلاً
       audio.src = url;
       audio.volume = 1;
 
-      // === isSpeaking = true بس لما الصوت يبدأ فعلاً ===
       audio.onplay = () => {
         setSpeaking(true);
         onStartRef.current?.();
       };
 
-      // === isSpeaking = false لما الصوت يخلص ===
       audio.onended = () => {
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // === isSpeaking = false لو حصل error ===
       audio.onerror = () => {
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // مفيش onpause — ده كان بيسبب مشاكل
-
-      // تشغيل الصوت
       audio.play().catch((err) => {
         console.warn('[OptiTalk TTS] play() failed:', err);
         setSpeaking(false);
