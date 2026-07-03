@@ -18,22 +18,24 @@ export function TeacherAvatar({
   isThinking,
   isListening = false,
 }: Props) {
-  const [showVideo, setShowVideo] = useState(true);
+  const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام =====
+  // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام فقط =====
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || videoError) return;
 
     if (isSpeaking) {
+      // المدرس بيتكلم → شغّل الفيديو (الشفايف بتتحرك)
       video.loop = true;
       video.muted = true;
       video.play().catch(() => {});
     } else {
+      // المدرس سكت → وقف الفيديو (الشفايف تقف)
       video.pause();
     }
-  }, [isSpeaking, showVideo]);
+  }, [isSpeaking, videoError]);
 
   const videoSrc = `/videos/${teacher.id}.mp4`;
 
@@ -49,30 +51,28 @@ export function TeacherAvatar({
 
       {/* ===== الشخصية ===== */}
       <div className="absolute inset-0 flex items-end justify-center">
-        {/* ===== فيديو متحرك ===== */}
         <div className="relative h-full w-full overflow-hidden">
-          {showVideo && (
+          {/* ===== فيديو متحرك (بيشتغل بس لما بيتكلم) ===== */}
+          {!videoError && (
             <video
               ref={videoRef}
               src={videoSrc}
               className="h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
-              onError={() => setShowVideo(false)}
-              onLoadedData={() => setShowVideo(true)}
+              onError={() => setVideoError(true)}
               playsInline
               preload="auto"
               muted
-              autoPlay
               loop
             />
           )}
 
-          {/* ===== صورة ثابتة (تظهر لو الفيديو فشل) ===== */}
-          {!showVideo && (
+          {/* ===== صورة ثابتة (تظهر لو الفيديو فشل أو المدرس مش بيتكلم) ===== */}
+          {(videoError || !isSpeaking) && (
             <img
               src={teacher.imageUrl || `/teachers/${teacher.id}.png`}
               alt={teacher.name}
-              className="h-full w-full object-cover select-none absolute inset-0"
+              className="absolute inset-0 h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
               draggable={false}
             />
