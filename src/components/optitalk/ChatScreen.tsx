@@ -69,16 +69,18 @@ export function ChatScreen() {
     },
   });
 
-  // Speech synthesis — pick voice matching teacher gender
+  // Speech synthesis — isSpeaking بيتتحكم فيه بس من audio events
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
     onStart: () => {
+      // audio.onplay fire → set speaking
       setSpeaking(true);
     },
     onEnd: () => {
+      // audio.onended fire → set not speaking
       setSpeaking(false);
       setSpeakingId(null);
     },
