@@ -27,13 +27,15 @@ export function TeacherAvatar({
     if (!video || videoError) return;
 
     if (isSpeaking) {
-      // المدرس بيتكلم → شغّل الفيديو (الشفايف بتتحرك)
+      // المدرس بدأ يتكلم → شغّل الفيديو من الأول
+      video.currentTime = 0;
       video.loop = true;
       video.muted = true;
       video.play().catch(() => {});
     } else {
-      // المدرس سكت → وقف الفيديو (الشفايف تقف)
+      // المدرس سكت → وقف الفيديو وارجع لأول إطار
       video.pause();
+      video.currentTime = 0;
     }
   }, [isSpeaking, videoError]);
 
