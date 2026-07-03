@@ -116,19 +116,11 @@ export function useSpeechSynthesis(
 
       // === isSpeaking = false لو حصل error ===
       audio.onerror = () => {
-        console.warn('[OptiTalk TTS] Audio error');
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // === isSpeaking = false لو الصوت اتوقف يدوي ===
-      audio.onpause = () => {
-        // بس لو مش بنعمل cancel (لإن cancel بيعمل pause كمان)
-        // هنتحقق لو الـ src لسه موجود (يعني مش cancel)
-        if (audio.src && !audio.ended) {
-          setSpeaking(false);
-        }
-      };
+      // مفيش onpause — ده كان بيسبب مشاكل
 
       // تشغيل الصوت
       audio.play().catch((err) => {
