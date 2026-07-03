@@ -18,41 +18,24 @@ export function TeacherAvatar({
   isThinking,
   isListening = false,
 }: Props) {
-  const [imgError, setImgError] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [videoAvailable, setVideoAvailable] = useState(false);
+  const [showVideo, setShowVideo] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // ===== تحقق من وجود فيديو للمدرس/الصديق =====
-  useEffect(() => {
-    async function checkVideo() {
-      try {
-        const res = await fetch(`/videos/${teacher.id}.mp4`, { method: 'HEAD' });
-        setVideoAvailable(res.ok);
-      } catch {
-        setVideoAvailable(false);
-      }
-    }
-    checkVideo();
-  }, [teacher.id]);
 
   // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام =====
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoAvailable) return;
+    if (!video) return;
 
     if (isSpeaking) {
-      // تشغيل الفيديو بشكل loop
       video.loop = true;
-      video.muted = true; // الصوت من TTS مش من الفيديو
+      video.muted = true;
       video.play().catch(() => {});
     } else {
-      // إيقاف الفيديو وتثبيت الإطار
       video.pause();
-      // رجوع لبداية الفيديو (إطار الابتسامة)
-      video.currentTime = 0;
     }
-  }, [isSpeaking, videoAvailable]);
+  }, [isSpeaking, showVideo]);
+
+  const videoSrc = `/videos/${teacher.id}.mp4`;
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-[#0a0e1a] via-[#0e1330] to-[#1a1f3a]">
@@ -64,76 +47,49 @@ export function TeacherAvatar({
         }}
       />
 
-      {/* ===== الشخصية (فيديو أو صورة) ===== */}
+      {/* ===== الشخصية ===== */}
       <div className="absolute inset-0 flex items-end justify-center">
-        {videoAvailable && !videoError ? (
-          /* ===== فيديو متحرك ===== */
-          <div className="relative h-full w-full overflow-hidden">
+        {/* ===== فيديو متحرك ===== */}
+        <div className="relative h-full w-full overflow-hidden">
+          {showVideo && (
             <video
               ref={videoRef}
-              src={`/videos/${teacher.id}.mp4`}
+              src={videoSrc}
               className="h-full w-full object-cover select-none"
               style={{ objectPosition: 'center 20%' }}
-              onError={() => setVideoError(true)}
+              onError={() => setShowVideo(false)}
+              onLoadedData={() => setShowVideo(true)}
               playsInline
               preload="auto"
-              autoPlay={false}
               muted
+              autoPlay
+              loop
             />
+          )}
 
-            {/* ===== gradient من تحت ===== */}
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/70 to-transparent pointer-events-none" />
-
-            {/* ===== gradient خفيف من فوق ===== */}
-            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent pointer-events-none" />
-
-            {/* ===== vignette ===== */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ boxShadow: 'inset 0 0 100px 30px rgba(0,0,0,0.55)' }}
-            />
-
-            {/* ===== overlay داكن لما المدرس مش بيتكلم (يبقى ثابت) ===== */}
-            {!isSpeaking && (
-              <div className="absolute inset-0 bg-[#0a0e1a]/20 pointer-events-none" />
-            )}
-          </div>
-        ) : !imgError ? (
-          /* ===== صورة ثابتة (fallback) ===== */
-          <div className="relative h-full w-full overflow-hidden">
+          {/* ===== صورة ثابتة (تظهر لو الفيديو فشل) ===== */}
+          {!showVideo && (
             <img
               src={teacher.imageUrl || `/teachers/${teacher.id}.png`}
               alt={teacher.name}
-              className="h-full w-full object-cover select-none"
+              className="h-full w-full object-cover select-none absolute inset-0"
               style={{ objectPosition: 'center 20%' }}
-              onError={() => setImgError(true)}
               draggable={false}
             />
+          )}
 
-            {/* ===== gradient من تحت ===== */}
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/70 to-transparent pointer-events-none" />
+          {/* ===== gradient من تحت ===== */}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/70 to-transparent pointer-events-none" />
 
-            {/* ===== gradient خفيف من فوق ===== */}
-            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent pointer-events-none" />
+          {/* ===== gradient خفيف من فوق ===== */}
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0e1a]/60 to-transparent pointer-events-none" />
 
-            {/* ===== vignette ===== */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ boxShadow: 'inset 0 0 100px 30px rgba(0,0,0,0.55)' }}
-            />
-          </div>
-        ) : (
-          /* fallback - emoji */
+          {/* ===== vignette ===== */}
           <div
-            className="flex h-full w-full flex-col items-center justify-center gap-3"
-            style={{ background: teacher.gradient }}
-          >
-            <div className="text-[100px] leading-none drop-shadow-lg">{teacher.avatar}</div>
-            <div className="rounded-full bg-black/30 px-4 py-1.5 backdrop-blur-md">
-              <span className="text-sm font-bold text-white">{teacher.name}</span>
-            </div>
-          </div>
-        )}
+            className="absolute inset-0 pointer-events-none"
+            style={{ boxShadow: 'inset 0 0 100px 30px rgba(0,0,0,0.55)' }}
+          />
+        </div>
       </div>
 
       {/* ===== اسم المدرس ===== */}
