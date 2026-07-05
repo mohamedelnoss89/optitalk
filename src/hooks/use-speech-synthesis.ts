@@ -1,4 +1,4 @@
-// ===== OptiTalk - TTS Hook (تحميل الصوت الأول وبعدين تشغيل) =====
+// ===== OptiTalk - TTS Hook (بسيط ومباشر) =====
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
@@ -56,7 +56,6 @@ export function useSpeechSynthesis(
     };
   }, []);
 
-  // ===== Speak: حمّل الصوت الأول وبعدين شغّله =====
   const speak = useCallback(
     (text: string) => {
       if (typeof window === 'undefined') return;
@@ -67,15 +66,17 @@ export function useSpeechSynthesis(
 
       // أوقف أي صوت حالي
       try {
-        audio.oncanplay = null;
         audio.onplay = null;
         audio.onended = null;
         audio.onerror = null;
+        audio.onloadeddata = null;
+        audio.oncanplay = null;
         audio.pause();
       } catch {
         // ignore
       }
 
+      // isSpeaking = false فوراً (الفيديو يقف)
       setSpeaking(false);
 
       // تنظيف النص
@@ -99,63 +100,28 @@ export function useSpeechSynthesis(
       audio.src = url;
       audio.volume = 1;
 
-      // استني لحد ما الصوت يتحمّل — نستخدم onloadeddata (أكثر توافق)
-      audio.onloadeddata = () => {
-        audio.onloadeddata = null;
-
-        // onplay → isSpeaking = true → الفيديو يبدأ
-        audio.onplay = () => {
-          setSpeaking(true);
-          onStartRef.current?.();
-        };
-
-        // onended → isSpeaking = false → الفيديو يقف
-        audio.onended = () => {
-          setSpeaking(false);
-          onEndRef.current?.();
-        };
-
-        audio.onerror = () => {
-          setSpeaking(false);
-          onEndRef.current?.();
-        };
-
-        // شغّل الصوت
-        audio.play().catch(() => {
-          setSpeaking(false);
-        });
+      // onplay → isSpeaking = true (الصوت بدأ فعلياً)
+      audio.onplay = () => {
+        setSpeaking(true);
+        onStartRef.current?.();
       };
 
-      // fallback: لو onloadeddata ما تناداش، جرب oncanplay
-      audio.oncanplay = () => {
-        if (!audio.onplay) {
-          audio.oncanplay = null;
-          audio.onplay = () => {
-            setSpeaking(true);
-            onStartRef.current?.();
-          };
-          audio.onended = () => {
-            setSpeaking(false);
-            onEndRef.current?.();
-          };
-          audio.onerror = () => {
-            setSpeaking(false);
-            onEndRef.current?.();
-          };
-          audio.play().catch(() => {
-            setSpeaking(false);
-          });
-        }
+      // onended → isSpeaking = false (الصوت خلص)
+      audio.onended = () => {
+        setSpeaking(false);
+        onEndRef.current?.();
       };
 
-      // أثناء التحميل: isSpeaking = false → الفيديو متوقف
+      // onerror → isSpeaking = false
       audio.onerror = () => {
         setSpeaking(false);
         onEndRef.current?.();
       };
 
-      // ابدأ تحميل الصوت
-      audio.load();
+      // شغّل الصوت فوراً — المتصفح هيدمّج التحميل مع التشغيل
+      audio.play().catch(() => {
+        setSpeaking(false);
+      });
     },
     [rate, preferGender]
   );
@@ -164,10 +130,11 @@ export function useSpeechSynthesis(
     const audio = audioRef.current;
     if (audio) {
       try {
-        audio.oncanplay = null;
         audio.onplay = null;
         audio.onended = null;
         audio.onerror = null;
+        audio.onloadeddata = null;
+        audio.oncanplay = null;
         audio.pause();
         audio.src = '';
       } catch {
