@@ -75,10 +75,20 @@ export function ChatScreen() {
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
+<<<<<<< HEAD
     // onStart و onEnd بيتنادوا من audio.onplay و audio.onended
     // ملحوظة: مش بنعمل setSpeaking هنا — الـ hook بيعملها
     onStart: () => {},
     onEnd: () => {
+=======
+    onStart: () => {
+      // audio.onplay fire → set speaking
+      setSpeaking(true);
+    },
+    onEnd: () => {
+      // audio.onended fire → set not speaking
+      setSpeaking(false);
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
       setSpeakingId(null);
     },
   });
@@ -111,7 +121,11 @@ export function ChatScreen() {
       createdAt: Date.now(),
     };
     addMessage(greeting);
+<<<<<<< HEAD
     // Speak the greeting after a brief delay
+=======
+    // Speak the greeting فوراً — من غير delay
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
     speakText(greeting.content, greeting.id);
   }, [selectedTeacher]);
 
@@ -187,7 +201,11 @@ export function ChatScreen() {
           bumpPerfectStreak();
         }
 
+<<<<<<< HEAD
         // Speak the reply
+=======
+        // Speak the reply فوراً — من غير delay
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
         speakText(aiMsg.content, aiMsg.id);
       } catch (err) {
         console.error('[OptiTalk] Chat error:', err);

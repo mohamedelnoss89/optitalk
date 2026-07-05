@@ -22,16 +22,28 @@ export function TeacherAvatar({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام =====
+<<<<<<< HEAD
+=======
+  // الفيديو بيتحرك بس لما isSpeaking = true (اللي بيت set من audio.onplay)
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
   useEffect(() => {
     const video = videoRef.current;
     if (!video || videoError) return;
 
     if (isSpeaking) {
+<<<<<<< HEAD
+=======
+      // الصوت بدأ فعلياً → شغّل الفيديو
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
       video.currentTime = 0;
       video.muted = true;
       video.loop = true;
       video.play().catch(() => {});
     } else {
+<<<<<<< HEAD
+=======
+      // الصوت وقف → وقف الفيديو
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
       video.pause();
       video.currentTime = 0;
       video.loop = false;
@@ -54,7 +66,11 @@ export function TeacherAvatar({
       {/* ===== الشخصية ===== */}
       <div className="absolute inset-0 flex items-end justify-center">
         <div className="relative h-full w-full overflow-hidden">
+<<<<<<< HEAD
           {/* ===== فيديو ===== */}
+=======
+          {/* ===== فيديو (دائماً موجود في DOM، بس متوقف لما مش بيتكلم) ===== */}
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
           {!videoError && (
             <video
               ref={videoRef}
@@ -68,6 +84,10 @@ export function TeacherAvatar({
           )}
 
           {/* ===== صورة ثابتة (تظهر فوق الفيديو لما مش بيتكلم) ===== */}
+<<<<<<< HEAD
+=======
+          {/* لما isSpeaking = true، الصورة بتختفي والفيديو بيظهر */}
+>>>>>>> cbb9d968db08c7e7d32b4267f0e71d9746d83c5e
           {(videoError || !isSpeaking) && !videoError && (
             <img
               src={imageSrc}
