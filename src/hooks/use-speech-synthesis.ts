@@ -99,9 +99,9 @@ export function useSpeechSynthesis(
       audio.src = url;
       audio.volume = 1;
 
-      // استني لحد ما الصوت يتحمّل بالكامل
-      audio.oncanplay = () => {
-        audio.oncanplay = null;
+      // استني لحد ما الصوت يتحمّل — نستخدم onloadeddata (أكثر توافق)
+      audio.onloadeddata = () => {
+        audio.onloadeddata = null;
 
         // onplay → isSpeaking = true → الفيديو يبدأ
         audio.onplay = () => {
@@ -120,10 +120,32 @@ export function useSpeechSynthesis(
           onEndRef.current?.();
         };
 
-        // شغّل الصوت — isSpeaking هتبقى true بس لما الصوت يبدأ فعلاً
+        // شغّل الصوت
         audio.play().catch(() => {
           setSpeaking(false);
         });
+      };
+
+      // fallback: لو onloadeddata ما تناداش، جرب oncanplay
+      audio.oncanplay = () => {
+        if (!audio.onplay) {
+          audio.oncanplay = null;
+          audio.onplay = () => {
+            setSpeaking(true);
+            onStartRef.current?.();
+          };
+          audio.onended = () => {
+            setSpeaking(false);
+            onEndRef.current?.();
+          };
+          audio.onerror = () => {
+            setSpeaking(false);
+            onEndRef.current?.();
+          };
+          audio.play().catch(() => {
+            setSpeaking(false);
+          });
+        }
       };
 
       // أثناء التحميل: isSpeaking = false → الفيديو متوقف
