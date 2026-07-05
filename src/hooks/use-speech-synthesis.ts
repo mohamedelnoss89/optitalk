@@ -77,7 +77,6 @@ export function useSpeechSynthesis(
       }
 
       // isSpeaking = false فوراً (الفيديو يقف أثناء التحميل)
-      // بس هنخليه true تاني لما onplay يتنادي
       setSpeaking(false);
 
       // تنظيف النص
@@ -98,31 +97,42 @@ export function useSpeechSynthesis(
       if (preferGender) params.set('gender', preferGender);
       const url = `/api/tts?${params.toString()}`;
 
-      audio.src = url;
-      audio.volume = 1;
+      // حمّل الصوت كامل الأول (fetch → blob) وبعدين شغّله
+      // كده onplay هيـ fire بس لما الصوت يكون جاهز فعلاً
+      fetch(url)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          audio.src = blobUrl;
+          audio.volume = 1;
 
-      // onplay → isSpeaking = true (الصوت بدأ فعلياً)
-      audio.onplay = () => {
-        setSpeaking(true);
-        onStartRef.current?.();
-      };
+          // onplay → isSpeaking = true (الصوت بدأ فعلياً)
+          audio.onplay = () => {
+            setSpeaking(true);
+            onStartRef.current?.();
+          };
 
-      // onended → isSpeaking = false (الصوت خلص)
-      audio.onended = () => {
-        setSpeaking(false);
-        onEndRef.current?.();
-      };
+          // onended → isSpeaking = false (الصوت خلص)
+          audio.onended = () => {
+            setSpeaking(false);
+            onEndRef.current?.();
+            URL.revokeObjectURL(blobUrl);
+          };
 
-      // onerror → isSpeaking = false
-      audio.onerror = () => {
-        setSpeaking(false);
-        onEndRef.current?.();
-      };
+          audio.onerror = () => {
+            setSpeaking(false);
+            onEndRef.current?.();
+            URL.revokeObjectURL(blobUrl);
+          };
 
-      // شغّل الصوت فوراً — المتصفح هيدمّج التحميل مع التشغيل
-      audio.play().catch(() => {
-        setSpeaking(false);
-      });
+          audio.play().catch(() => {
+            setSpeaking(false);
+            URL.revokeObjectURL(blobUrl);
+          });
+        })
+        .catch(() => {
+          setSpeaking(false);
+        });
     },
     [rate, preferGender]
   );
