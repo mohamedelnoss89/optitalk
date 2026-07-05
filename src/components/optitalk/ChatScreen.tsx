@@ -113,7 +113,7 @@ export function ChatScreen() {
     };
     addMessage(greeting);
     // Speak the greeting after a brief delay
-    setTimeout(() => speakText(greeting.content, greeting.id), 400);
+    speakText(greeting.content, greeting.id);
   }, [selectedTeacher]);
 
   // ===== Cleanup speech on unmount =====
@@ -191,7 +191,7 @@ export function ChatScreen() {
         }
 
         // Speak the reply
-        setTimeout(() => speakText(aiMsg.content, aiMsg.id), 150);
+        speakText(aiMsg.content, aiMsg.id);
       } catch (err) {
         console.error('[OptiTalk] Chat error:', err);
         toast.error('مشكلة في الاتصال بالمدرس. حاول تاني');

@@ -1,7 +1,4 @@
-// ===== OptiTalk - TTS Hook (Mobile-friendly Audio API + Web Speech fallback) =====
-// يعتمد على Audio element + /api/tts endpoint عشان يشتغل على كل المتصفحات
-// Web Speech API كـ fallback بس
-
+// ===== OptiTalk - TTS Hook (تحميل الصوت الأول وبعدين تشغيل) =====
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
@@ -24,24 +21,6 @@ interface UseSpeechSynthesisReturn {
   unlock: () => void;
 }
 
-// ===== Split text into chunks <= 1024 chars for TTS API =====
-function splitTextIntoChunks(text: string, maxLen = 1000): string[] {
-  if (text.length <= maxLen) return [text];
-  const chunks: string[] = [];
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-  let cur = '';
-  for (const s of sentences) {
-    if ((cur + s).length <= maxLen) {
-      cur += s;
-    } else {
-      if (cur) chunks.push(cur.trim());
-      cur = s;
-    }
-  }
-  if (cur) chunks.push(cur.trim());
-  return chunks;
-}
-
 export function useSpeechSynthesis(
   opts: UseSpeechSynthesisOptions = {}
 ): UseSpeechSynthesisReturn {
@@ -54,20 +33,15 @@ export function useSpeechSynthesis(
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onEndRef = useRef(onEnd);
   const onStartRef = useRef(onStart);
-  const queueRef = useRef<string[]>([]);
-  const isPlayingRef = useRef(false);
-  const cancelledRef = useRef(false);
 
   useEffect(() => {
     onEndRef.current = onEnd;
     onStartRef.current = onStart;
   }, [onEnd, onStart]);
 
-  // ===== Create audio element once =====
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
     audioRef.current = audio;
 
@@ -82,30 +56,41 @@ export function useSpeechSynthesis(
     };
   }, []);
 
-  // ===== Play next chunk from queue =====
-  const playNextChunk = useCallback(async () => {
-    if (cancelledRef.current) {
-      isPlayingRef.current = false;
-      return;
-    }
-    const next = queueRef.current.shift();
-    if (!next) {
-      isPlayingRef.current = false;
+  // ===== Speak: حمّل الصوت الأول وبعدين شغّله =====
+  const speak = useCallback(
+    (text: string) => {
+      if (typeof window === 'undefined') return;
+      if (!text.trim()) return;
+
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      // أوقف أي صوت حالي
+      try {
+        audio.oncanplay = null;
+        audio.onplay = null;
+        audio.onended = null;
+        audio.onerror = null;
+        audio.pause();
+      } catch {
+        // ignore
+      }
+
       setSpeaking(false);
-      onEndRef.current?.();
-      return;
-    }
 
-    const audio = audioRef.current;
-    if (!audio) {
-      isPlayingRef.current = false;
-      return;
-    }
+      // تنظيف النص
+      const clean = text
+        .replace(/\([^)]*\)/g, '')
+        .replace(/[""«»]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 
-    try {
-      // Build TTS URL
+      if (!clean) return;
+
+      const truncated = clean.length > 1000 ? clean.slice(0, 1000) : clean;
+
       const params = new URLSearchParams({
-        text: next,
+        text: truncated,
         speed: String(rate),
       });
       if (preferGender) params.set('gender', preferGender);
@@ -114,68 +99,48 @@ export function useSpeechSynthesis(
       audio.src = url;
       audio.volume = 1;
 
-      audio.onplay = () => {
-        if (!cancelledRef.current) {
-          onStartRef.current?.();
-        }
-      };
+      // استني لحد ما الصوت يتحمّل بالكامل
+      audio.oncanplay = () => {
+        audio.oncanplay = null;
 
-      audio.onended = () => {
-        // Play next chunk
-        playNextChunk();
+        audio.onplay = () => {
+          setSpeaking(true);
+          onStartRef.current?.();
+        };
+
+        audio.onended = () => {
+          setSpeaking(false);
+          onEndRef.current?.();
+        };
+
+        audio.onerror = () => {
+          setSpeaking(false);
+          onEndRef.current?.();
+        };
+
+        audio.play().catch(() => {
+          setSpeaking(false);
+        });
       };
 
       audio.onerror = () => {
-        console.warn('[OptiTalk TTS] Audio error, skipping chunk');
-        playNextChunk();
+        setSpeaking(false);
+        onEndRef.current?.();
       };
 
-      // Set play promise (mobile requires play() inside user gesture or after)
-      await audio.play();
-    } catch (err) {
-      console.warn('[OptiTalk TTS] play() failed:', err);
-      // Try to play next chunk
-      playNextChunk();
-    }
-  }, [rate, preferGender]);
-
-  // ===== Speak: split text and queue chunks =====
-  const speak = useCallback(
-    (text: string) => {
-      if (typeof window === 'undefined') return;
-      if (!text.trim()) return;
-
-      // Cancel current
-      cancelledRef.current = true;
-      const audio = audioRef.current;
-      if (audio) {
-        try {
-          audio.pause();
-          audio.src = '';
-        } catch {
-          // ignore
-        }
-      }
-
-      // Reset for new speech
-      cancelledRef.current = false;
-      queueRef.current = splitTextIntoChunks(text);
-      isPlayingRef.current = true;
-      setSpeaking(true);
-
-      // Start playing
-      playNextChunk();
+      audio.load();
     },
-    [playNextChunk]
+    [rate, preferGender]
   );
 
   const cancel = useCallback(() => {
-    cancelledRef.current = true;
-    queueRef.current = [];
-    isPlayingRef.current = false;
     const audio = audioRef.current;
     if (audio) {
       try {
+        audio.oncanplay = null;
+        audio.onplay = null;
+        audio.onended = null;
+        audio.onerror = null;
         audio.pause();
         audio.src = '';
       } catch {
@@ -183,13 +148,12 @@ export function useSpeechSynthesis(
       }
     }
     setSpeaking(false);
+    onEndRef.current?.();
   }, []);
 
-  // ===== Unlock: required for iOS Safari to allow audio playback =====
   const unlock = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    // Play a tiny silent audio to unlock the audio context
     try {
       audio.muted = true;
       audio.play().then(() => {
@@ -204,10 +168,8 @@ export function useSpeechSynthesis(
     }
   }, []);
 
-  // Cleanup
   useEffect(() => {
     return () => {
-      cancelledRef.current = true;
       const audio = audioRef.current;
       if (audio) {
         try {
