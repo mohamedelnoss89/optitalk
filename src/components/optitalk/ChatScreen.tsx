@@ -69,17 +69,16 @@ export function ChatScreen() {
     },
   });
 
-  // Speech synthesis — pick voice matching teacher gender
+  // Speech synthesis — isSpeaking بيتتحكم فيه بس من audio events
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
-    onStart: () => {
-      setSpeaking(true);
-    },
+    // onStart و onEnd بيتنادوا من audio.onplay و audio.onended
+    // ملحوظة: مش بنعمل setSpeaking هنا — الـ hook بيعملها
+    onStart: () => {},
     onEnd: () => {
-      setSpeaking(false);
       setSpeakingId(null);
     },
   });
@@ -139,10 +138,8 @@ export function ChatScreen() {
       addMessage(userMsg);
       addPoints(1);
       setAiThinking(true);
-      // Stop any ongoing speech when user starts talking
+      // Stop any ongoing speech — الـ hook هيعمل setSpeaking(false)
       synthesis.cancel();
-      setSpeaking(false);
-      setSpeakingId(null);
 
       try {
         const history = messages
@@ -219,8 +216,6 @@ export function ChatScreen() {
     }
     if (isSpeaking) {
       synthesis.cancel();
-      setSpeaking(false);
-      setSpeakingId(null);
       return;
     }
     if (isListening) {
@@ -228,25 +223,20 @@ export function ChatScreen() {
       setListening(false);
     } else {
       synthesis.cancel();
-      setSpeaking(false);
-      setSpeakingId(null);
       setListening(true);
       recognition.start();
     }
-  }, [recognition, isListening, isSpeaking, synthesis, setListening, setSpeaking]);
+  }, [recognition, isListening, isSpeaking, synthesis, setListening]);
 
   const handleStopSpeaking = useCallback(() => {
     synthesis.cancel();
-    setSpeaking(false);
-    setSpeakingId(null);
-  }, [synthesis, setSpeaking]);
+  }, [synthesis]);
 
   // ===== End conversation =====
   const handleEnd = useCallback(() => {
     synthesis.cancel();
     recognition.stop();
     setListening(false);
-    setSpeaking(false);
     setAiThinking(false);
     setSpeakingId(null);
     toast.success('انتهت المحادثة. شكراً لك! 🎓');
