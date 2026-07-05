@@ -103,11 +103,13 @@ export function useSpeechSynthesis(
       audio.oncanplay = () => {
         audio.oncanplay = null;
 
+        // onplay → isSpeaking = true → الفيديو يبدأ
         audio.onplay = () => {
           setSpeaking(true);
           onStartRef.current?.();
         };
 
+        // onended → isSpeaking = false → الفيديو يقف
         audio.onended = () => {
           setSpeaking(false);
           onEndRef.current?.();
@@ -118,16 +120,19 @@ export function useSpeechSynthesis(
           onEndRef.current?.();
         };
 
+        // شغّل الصوت — isSpeaking هتبقى true بس لما الصوت يبدأ فعلاً
         audio.play().catch(() => {
           setSpeaking(false);
         });
       };
 
+      // أثناء التحميل: isSpeaking = false → الفيديو متوقف
       audio.onerror = () => {
         setSpeaking(false);
         onEndRef.current?.();
       };
 
+      // ابدأ تحميل الصوت
       audio.load();
     },
     [rate, preferGender]

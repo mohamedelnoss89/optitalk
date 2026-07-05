@@ -68,7 +68,9 @@ export function TeacherAvatar({
           )}
 
           {/* ===== صورة ثابتة (تظهر فوق الفيديو لما مش بيتكلم) ===== */}
-          {(videoError || !isSpeaking) && !videoError && (
+          {/* لما isSpeaking = false: الصورة بتغطي الفيديو بالكامل */}
+          {/* لما isSpeaking = true: الصورة بتختفي والفيديو بيظهر */}
+          {!isSpeaking && !videoError && (
             <img
               src={imageSrc}
               alt={teacher.name}
