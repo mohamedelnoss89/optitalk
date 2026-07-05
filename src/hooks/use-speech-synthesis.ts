@@ -76,7 +76,8 @@ export function useSpeechSynthesis(
         // ignore
       }
 
-      // isSpeaking = false فوراً (الفيديو يقف)
+      // isSpeaking = false فوراً (الفيديو يقف أثناء التحميل)
+      // بس هنخليه true تاني لما onplay يتنادي
       setSpeaking(false);
 
       // تنظيف النص

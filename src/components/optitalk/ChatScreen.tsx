@@ -69,16 +69,17 @@ export function ChatScreen() {
     },
   });
 
-  // Speech synthesis — isSpeaking بيتتحكم فيه بس من audio events
+  // Speech synthesis — isSpeaking بيتتحكم فيه من audio events عبر onStart/onEnd
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
-    // onStart و onEnd بيتنادوا من audio.onplay و audio.onended
-    // ملحوظة: مش بنعمل setSpeaking هنا — الـ hook بيعملها
-    onStart: () => {},
+    onStart: () => {
+      setSpeaking(true);
+    },
     onEnd: () => {
+      setSpeaking(false);
       setSpeakingId(null);
     },
   });
