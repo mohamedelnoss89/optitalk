@@ -52,7 +52,8 @@ export function ChatScreen() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Speech recognition - يدعم العربية والإنجليزية
-  const recognitionLang = speechLang === 'ar' ? 'ar-EG' : 'en-US';
+  // الميكروفون يستمع للغتين مع بعض — المتصفح يتعرف على أي لغة
+  const recognitionLang = 'ar-EG'; // عربي افتراضي (يدعم أرقام وكلمات إنجليزي)
   const recognition = useSpeechRecognition({
     lang: recognitionLang,
     onFinal: (transcript) => {
