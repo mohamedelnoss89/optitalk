@@ -2,7 +2,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Square, X, Keyboard, Send, Languages } from 'lucide-react';
+import { Mic, MicOff, Square, X, Keyboard, Send } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -111,7 +111,25 @@ export function ControlBar({
               <X className="h-5 w-5" />
             </button>
 
-            {/* مكان فارغ بدل زرار اللغة - التطبيق يكتشف اللغة تلقائياً */}
+            {/* زرار تبديل لغة الميكروفون - AR/EN */}
+            <button
+              onClick={onToggleLang}
+              className={cn(
+                'flex h-11 w-11 flex-col items-center justify-center rounded-full transition-all active:scale-95',
+                speechLang === 'ar'
+                  ? 'opti-glass-teal text-opti-accent border border-opti-accent/40'
+                  : 'opti-glass text-opti-text/70 border border-opti-primary/30 hover:scale-105'
+              )}
+              aria-label={speechLang === 'ar' ? 'تبديل للإنجليزي' : 'تبديل للعربي'}
+              title={speechLang === 'ar' ? 'الميكروفون بيسمع عربي - اضغط للإنجليزي' : 'الميكروفون بيسمع إنجليزي - اضغط للعربي'}
+            >
+              <span className="text-[11px] font-black leading-none">
+                {speechLang === 'ar' ? 'ع' : 'EN'}
+              </span>
+              <span className="text-[7px] font-medium leading-none mt-0.5 opacity-60">
+                {speechLang === 'ar' ? 'عربي' : 'English'}
+              </span>
+            </button>
 
             {/* Main mic / stop button - كبير وواضح دايماً */}
             <button
@@ -167,8 +185,8 @@ export function ControlBar({
               : isSpeaking
               ? 'اضغط لإيقاف الصوت'
               : isListening
-              ? 'بتتكلم... اضغط للإيقاف'
-              : 'اضغط على الميكروفون وتكلم (عربي أو إنجليزي)'}
+              ? `بتتكلم ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'}... اضغط للإيقاف`
+              : `الميكروفون بيسمع ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'} — اضغط (ع/EN) للتبديل`}
           </div>
         </>
       )}

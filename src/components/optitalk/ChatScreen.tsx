@@ -51,9 +51,9 @@ export function ChatScreen() {
   const convIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Speech recognition - يدعم العربية والإنجليزية
-  // الميكروفون يستمع للغتين مع بعض — المتصفح يتعرف على أي لغة
-  const recognitionLang = 'ar-EG'; // عربي افتراضي (يدعم أرقام وكلمات إنجليزي)
+  // Speech recognition - لغة الميكروفون بتتحدد حسب اختيار المستخدم (عربي/إنجليزي)
+  // Web Speech API ما بيدعمش التعرف التلقائي على اللغة، فلازم المستخدم يختار
+  const recognitionLang = speechLang === 'ar' ? 'ar-EG' : 'en-US';
   const recognition = useSpeechRecognition({
     lang: recognitionLang,
     onFinal: (transcript) => {
@@ -119,7 +119,7 @@ export function ChatScreen() {
         // اختيار صوت عربي مناسب للجنس
         const voices = window.speechSynthesis.getVoices();
         const arabicVoices = voices.filter(v => v.lang.startsWith('ar'));
-        let selectedVoice = null;
+        let selectedVoice: SpeechSynthesisVoice | null = null;
 
         if (arabicVoices.length > 0) {
           if (selectedTeacher?.gender === 'female') {
@@ -131,7 +131,7 @@ export function ChatScreen() {
               v.name.toLowerCase().includes('salma') ||
               v.name.toLowerCase().includes('laila') ||
               v.name.toLowerCase().includes('hoda')
-            ) || arabicVoices[0];
+            ) || arabicVoices[0] || null;
           } else {
             // ابحث عن صوت راجل
             selectedVoice = arabicVoices.find(v =>
@@ -140,7 +140,7 @@ export function ChatScreen() {
               v.name.toLowerCase().includes('tarik') ||
               v.name.toLowerCase().includes('maged') ||
               v.name.toLowerCase().includes('naayf')
-            ) || arabicVoices[0];
+            ) || arabicVoices[0] || null;
           }
         }
 
