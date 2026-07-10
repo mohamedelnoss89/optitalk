@@ -93,10 +93,45 @@ export function ChatScreen() {
       const clean = text.replace(/\([^)]*\)/g, '').replace(/[""]/g, '').trim();
       if (clean) {
         if (msgId) setSpeakingId(msgId);
-        synthesis.speak(clean);
+
+        // لو النص فيه عربي → استخدم Web Speech API (يدعم عربي)
+        // لو النص إنجليزي بس → استخدم z-ai TTS (جودة أحسن)
+        const hasArabic = /[\u0600-\u06FF]/.test(clean);
+
+        if (hasArabic && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          // Web Speech API للعربي
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(clean);
+          utterance.lang = 'ar-EG';
+          utterance.rate = 0.9;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+
+          // اختيار صوت عربي لو موجود
+          const voices = window.speechSynthesis.getVoices();
+          const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
+          if (arabicVoice) utterance.voice = arabicVoice;
+
+          utterance.onstart = () => {
+            setSpeaking(true);
+          };
+          utterance.onend = () => {
+            setSpeaking(false);
+            setSpeakingId(null);
+          };
+          utterance.onerror = () => {
+            setSpeaking(false);
+            setSpeakingId(null);
+          };
+
+          window.speechSynthesis.speak(utterance);
+        } else {
+          // z-ai TTS للإنجليزي
+          synthesis.speak(clean);
+        }
       }
     },
-    [synthesis]
+    [synthesis, setSpeaking, setSpeakingId]
   );
 
   // ===== Send greeting on first load =====
