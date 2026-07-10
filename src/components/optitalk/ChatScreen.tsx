@@ -94,12 +94,16 @@ export function ChatScreen() {
       if (clean) {
         if (msgId) setSpeakingId(msgId);
 
-        // لو النص فيه عربي → استخدم Web Speech API (يدعم عربي)
-        // لو النص إنجليزي بس → استخدم z-ai TTS (جودة أحسن)
-        const hasArabic = /[\u0600-\u06FF]/.test(clean);
+        // نحسب نسبة العربي للإنجليزي في النص
+        const arabicChars = (clean.match(/[\u0600-\u06FF]/g) || []).length;
+        const latinChars = (clean.match(/[a-zA-Z]/g) || []).length;
+        const totalChars = arabicChars + latinChars;
+        // لو العربي أكتر من 30% من الحروف → استخدم Web Speech API (عربي)
+        // ده مهم عشان الجمل اللي فيها خليط عربي + إنجليزي
+        const isArabicDominant = totalChars > 0 && (arabicChars / totalChars) > 0.3;
 
-        if (hasArabic && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          // Web Speech API للعربي
+        if (isArabicDominant && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          // Web Speech API للعربي (أو الخليط اللي أغلبه عربي)
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(clean);
           utterance.lang = 'ar-EG';
@@ -126,7 +130,7 @@ export function ChatScreen() {
 
           window.speechSynthesis.speak(utterance);
         } else {
-          // z-ai TTS للإنجليزي
+          // z-ai TTS للإنجليزي (أو الخليط اللي أغلبه إنجليزي)
           synthesis.speak(clean);
         }
       }
