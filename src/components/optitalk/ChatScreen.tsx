@@ -86,53 +86,54 @@ export function ChatScreen() {
   });
 
   // ===== Speak helper =====
+  // كل النطق بيتم هنا — Web Speech API للعربي، z-ai TTS للإنجليزي
   const speakText = useCallback(
     (text: string, msgId?: string) => {
-      if (!synthesis.supported) return;
-      // Strip parenthetical Arabic translations from spoken text
       const clean = text.replace(/\([^)]*\)/g, '').replace(/[""]/g, '').trim();
-      if (clean) {
-        if (msgId) setSpeakingId(msgId);
+      if (!clean) return;
+      if (msgId) setSpeakingId(msgId);
 
-        // نحسب نسبة العربي للإنجليزي في النص
-        const arabicChars = (clean.match(/[\u0600-\u06FF]/g) || []).length;
-        const latinChars = (clean.match(/[a-zA-Z]/g) || []).length;
-        const totalChars = arabicChars + latinChars;
-        // لو العربي أكتر من 30% من الحروف → استخدم Web Speech API (عربي)
-        // ده مهم عشان الجمل اللي فيها خليط عربي + إنجليزي
-        const isArabicDominant = totalChars > 0 && (arabicChars / totalChars) > 0.3;
+      // نحسب نسبة العربي للإنجليزي
+      const arabicChars = (clean.match(/[\u0600-\u06FF]/g) || []).length;
+      const latinChars = (clean.match(/[a-zA-Z]/g) || []).length;
+      const totalChars = arabicChars + latinChars;
+      const isArabicDominant = totalChars > 0 && (arabicChars / totalChars) > 0.3;
 
-        if (isArabicDominant && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          // Web Speech API للعربي (أو الخليط اللي أغلبه عربي)
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(clean);
-          utterance.lang = 'ar-EG';
-          utterance.rate = 0.9;
-          utterance.pitch = 1;
-          utterance.volume = 1;
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-          // اختيار صوت عربي لو موجود
-          const voices = window.speechSynthesis.getVoices();
-          const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
-          if (arabicVoice) utterance.voice = arabicVoice;
+      // أوقف أي نطق حالي (سواء عربي أو إنجليزي)
+      window.speechSynthesis.cancel();
+      synthesis.cancel();
+      setSpeaking(false);
 
-          utterance.onstart = () => {
-            setSpeaking(true);
-          };
-          utterance.onend = () => {
-            setSpeaking(false);
-            setSpeakingId(null);
-          };
-          utterance.onerror = () => {
-            setSpeaking(false);
-            setSpeakingId(null);
-          };
+      if (isArabicDominant) {
+        // === عربي → Web Speech API ===
+        const utterance = new SpeechSynthesisUtterance(clean);
+        utterance.lang = 'ar-EG';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 1;
 
-          window.speechSynthesis.speak(utterance);
-        } else {
-          // z-ai TTS للإنجليزي (أو الخليط اللي أغلبه إنجليزي)
-          synthesis.speak(clean);
-        }
+        const voices = window.speechSynthesis.getVoices();
+        const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
+        if (arabicVoice) utterance.voice = arabicVoice;
+
+        utterance.onstart = () => {
+          setSpeaking(true);
+        };
+        utterance.onend = () => {
+          setSpeaking(false);
+          setSpeakingId(null);
+        };
+        utterance.onerror = () => {
+          setSpeaking(false);
+          setSpeakingId(null);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      } else {
+        // === إنجليزي → z-ai TTS ===
+        synthesis.speak(clean);
       }
     },
     [synthesis, setSpeaking, setSpeakingId]
