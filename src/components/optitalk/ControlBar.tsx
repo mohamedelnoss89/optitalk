@@ -2,7 +2,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Square, X, Keyboard, Send } from 'lucide-react';
+import { Mic, MicOff, Square, X, Keyboard, Send, Home, Plus } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +19,8 @@ interface Props {
   onStopSpeaking: () => void;
   onEndConversation: () => void;
   onSendText?: (text: string) => void;
+  onNewConversation?: () => void;
+  onGoHome?: () => void;
 }
 
 export function ControlBar({
@@ -34,6 +36,8 @@ export function ControlBar({
   onStopSpeaking,
   onEndConversation,
   onSendText,
+  onNewConversation,
+  onGoHome,
 }: Props) {
   const [textMode, setTextMode] = useState(false);
   const [textInput, setTextInput] = useState('');
@@ -237,6 +241,30 @@ export function ControlBar({
               ? `بتتكلم ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'}... اضغط للإيقاف`
               : `الميكروفون بيسمع ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'} — اضغط (ع/EN) للتبديل`}
           </div>
+
+          {/* ===== زرارين سريعين: محادثة جديدة + الصفحة الرئيسية ===== */}
+          {(onNewConversation || onGoHome) && (
+            <div className="mt-3 flex gap-2">
+              {onNewConversation && (
+                <button
+                  onClick={onNewConversation}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl opti-glass px-3 py-2 text-[11px] font-bold text-opti-text/70 transition-all hover:scale-[1.02] hover:text-opti-text active:scale-95"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>محادثة جديدة</span>
+                </button>
+              )}
+              {onGoHome && (
+                <button
+                  onClick={onGoHome}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl opti-glass px-3 py-2 text-[11px] font-bold text-opti-text/70 transition-all hover:scale-[1.02] hover:text-opti-text active:scale-95"
+                >
+                  <Home className="h-3.5 w-3.5" />
+                  <span>الصفحة الرئيسية</span>
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

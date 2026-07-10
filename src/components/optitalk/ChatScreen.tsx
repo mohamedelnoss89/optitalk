@@ -545,6 +545,8 @@ export function ChatScreen() {
           onStopSpeaking={handleStopSpeaking}
           onEndConversation={handleEnd}
           onSendText={(text) => void handleSendMessage(text)}
+          onNewConversation={handleNewConversation}
+          onGoHome={handleEnd}
         />
       </section>
 
