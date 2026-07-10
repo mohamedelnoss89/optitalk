@@ -19,9 +19,21 @@ export interface OptiUser {
   level: Level;
 }
 
-export type Screen = 'welcome' | 'onboarding' | 'chat';
+export type Screen = 'welcome' | 'onboarding' | 'chat' | 'teacher-select';
+
+// ===== المستخدم المسجل (auth) =====
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+}
 
 interface AppState {
+  // ===== Auth (تسجيل الدخول) =====
+  authUser: AuthUser | null;
+  isAuthenticated: boolean;
+
   // Onboarding
   user: OptiUser | null;
   selectedTeacher: Teacher | null;
@@ -32,6 +44,8 @@ interface AppState {
   isSpeaking: boolean;
   isAiThinking: boolean;
   conversationId: string | null;
+  // آخر رسالة ترحيب اتبعتت — عشان متكررناش نفس الترحيب
+  lastGreetingIndex: number;
 
   // Progress
   points: number;
@@ -40,15 +54,29 @@ interface AppState {
   lastActiveDate: string | null;
   messagesCount: number;
   perfectStreak: number; // consecutive messages without corrections
+  // ===== مرحلة التعلم للمبتدئ (1-5) =====
+  // 1: كلمات ترحيب (Hello) | 2: كلمات أساسية (Yes/No) | 3: جمل كلمتين
+  // 4: جمل قصيرة (How are you) | 5: محادثة بسيطة
+  learningStage: number;
+  // عدد المرات اللي الطالب اتدرب فيها على المرحلة الحالية
+  stageAttempts: number;
+  // ===== الكلمات اللي الطالب اتعلمها (للمراجعة كل 8 كلمات) =====
+  learnedWords: string[];
+  // عدّاد الكلمات من آخر مراجعة (لما يوصل 8 → نعمل مراجعة)
+  wordsSinceReview: number;
+  // هل المدرس في وضع المراجعة دلوقتي؟
+  inReviewMode: boolean;
+  // ===== الكلمة المستهدفة الحالية (اللي المدرس طلب من الطالب يقولها) =====
+  currentTargetWord: string | null;
+  // ===== هل المدرس في وضع بناء الجمل؟ (بعد المراجعة) =====
+  inSentenceBuilderMode: boolean;
 
   // UI
   currentScreen: Screen;
   cameraEnabled: boolean;
   micEnabled: boolean;
   showAchievement: string | null;
-  // لغة التعرف على الصوت: 'en' (إنجليزي افتراضي) أو 'ar' (عربي)
   speechLang: 'en' | 'ar';
-  // إعدادات إضافية
   audioRate: number;
   autoSpeak: boolean;
   showCorrections: boolean;
@@ -58,6 +86,10 @@ interface AppState {
   setUser: (u: OptiUser) => void;
   setTeacher: (t: Teacher | null) => void;
 
+  // Actions: Auth
+  setAuthUser: (u: AuthUser | null) => void;
+  logout: () => void;
+
   // Actions: Chat
   addMessage: (m: ChatMessage) => void;
   clearMessages: () => void;
@@ -65,6 +97,7 @@ interface AppState {
   setListening: (v: boolean) => void;
   setSpeaking: (v: boolean) => void;
   setAiThinking: (v: boolean) => void;
+  setLastGreetingIndex: (i: number) => void;
 
   // Actions: Progress
   addPoints: (n: number) => void;
@@ -74,6 +107,15 @@ interface AppState {
   bumpPerfectStreak: () => void;
   resetPerfectStreak: () => void;
   setShowAchievement: (id: string | null) => void;
+  bumpStageAttempts: () => void;
+  advanceStage: () => void;
+  setLearningStage: (stage: number) => void;
+  addLearnedWord: (word: string) => void;
+  setWordsSinceReview: (count: number) => void;
+  setInReviewMode: (inReview: boolean) => void;
+  clearLearnedWords: () => void;
+  setCurrentTargetWord: (word: string | null) => void;
+  setInSentenceBuilderMode: (inBuilder: boolean) => void;
 
   // Actions: UI
   setScreen: (s: Screen) => void;
@@ -92,6 +134,10 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      // ===== Auth =====
+      authUser: null,
+      isAuthenticated: false,
+
       // Onboarding
       user: null,
       selectedTeacher: null,
@@ -102,6 +148,7 @@ export const useStore = create<AppState>()(
       isSpeaking: false,
       isAiThinking: false,
       conversationId: null,
+      lastGreetingIndex: -1,
 
       // Progress
       points: 0,
@@ -110,6 +157,13 @@ export const useStore = create<AppState>()(
       lastActiveDate: null,
       messagesCount: 0,
       perfectStreak: 0,
+      learningStage: 1, // ابدأ من المرحلة 1
+      stageAttempts: 0,
+      learnedWords: [],
+      wordsSinceReview: 0,
+      inReviewMode: false,
+      currentTargetWord: null,
+      inSentenceBuilderMode: false,
 
       // UI
       currentScreen: 'welcome',
@@ -126,6 +180,18 @@ export const useStore = create<AppState>()(
       setUser: (u) => set({ user: u }),
       setTeacher: (t) => set({ selectedTeacher: t }),
 
+      // Actions: Auth
+      setAuthUser: (u) => set({ authUser: u, isAuthenticated: !!u }),
+      logout: () => set({
+        authUser: null,
+        isAuthenticated: false,
+        user: null,
+        selectedTeacher: null,
+        messages: [],
+        conversationId: null,
+        currentScreen: 'welcome',
+      }),
+
       // Actions: Chat
       addMessage: (m) => {
         set((s) => ({ messages: [...s.messages, m] }));
@@ -138,6 +204,7 @@ export const useStore = create<AppState>()(
       setListening: (v) => set({ isListening: v }),
       setSpeaking: (v) => set({ isSpeaking: v }),
       setAiThinking: (v) => set({ isAiThinking: v }),
+      setLastGreetingIndex: (i) => set({ lastGreetingIndex: i }),
 
       // Actions: Progress
       addPoints: (n) => set((s) => ({ points: s.points + n })),
@@ -182,6 +249,35 @@ export const useStore = create<AppState>()(
       },
       resetPerfectStreak: () => set({ perfectStreak: 0 }),
       setShowAchievement: (id) => set({ showAchievement: id }),
+      bumpStageAttempts: () => set((s) => ({ stageAttempts: s.stageAttempts + 1 })),
+      // تقدّم للمرحلة التالية (حد أقصى 5)
+      advanceStage: () => {
+        const current = get().learningStage;
+        if (current < 5) {
+          set({ learningStage: current + 1, stageAttempts: 0 });
+          console.log(`[OptiTalk] Advanced to stage ${current + 1}`);
+        }
+      },
+      setLearningStage: (stage) => set({ learningStage: Math.min(5, Math.max(1, stage)), stageAttempts: 0 }),
+      // ===== إضافة كلمة جديدة للكلمات اللي اتعلمت =====
+      addLearnedWord: (word) => set((s) => {
+        const cleanWord = word.trim();
+        if (!cleanWord || s.learnedWords.includes(cleanWord)) return s;
+        const newLearnedWords = [...s.learnedWords, cleanWord];
+        const newWordsSinceReview = s.wordsSinceReview + 1;
+        // لو وصلنا 8 كلمات → فعّل وضع المراجعة
+        const shouldReview = newWordsSinceReview >= 8;
+        return {
+          learnedWords: newLearnedWords,
+          wordsSinceReview: shouldReview ? 0 : newWordsSinceReview,
+          inReviewMode: shouldReview,
+        };
+      }),
+      setWordsSinceReview: (count) => set({ wordsSinceReview: count }),
+      setInReviewMode: (inReview) => set({ inReviewMode: inReview }),
+      clearLearnedWords: () => set({ learnedWords: [], wordsSinceReview: 0, inReviewMode: false, inSentenceBuilderMode: false }),
+      setCurrentTargetWord: (word) => set({ currentTargetWord: word }),
+      setInSentenceBuilderMode: (inBuilder) => set({ inSentenceBuilderMode: inBuilder }),
 
       // Actions: UI
       setScreen: (s) => set({ currentScreen: s }),
@@ -196,10 +292,13 @@ export const useStore = create<AppState>()(
       // Reset
       resetAll: () =>
         set({
+          authUser: null,
+          isAuthenticated: false,
           user: null,
           selectedTeacher: null,
           messages: [],
           conversationId: null,
+          lastGreetingIndex: -1,
           isListening: false,
           isSpeaking: false,
           isAiThinking: false,
@@ -209,6 +308,13 @@ export const useStore = create<AppState>()(
           lastActiveDate: null,
           messagesCount: 0,
           perfectStreak: 0,
+          learningStage: 1,
+          stageAttempts: 0,
+          learnedWords: [],
+          wordsSinceReview: 0,
+          inReviewMode: false,
+          currentTargetWord: null,
+          inSentenceBuilderMode: false,
           currentScreen: 'welcome',
           cameraEnabled: false,
           micEnabled: false,
@@ -217,17 +323,32 @@ export const useStore = create<AppState>()(
         }),
     }),
     {
-      name: 'optitalk-store-v5',
-      version: 5,
+      name: 'optitalk-store-v6',
+      version: 6,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
+        // ===== حفظ بيانات تسجيل الدخول =====
+        authUser: s.authUser,
+        isAuthenticated: s.isAuthenticated,
         user: s.user,
         selectedTeacher: s.selectedTeacher,
+        // ===== حفظ المحادثات عشان يكمل من حيث وقف =====
+        messages: s.messages,
+        conversationId: s.conversationId,
+        lastGreetingIndex: s.lastGreetingIndex,
+        // ===== حفظ التقدم =====
         points: s.points,
         streak: s.streak,
         achievements: s.achievements,
         lastActiveDate: s.lastActiveDate,
         messagesCount: s.messagesCount,
+        learningStage: s.learningStage,
+        stageAttempts: s.stageAttempts,
+        learnedWords: s.learnedWords,
+        wordsSinceReview: s.wordsSinceReview,
+        inReviewMode: s.inReviewMode,
+        currentTargetWord: s.currentTargetWord,
+        inSentenceBuilderMode: s.inSentenceBuilderMode,
         currentScreen: s.currentScreen,
         speechLang: s.speechLang,
       }),

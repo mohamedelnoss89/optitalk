@@ -1,7 +1,7 @@
 // ===== OptiTalk - Onboarding Screen (3 steps) =====
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -29,14 +29,24 @@ export function OnboardingScreen() {
   const setTeacher = useStore((s) => s.setTeacher);
   const setCameraEnabled = useStore((s) => s.setCameraEnabled);
   const setMicEnabled = useStore((s) => s.setMicEnabled);
+  // ===== auth user — عشان نعرض اسمه تلقائياً =====
+  const authUser = useStore((s) => s.authUser);
+  const isAuthenticated = useStore((s) => s.isAuthenticated);
 
   const [step, setStep] = useState<Step>(1);
 
-  // Step 1 state
-  const [name, setName] = useState('');
+  // Step 1 state — اعرض اسم المستخدم تلقائياً لو مسجل
+  const [name, setName] = useState(authUser?.name || '');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [level, setLevel] = useState<Level | ''>('');
+
+  // ===== لو المستخدم مش مسجل → ارجع للـ welcome =====
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setScreen('welcome');
+    }
+  }, [isAuthenticated, setScreen]);
 
   // Step 2 state
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
@@ -163,15 +173,33 @@ export function OnboardingScreen() {
                   subtitle="عرفنا بنفسك عشان نظبط لك التجربة"
                 />
 
-                {/* Name */}
+                {/* Name — معروض تلقائياً من حساب المستخدم */}
                 <Field label="الاسم" required>
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="مثال: أحمد"
-                    maxLength={30}
-                    className="w-full rounded-xl opti-glass border border-opti-primary/15 bg-transparent px-4 py-3 text-opti-text placeholder:text-opti-text/35 focus:border-opti-primary/50 focus:outline-none"
-                  />
+                  <div className="relative">
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="مثال: أحمد"
+                      maxLength={30}
+                      readOnly={!!authUser}
+                      className={cn(
+                        'w-full rounded-xl opti-glass border border-opti-primary/15 bg-transparent px-4 py-3 text-opti-text placeholder:text-opti-text/35 focus:border-opti-primary/50 focus:outline-none',
+                        authUser && 'pr-24 opacity-90'
+                      )}
+                    />
+                    {authUser && (
+                      <div className="absolute top-1/2 left-2 -translate-y-1/2 flex items-center gap-1 rounded-full opti-glass-teal px-2 py-0.5">
+                        <Check className="h-3 w-3 text-opti-accent" />
+                        <span className="text-[9px] font-bold text-opti-accent">مسجّل</span>
+                      </div>
+                    )}
+                  </div>
+                  {authUser?.email && (
+                    <p className="mt-1.5 text-[10px] text-opti-text/45">
+                      {authUser.email}
+                      {authUser.phone && ` • ${authUser.phone}`}
+                    </p>
+                  )}
                 </Field>
 
                 {/* Age */}

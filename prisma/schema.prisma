@@ -12,11 +12,14 @@ model User {
   id        String   @id @default(cuid())
   email     String?  @unique
   name      String
-  age       Int
-  gender    String   // "male" | "female"
-  level     String   // "beginner" | "intermediate" | "advanced"
+  phone     String?  @unique
+  password  String?  // hashed password (null للمستخدمين اللي بيدخلوا بـ Google)
+  provider  String   @default("credentials") // "credentials" | "google"
+  age       Int      @default(0)
+  gender    String   @default("male") // "male" | "female"
+  level     String   @default("beginner") // "beginner" | "intermediate" | "advanced"
   avatar    String?
-  teacherId String
+  teacherId String   @default("")
   points    Int      @default(0)
   streak    Int      @default(0)
   createdAt DateTime @default(now())

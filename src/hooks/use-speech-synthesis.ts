@@ -1,4 +1,4 @@
-// ===== OptiTalk - TTS Hook (بسيط ومباشر) =====
+// ===== OptiTalk - TTS Hook (محسّن — إصلاح race condition + تقطيع الكلام) =====
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
@@ -33,6 +33,11 @@ export function useSpeechSynthesis(
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onEndRef = useRef(onEnd);
   const onStartRef = useRef(onStart);
+  // ===== generation counter — عشان نمنع race condition =====
+  // كل استدعاء لـ speak() بيعدّي الجيل الحالي. لو fetch قديم رجع، نتجاهله.
+  const generationRef = useRef(0);
+  // ===== علامة إلغاء — لو cancel() اتسببت، نمنع onEnd من الـ fire =====
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     onEndRef.current = onEnd;
@@ -47,6 +52,9 @@ export function useSpeechSynthesis(
 
     return () => {
       try {
+        audio.onplay = null;
+        audio.onended = null;
+        audio.onerror = null;
         audio.pause();
         audio.src = '';
       } catch {
@@ -64,6 +72,10 @@ export function useSpeechSynthesis(
       const audio = audioRef.current;
       if (!audio) return;
 
+      // ===== زيّد جيل الكلام الحالي — أي fetch قديم هيبقى stale =====
+      const myGeneration = ++generationRef.current;
+      cancelledRef.current = false;
+
       // أوقف أي صوت حالي
       try {
         audio.onplay = null;
@@ -72,6 +84,7 @@ export function useSpeechSynthesis(
         audio.onloadeddata = null;
         audio.oncanplay = null;
         audio.pause();
+        audio.src = '';
       } catch {
         // ignore
       }
@@ -88,7 +101,25 @@ export function useSpeechSynthesis(
 
       if (!clean) return;
 
-      const truncated = clean.length > 1000 ? clean.slice(0, 1000) : clean;
+      // لا تقطع النص في منتصف جملة — قطّع عند آخر نقطة/علامة استفهام قبل الحد
+      const MAX_CHARS = 950;
+      let truncated = clean;
+      if (clean.length > MAX_CHARS) {
+        const slice = clean.slice(0, MAX_CHARS);
+        // ابحث عن آخر علامة ترقيم
+        const lastPunct = Math.max(
+          slice.lastIndexOf('. '),
+          slice.lastIndexOf('! '),
+          slice.lastIndexOf('? '),
+          slice.lastIndexOf('؟ '),
+          slice.lastIndexOf('.'),
+          slice.lastIndexOf('!'),
+          slice.lastIndexOf('?')
+        );
+        truncated = lastPunct > MAX_CHARS * 0.5
+          ? slice.slice(0, lastPunct + 1)
+          : slice + '...';
+      }
 
       const params = new URLSearchParams({
         text: truncated,
@@ -98,39 +129,63 @@ export function useSpeechSynthesis(
       const url = `/api/tts?${params.toString()}`;
 
       // حمّل الصوت كامل الأول (fetch → blob) وبعدين شغّله
-      // كده onplay هيـ fire بس لما الصوت يكون جاهز فعلاً
       fetch(url)
-        .then((res) => res.blob())
+        .then((res) => {
+          if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
+          return res.blob();
+        })
         .then((blob) => {
+          // ===== تحقق من الجيل — لو تغيّر، يبقى هذا fetch قديم، نتجاهله =====
+          if (myGeneration !== generationRef.current || cancelledRef.current) {
+            return; // stale — تجاهل
+          }
+
           const blobUrl = URL.createObjectURL(blob);
           audio.src = blobUrl;
           audio.volume = 1;
 
           // onplay → isSpeaking = true (الصوت بدأ فعلياً)
           audio.onplay = () => {
+            if (myGeneration !== generationRef.current || cancelledRef.current) {
+              return;
+            }
             setSpeaking(true);
             onStartRef.current?.();
           };
 
-          // onended → isSpeaking = false (الصوت خلص)
+          // onended → isSpeaking = false (الصوت خلص طبيعياً)
           audio.onended = () => {
+            URL.revokeObjectURL(blobUrl);
+            if (myGeneration !== generationRef.current || cancelledRef.current) {
+              return;
+            }
             setSpeaking(false);
             onEndRef.current?.();
-            URL.revokeObjectURL(blobUrl);
           };
 
           audio.onerror = () => {
+            URL.revokeObjectURL(blobUrl);
+            if (myGeneration !== generationRef.current || cancelledRef.current) {
+              return;
+            }
             setSpeaking(false);
             onEndRef.current?.();
-            URL.revokeObjectURL(blobUrl);
           };
 
-          audio.play().catch(() => {
-            setSpeaking(false);
+          audio.play().catch((err) => {
+            console.error('[TTS] play() failed:', err);
             URL.revokeObjectURL(blobUrl);
+            if (myGeneration !== generationRef.current || cancelledRef.current) {
+              return;
+            }
+            setSpeaking(false);
           });
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('[TTS] fetch failed:', err);
+          if (myGeneration !== generationRef.current || cancelledRef.current) {
+            return;
+          }
           setSpeaking(false);
         });
     },
@@ -138,6 +193,10 @@ export function useSpeechSynthesis(
   );
 
   const cancel = useCallback(() => {
+    // ===== علم الإلغاء — منع أي callback قادم من الـ fire =====
+    cancelledRef.current = true;
+    generationRef.current++; // ألغي أي fetch معلّق
+
     const audio = audioRef.current;
     if (audio) {
       try {
@@ -153,7 +212,8 @@ export function useSpeechSynthesis(
       }
     }
     setSpeaking(false);
-    onEndRef.current?.();
+    // ملاحظة: لا نستدعي onEnd هنا — الإلغاء ليس نهاية طبيعية
+    // onEnd بيتستدعى بس لما الصوت يخلص طبيعياً أو يخطئ
   }, []);
 
   const unlock = useCallback(() => {

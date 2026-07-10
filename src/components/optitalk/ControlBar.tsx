@@ -3,7 +3,7 @@
 
 import { motion } from 'framer-motion';
 import { Mic, MicOff, Square, X, Keyboard, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   speechLang: 'en' | 'ar';
   onToggleLang: () => void;
   onMicToggle: () => void;
+  onMicForceRestart?: () => void;
   onStopSpeaking: () => void;
   onEndConversation: () => void;
   onSendText?: (text: string) => void;
@@ -29,6 +30,7 @@ export function ControlBar({
   speechLang,
   onToggleLang,
   onMicToggle,
+  onMicForceRestart,
   onStopSpeaking,
   onEndConversation,
   onSendText,
@@ -36,12 +38,47 @@ export function ControlBar({
   const [textMode, setTextMode] = useState(false);
   const [textInput, setTextInput] = useState('');
 
+  // ===== long-press timer للـ force restart =====
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
   const handleSend = () => {
     const text = textInput.trim();
     if (!text) return;
     onSendText?.(text);
     setTextInput('');
   };
+
+  // ===== long-press handlers لزرار الميك =====
+  const handleMicMouseDown = useCallback(() => {
+    if (!onMicForceRestart) return;
+    longPressTriggeredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      onMicForceRestart();
+    }, 800); // 800ms = long press
+  }, [onMicForceRestart]);
+
+  const handleMicMouseUp = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    // لو الـ long press ما اتشغلش → اتعامل كـ normal click
+    if (!longPressTriggeredRef.current) {
+      onMicToggle();
+    }
+  }, [onMicToggle]);
+
+  const handleMicTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    handleMicMouseDown();
+  }, [handleMicMouseDown]);
+
+  const handleMicTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    handleMicMouseUp();
+  }, [handleMicMouseUp]);
 
   return (
     <div className="border-t border-opti-primary/15 opti-glass px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -132,11 +169,23 @@ export function ControlBar({
             </button>
 
             {/* Main mic / stop button - كبير وواضح دايماً */}
+            {/* ضغطة عادية = تشغيل/إيقاف | ضغطة مطوّلة (800ms) = إعادة تشغيل قسرية */}
             <button
-              onClick={isSpeaking ? onStopSpeaking : onMicToggle}
+              onClick={isSpeaking ? onStopSpeaking : undefined}
+              onMouseDown={isSpeaking ? undefined : handleMicMouseDown}
+              onMouseUp={isSpeaking ? undefined : handleMicMouseUp}
+              onMouseLeave={isSpeaking ? undefined : () => {
+                if (longPressTimerRef.current) {
+                  clearTimeout(longPressTimerRef.current);
+                  longPressTimerRef.current = null;
+                }
+              }}
+              onTouchStart={isSpeaking ? undefined : handleMicTouchStart}
+              onTouchEnd={isSpeaking ? undefined : handleMicTouchEnd}
               disabled={isAiThinking}
+              title={isSpeaking ? 'إيقاف الصوت' : isListening ? 'اضغط للإيقاف • اضغط مطولاً لإعادة التشغيل' : 'اضغط للتحدث • اضغط مطولاً لإعادة التشغيل'}
               className={cn(
-                'relative flex h-16 w-16 items-center justify-center rounded-full transition-all duration-300',
+                'relative flex h-16 w-16 items-center justify-center rounded-full transition-all duration-300 select-none',
                 isListening
                   ? 'bg-opti-error text-white opti-glow scale-110'
                   : isSpeaking

@@ -25,7 +25,19 @@ function cleanText(text: string): string {
     .replace(/[""«»]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  if (out.length > 1024) out = out.slice(0, 1024);
+  // قطّع عند حدود الجملة مش في النص — عشان الصوت ما يتقطعش
+  if (out.length > 1000) {
+    const slice = out.slice(0, 1000);
+    const lastPunct = Math.max(
+      slice.lastIndexOf('. '),
+      slice.lastIndexOf('! '),
+      slice.lastIndexOf('? '),
+      slice.lastIndexOf('.'),
+      slice.lastIndexOf('!'),
+      slice.lastIndexOf('?')
+    );
+    out = lastPunct > 500 ? slice.slice(0, lastPunct + 1) : slice;
+  }
   return out;
 }
 

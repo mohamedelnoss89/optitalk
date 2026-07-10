@@ -8,12 +8,14 @@ import { Flame, Trophy, LogOut, Settings2, Volume2 } from 'lucide-react';
 import { useStore, type ChatMessage } from '@/lib/store';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { useSpeechSynthesis } from '@/hooks/use-speech-synthesis';
+import { useArabicSpeech } from '@/hooks/use-arabic-speech';
 import { TeacherAvatar } from './TeacherAvatar';
 import { StudentCamera } from './StudentCamera';
 import { MessagesList } from './MessagesList';
 import { ControlBar } from './ControlBar';
 import { SettingsSheet } from './SettingsSheet';
 import { ACHIEVEMENTS } from '@/lib/teachers';
+import { getGreeting, STAGE_INFO, type GreetingContext } from '@/lib/greetings';
 import { cn } from '@/lib/utils';
 
 export function ChatScreen() {
@@ -30,6 +32,18 @@ export function ChatScreen() {
     achievements,
     showAchievement,
     speechLang,
+    // ===== التقدم والمرحلة =====
+    learningStage,
+    stageAttempts,
+    messagesCount,
+    lastGreetingIndex,
+    conversationId,
+    // ===== الكلمات اللي اتعلمت =====
+    learnedWords,
+    wordsSinceReview,
+    inReviewMode,
+    currentTargetWord,
+    inSentenceBuilderMode,
     addMessage,
     clearMessages,
     setListening,
@@ -39,26 +53,38 @@ export function ChatScreen() {
     setScreen,
     setShowAchievement,
     setSpeechLang,
+    setConversationId,
+    setLastGreetingIndex,
+    setLearningStage,
     addPoints,
     bumpPerfectStreak,
     resetPerfectStreak,
     addAchievement,
+    bumpStageAttempts,
+    advanceStage,
+    addLearnedWord,
+    setInReviewMode,
+    setCurrentTargetWord,
+    setInSentenceBuilderMode,
   } = useStore();
 
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const greetingSentRef = useRef(false);
-  const convIdRef = useRef<string | null>(null);
+  const convIdRef = useRef<string | null>(conversationId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Speech recognition - لغة الميكروفون بتتحدد حسب اختيار المستخدم (عربي/إنجليزي)
-  // Web Speech API ما بيدعمش التعرف التلقائي على اللغة، فلازم المستخدم يختار
   const recognitionLang = speechLang === 'ar' ? 'ar-EG' : 'en-US';
   const recognition = useSpeechRecognition({
     lang: recognitionLang,
-    onFinal: (transcript) => {
+    onListeningChange: (isListening) => {
+      // ===== مزامنة تلقائية بين الـ hook والـ store =====
+      setListening(isListening);
+    },
+    onFinal: (transcript, confidence) => {
       setListening(false);
-      void handleSendMessage(transcript);
+      void handleSendMessage(transcript, confidence);
     },
     onError: (err) => {
       setListening(false);
@@ -70,7 +96,7 @@ export function ChatScreen() {
     },
   });
 
-  // z-ai TTS hook — بس للإنجليزي، التحكم في isSpeaking بيتم في speakText
+  // z-ai TTS hook — بس للإنجليزي الخالص، التحكم في isSpeaking بيتم في speakText
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
@@ -87,110 +113,114 @@ export function ChatScreen() {
     },
   });
 
+  // ===== Arabic speech hook — Web Speech API + fallback إلى /api/tts-arabic =====
+  // z-ai TTS مفيهاش أصوات عربي، فبنستخدم Web Speech API للعربي والخليط
+  // لو مفيش أصوات عربي في المتصفح، بنرجع لـ /api/tts-arabic (espeak-ng على السيرفر)
+  const arabicSpeech = useArabicSpeech({
+    rate: 0.9,
+    pitch: selectedTeacher?.gender === 'female' ? 1.15 : 0.9,
+    gender: selectedTeacher?.gender,
+    onStart: () => {
+      console.log('[ChatScreen] المدرس بدأ ينطق عربي');
+      setSpeaking(true);
+    },
+    onEnd: () => {
+      console.log('[ChatScreen] المدرس خلص نطق عربي');
+      setSpeaking(false);
+      setSpeakingId(null);
+    },
+    onError: () => {
+      console.error('[ChatScreen] خطأ في النطق العربي');
+      setSpeaking(false);
+      setSpeakingId(null);
+    },
+  });
+
   // ===== Speak helper =====
-  // كل النطق بيتم هنا — Web Speech API للعربي، z-ai TTS للإنجليزي
+  // كل النطق بيتم هنا:
+  // - عربي أو خليط عربي+إنجليزي → useArabicSpeech (Web Speech API موثوق)
+  // - إنجليزي خالص → z-ai TTS (جودة أعلى)
   const speakText = useCallback(
     (text: string, msgId?: string) => {
       const clean = text.replace(/\([^)]*\)/g, '').replace(/[""]/g, '').trim();
       if (!clean) return;
       if (msgId) setSpeakingId(msgId);
 
-      // نحسب نسبة العربي للإنجليزي
+      // ===== نحسب نسبة العربي =====
       const arabicChars = (clean.match(/[\u0600-\u06FF]/g) || []).length;
-      const latinChars = (clean.match(/[a-zA-Z]/g) || []).length;
-      const totalChars = arabicChars + latinChars;
-      const isArabicDominant = totalChars > 0 && (arabicChars / totalChars) > 0.3;
+      const hasArabic = arabicChars > 0;
 
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
       // أوقف أي نطق حالي (سواء عربي أو إنجليزي)
-      window.speechSynthesis.cancel();
+      arabicSpeech.cancel();
       synthesis.cancel();
+      window.speechSynthesis.cancel();
       setSpeaking(false);
 
-      if (isArabicDominant) {
-        // === عربي → Web Speech API ===
-        const utterance = new SpeechSynthesisUtterance(clean);
-        utterance.lang = 'ar-EG';
-        utterance.rate = 0.9;
-        utterance.pitch = selectedTeacher?.gender === 'female' ? 1.2 : 0.9;
-        utterance.volume = 1;
-
-        // اختيار صوت عربي مناسب للجنس
-        const voices = window.speechSynthesis.getVoices();
-        const arabicVoices = voices.filter(v => v.lang.startsWith('ar'));
-        let selectedVoice: SpeechSynthesisVoice | null = null;
-
-        if (arabicVoices.length > 0) {
-          if (selectedTeacher?.gender === 'female') {
-            // ابحث عن صوت أنثى
-            selectedVoice = arabicVoices.find(v =>
-              v.name.toLowerCase().includes('female') ||
-              v.name.toLowerCase().includes('woman') ||
-              v.name.toLowerCase().includes('amira') ||
-              v.name.toLowerCase().includes('salma') ||
-              v.name.toLowerCase().includes('laila') ||
-              v.name.toLowerCase().includes('hoda')
-            ) || arabicVoices[0] || null;
-          } else {
-            // ابحث عن صوت راجل
-            selectedVoice = arabicVoices.find(v =>
-              v.name.toLowerCase().includes('male') ||
-              v.name.toLowerCase().includes('man') ||
-              v.name.toLowerCase().includes('tarik') ||
-              v.name.toLowerCase().includes('maged') ||
-              v.name.toLowerCase().includes('naayf')
-            ) || arabicVoices[0] || null;
-          }
-        }
-
-        if (selectedVoice) utterance.voice = selectedVoice;
-
-        utterance.onstart = () => {
-          setSpeaking(true);
-        };
-        utterance.onend = () => {
-          setSpeaking(false);
-          setSpeakingId(null);
-        };
-        utterance.onerror = () => {
-          setSpeaking(false);
-          setSpeakingId(null);
-        };
-
-        window.speechSynthesis.speak(utterance);
+      if (hasArabic) {
+        // === عربي أو خليط → useArabicSpeech ===
+        // الـ hook بيتحكم في: تحميل الأصوات، Chrome cancel+speak delay،
+        // keep-alive لمنع التعليق، اختيار صوت عربي مناسب للجنس
+        console.log('[ChatScreen] بدء النطق العربي:', clean.substring(0, 80));
+        arabicSpeech.speak(clean);
       } else {
-        // === إنجليزي → z-ai TTS ===
+        // === إنجليزي خالص → z-ai TTS ===
+        console.log('[ChatScreen] بدء النطق الإنجليزي:', clean.substring(0, 80));
         synthesis.speak(clean);
       }
     },
-    [synthesis, setSpeaking, setSpeakingId]
+    [synthesis, arabicSpeech, setSpeaking, setSpeakingId]
   );
 
   // ===== Send greeting on first load =====
+  // الترحيب بيتعمل بس لو مفيش رسائل محفوظة (محادثة جديدة)
+  // لو فيه رسائل محفوظة، يكمل من حيث وقف بدون ترحيب جديد
   useEffect(() => {
     if (!selectedTeacher || greetingSentRef.current) return;
+    // ===== لو فيه رسائل محفوظة، مفيش حاجة جديدة =====
+    if (messages.length > 0) {
+      greetingSentRef.current = true;
+      return;
+    }
     greetingSentRef.current = true;
 
-    // قائمة greetings مختلفة لكل مدرس — عشوائية كل مرة
-    const greetings = [
-      selectedTeacher.greeting,
-      `Ahlan! Welcome back! ${selectedTeacher.nameAr} here. عامل إيه؟ Ready for some English practice today?`,
-      `Hi! Great to see you! I'm ${selectedTeacher.name}. ما الجديد؟ Let's start our English session — what's on your mind?`,
-      `Hello hello! ${selectedTeacher.name} here! يلا نبدأ! What would you like to talk about today?`,
-      `Hey! Nice to see you again! أنا ${selectedTeacher.nameAr}. How was your day? Let's practice some English!`,
-    ];
-    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+    // ===== greeting متغير كل مرة من الـ pool الموسّع =====
+    const level = user?.level || 'beginner';
+    const ctx: GreetingContext = {
+      userName: user?.name || 'صديقي',
+      teacherNameAr: selectedTeacher.nameAr || selectedTeacher.name,
+      teacherName: selectedTeacher.name,
+      learningStage,
+      messagesCount,
+      streak,
+    };
+
+    const { content: greetingContent, index } = getGreeting(level, ctx, lastGreetingIndex);
+    setLastGreetingIndex(index);
 
     const greeting: ChatMessage = {
       id: `greeting-${Date.now()}`,
       role: 'assistant',
-      content: randomGreeting,
+      content: greetingContent,
       correction: null,
       translatedWord: null,
       createdAt: Date.now(),
     };
     addMessage(greeting);
+
+    // ===== استخرج الكلمة المستهدفة من الترحيب =====
+    // لو الترحيب فيه كلمة إنجليزي (للمبتدئ)، احفظها كـ targetWord
+    if (level === 'beginner') {
+      // ابحث عن أول كلمة إنجليزي في الترحيب
+      const englishMatch = greetingContent.match(/\b(Hello|Hi|Welcome|Yes|No|Thank you|Please|Good)\b/i);
+      if (englishMatch) {
+        const firstWord = englishMatch[0];
+        console.log('[OptiTalk] Initial target word from greeting:', firstWord);
+        setCurrentTargetWord(firstWord);
+      }
+    }
+
     // Speak the greeting after a brief delay
     speakText(greeting.content, greeting.id);
   }, [selectedTeacher]);
@@ -199,12 +229,13 @@ export function ChatScreen() {
   useEffect(() => {
     return () => {
       synthesis.cancel();
+      arabicSpeech.cancel();
     };
   }, []);
 
   // ===== Send message to API =====
   const handleSendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, confidence?: number) => {
       if (!user || !selectedTeacher || !text.trim()) return;
 
       const userMsg: ChatMessage = {
@@ -218,8 +249,9 @@ export function ChatScreen() {
       addMessage(userMsg);
       addPoints(1);
       setAiThinking(true);
-      // Stop any ongoing speech — الـ hook هيعمل setSpeaking(false)
+      // Stop any ongoing speech — سواء عربي أو إنجليزي
       synthesis.cancel();
+      arabicSpeech.cancel();
 
       try {
         const history = messages
@@ -237,6 +269,12 @@ export function ChatScreen() {
             conversationHistory: history,
             conversationId: convIdRef.current,
             inputLang: speechLang,
+            learningStage, // أرسل المرحلة الحالية للمدرس
+            confidence: confidence ?? undefined, // أرسل نسبة الثقة في النطق
+            learnedWords, // الكلمات اللي اتعلمت
+            inReviewMode, // هل في وضع المراجعة
+            targetWord: currentTargetWord, // الكلمة المستهدفة الحالية
+            inSentenceBuilderMode, // هل في وضع بناء الجمل
           }),
         });
 
@@ -267,6 +305,36 @@ export function ChatScreen() {
           bumpPerfectStreak();
         }
 
+        // ===== استخرج الكلمة المستهدفة الجديدة من رد المدرس =====
+        // الـ translatedWord بصيغة: "englishWord (النطق) = الترجمة"
+        // نستخرج الكلمة الإنجليزي ونحفظها كـ targetWord
+        if (data.translatedWord) {
+          const match = data.translatedWord.match(/^([a-zA-Z][a-zA-Z\s]*?)(?:\s*\()/);
+          if (match) {
+            const newTargetWord = match[1].trim();
+            console.log('[OptiTalk] New target word:', newTargetWord);
+            setCurrentTargetWord(newTargetWord);
+
+            // لو المدرس علّم كلمة جديدة (confidence عالي ومفيش correction) → أضفها للكلمات اللي اتعلمت
+            if (user?.level === 'beginner' && !data.correction && confidence && confidence >= 0.6 && !learnedWords.includes(newTargetWord)) {
+              addLearnedWord(newTargetWord);
+            }
+          }
+        }
+
+        // ===== لو كنا في وضع المراجعة وخلصنا → ابدأ وضع بناء الجمل =====
+        if (inReviewMode && !data.correction && confidence && confidence >= 0.6) {
+          // المراجعة خلصت بنجاح → ابدأ وضع بناء الجمل
+          console.log('[OptiTalk] Review done → starting sentence builder mode');
+          setInReviewMode(false);
+          setInSentenceBuilderMode(true);
+        }
+        // ===== لو كنا في وضع بناء الجمل وخلصنا → اخرج من الوضع =====
+        else if (inSentenceBuilderMode && !data.correction && confidence && confidence >= 0.6) {
+          console.log('[OptiTalk] Sentence builder done');
+          setInSentenceBuilderMode(false);
+        }
+
         // Speak the reply
         speakText(aiMsg.content, aiMsg.id);
       } catch (err) {
@@ -285,7 +353,7 @@ export function ChatScreen() {
         setAiThinking(false);
       }
     },
-    [user, selectedTeacher, messages, addMessage, addPoints, setAiThinking, synthesis, speakText, resetPerfectStreak, bumpPerfectStreak, speechLang]
+    [user, selectedTeacher, messages, addMessage, addPoints, setAiThinking, synthesis, arabicSpeech, speakText, resetPerfectStreak, bumpPerfectStreak, speechLang, learningStage, learnedWords, inReviewMode, currentTargetWord, inSentenceBuilderMode, addLearnedWord, setInReviewMode, setCurrentTargetWord, setInSentenceBuilderMode]
   );
 
   // ===== Mic toggle =====
@@ -294,39 +362,77 @@ export function ChatScreen() {
       toast.error('المتصفح مش بيدعم التعرف على الصوت. استخدم الكتابة');
       return;
     }
+    // لو المدرس بيتكلم → وقف الصوت
     if (isSpeaking) {
       synthesis.cancel();
+      arabicSpeech.cancel();
       return;
     }
+    // لو الميك شغال → وقفه
     if (isListening) {
       recognition.stop();
-      setListening(false);
-    } else {
-      synthesis.cancel();
-      setListening(true);
-      recognition.start();
+      // الـ hook هيحدث isListening تلقائياً عبر onListeningChange
+      return;
     }
-  }, [recognition, isListening, isSpeaking, synthesis, setListening]);
+    // ===== الميك مفصول → ابدأ =====
+    // أوقف أي صوت أول
+    synthesis.cancel();
+    arabicSpeech.cancel();
+    // ابدأ الميك — الـ hook هيحدث isListening تلقائياً
+    recognition.start();
+  }, [recognition, isListening, isSpeaking, synthesis, arabicSpeech]);
+
+  // ===== Force restart للحالات العالقة =====
+  // بيتنفذ لو المستخدم ضغط مطوّل على زرار الميك
+  const handleMicForceRestart = useCallback(() => {
+    if (!recognition.supported) return;
+    toast.info('إعادة تشغيل الميكروفون...');
+    recognition.forceRestart();
+  }, [recognition]);
 
   const handleStopSpeaking = useCallback(() => {
     synthesis.cancel();
-  }, [synthesis]);
+    arabicSpeech.cancel();
+  }, [synthesis, arabicSpeech]);
 
-  // ===== End conversation =====
+  // ===== End conversation (يحفظ المحادثة ولا يمسحها) =====
+  // المستخدم لما يضغط X، بنوقف الصوت بس بنحتفظ بالرسائل
+  // عشان لما يرجع يكمل من حيث وقف
   const handleEnd = useCallback(() => {
     synthesis.cancel();
+    arabicSpeech.cancel();
     recognition.stop();
     setListening(false);
     setAiThinking(false);
     setSpeakingId(null);
-    toast.success('انتهت المحادثة. شكراً لك! 🎓');
+    // احفظ conversationId في الـ store
+    if (convIdRef.current) {
+      setConversationId(convIdRef.current);
+    }
+    toast.success('محادثتك محفوظة — تقدر ترجع في أي وقت! 🎓');
+    // روح لـ welcome — المستخدم ممكن يرجع يكمل
     setScreen('welcome');
-    setTimeout(() => {
-      clearMessages();
-      greetingSentRef.current = false;
-      convIdRef.current = null;
-    }, 300);
-  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, setScreen, clearMessages]);
+  }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, setScreen, setConversationId]);
+
+  // ===== Start new conversation (روح لشاشة اختيار المدرس) =====
+  const handleNewConversation = useCallback(() => {
+    synthesis.cancel();
+    arabicSpeech.cancel();
+    recognition.stop();
+    setListening(false);
+    setAiThinking(false);
+    setSpeakingId(null);
+    clearMessages();
+    setConversationId(null);
+    setCurrentTargetWord(null); // امسح الكلمة المستهدفة
+    setInReviewMode(false);
+    setInSentenceBuilderMode(false);
+    greetingSentRef.current = false;
+    convIdRef.current = null;
+    // روح لشاشة اختيار المدرس
+    toast.success('اختار المدرس اللي عايزه! 🎓');
+    setScreen('teacher-select');
+  }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
 
   // ===== Replay a message =====
   const handleReplay = useCallback(
@@ -370,6 +476,18 @@ export function ChatScreen() {
           <LogOut className="h-3.5 w-3.5" />
         </button>
         <div className="flex items-center gap-2">
+          {/* ===== مؤشر المرحلة للمبتدئ ===== */}
+          {user?.level === 'beginner' && (
+            <div
+              className="flex items-center gap-1 rounded-lg opti-glass-teal px-2 py-1 border border-opti-accent/30"
+              title={`المرحلة ${learningStage} من 5: ${STAGE_INFO[learningStage]?.desc || ''}`}
+            >
+              <span className="text-[10px]">{STAGE_INFO[learningStage]?.emoji || '📚'}</span>
+              <span className="text-[10px] font-bold text-opti-accent">
+                {learningStage}/5
+              </span>
+            </div>
+          )}
           <StatPill icon={<Flame className="h-3 w-3" />} value={streak} color="text-opti-error" />
           <StatPill icon={<Trophy className="h-3 w-3" />} value={points} color="text-opti-gold" />
         </div>
@@ -423,6 +541,7 @@ export function ChatScreen() {
           speechLang={speechLang}
           onToggleLang={() => setSpeechLang(speechLang === 'ar' ? 'en' : 'ar')}
           onMicToggle={handleMicToggle}
+          onMicForceRestart={handleMicForceRestart}
           onStopSpeaking={handleStopSpeaking}
           onEndConversation={handleEnd}
           onSendText={(text) => void handleSendMessage(text)}
@@ -435,7 +554,7 @@ export function ChatScreen() {
         onClose={() => setShowSettings(false)}
         onReset={() => {
           setShowSettings(false);
-          handleEnd();
+          handleNewConversation();
         }}
       />
 
