@@ -1,7 +1,8 @@
-// ===== OptiTalk - Messages List (بدون scroll - عرض آخر رسالتين) =====
+// ===== OptiTalk - Messages List (مع scroll + RTL مظبوط) =====
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 import { Check, AlertCircle, Languages, Volume2 } from 'lucide-react';
 import type { ChatMessage } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -14,13 +15,23 @@ interface Props {
 }
 
 export function MessagesList({ messages, isThinking, onReplay, speakingId }: Props) {
-  // نعرض آخر 4 رسايل بس (بدون scroll)
-  const recentMessages = messages.slice(-4);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // scroll لتحت تلقائياً لما تيجي رسالة جديدة
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isThinking]);
 
   return (
-    <div className="flex h-full flex-col justify-end gap-2 px-3 py-3">
+    <div
+      ref={scrollRef}
+      className="flex h-full flex-col gap-2 overflow-y-auto px-3 py-3 scroll-smooth"
+      style={{ direction: 'rtl' }}
+    >
       <AnimatePresence initial={false} mode="popLayout">
-        {recentMessages.map((m) => (
+        {messages.map((m) => (
           <MessageBubble
             key={m.id}
             msg={m}
@@ -67,16 +78,16 @@ function MessageBubble({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
-      className={cn('flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}
+      className={cn('flex flex-col gap-1', isUser ? 'items-start' : 'items-end')}
     >
       <div
         className={cn(
           'group relative max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-md',
           isUser
-            ? 'rounded-br-md opti-primary-gradient text-white'
+            ? 'rounded-bl-md opti-primary-gradient text-white'
             : hasCorrection
-            ? 'rounded-bl-md opti-glass-teal text-opti-text border border-opti-success/30'
-            : 'rounded-bl-md opti-glass text-opti-text'
+            ? 'rounded-br-md opti-glass-teal text-opti-text border border-opti-success/30'
+            : 'rounded-br-md opti-glass text-opti-text'
         )}
       >
         {/* Speaker label */}
@@ -89,7 +100,10 @@ function MessageBubble({
           {isUser ? 'You' : 'Teacher'}
         </div>
 
-        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+        {/* النص — direction يتحدد تلقائياً حسب المحتوى */}
+        <p className="whitespace-pre-wrap break-words" style={{ direction: 'auto', textAlign: 'right' }}>
+          {msg.content}
+        </p>
 
         {/* Replay button for teacher messages */}
         {!isUser && onReplay && (
@@ -113,7 +127,7 @@ function MessageBubble({
           animate={{ opacity: 1, height: 'auto' }}
           className="max-w-[85%] overflow-hidden rounded-xl border border-opti-gold/30 bg-opti-gold/10 px-3 py-2"
         >
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2" style={{ direction: 'rtl' }}>
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-opti-gold" />
             <div className="min-w-0">
               <div className="text-[9px] font-bold text-opti-gold">تصحيح المدرس</div>
@@ -131,6 +145,7 @@ function MessageBubble({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="max-w-[85%] flex items-center gap-1.5 rounded-lg bg-opti-primary/10 px-2 py-1"
+          style={{ direction: 'rtl' }}
         >
           <Languages className="h-3 w-3 shrink-0 text-opti-primary" />
           <span className="text-[10px] text-opti-text/75" dir="rtl">{msg.translatedWord}</span>
