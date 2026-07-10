@@ -75,7 +75,7 @@ export default function Home() {
 
         {currentScreen === 'chat' && (
           <motion.div
-            key="chat"
+            key={`chat-${selectedTeacher?.id || 'no-teacher'}`}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.02 }}
