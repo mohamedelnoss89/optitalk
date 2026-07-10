@@ -70,16 +70,18 @@ export function ChatScreen() {
     },
   });
 
-  // Speech synthesis — isSpeaking بيتتحكم فيه من audio events عبر onStart/onEnd
+  // z-ai TTS hook — بس للإنجليزي، التحكم في isSpeaking بيتم في speakText
   const synthesis = useSpeechSynthesis({
     lang: 'en-US',
     rate: 0.9,
     pitch: 1,
     preferGender: selectedTeacher?.gender,
     onStart: () => {
+      // z-ai TTS بدأ → isSpeaking = true
       setSpeaking(true);
     },
     onEnd: () => {
+      // z-ai TTS خلص → isSpeaking = false
       setSpeaking(false);
       setSpeakingId(null);
     },
@@ -111,12 +113,38 @@ export function ChatScreen() {
         const utterance = new SpeechSynthesisUtterance(clean);
         utterance.lang = 'ar-EG';
         utterance.rate = 0.9;
-        utterance.pitch = 1;
+        utterance.pitch = selectedTeacher?.gender === 'female' ? 1.2 : 0.9;
         utterance.volume = 1;
 
+        // اختيار صوت عربي مناسب للجنس
         const voices = window.speechSynthesis.getVoices();
-        const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
-        if (arabicVoice) utterance.voice = arabicVoice;
+        const arabicVoices = voices.filter(v => v.lang.startsWith('ar'));
+        let selectedVoice = null;
+
+        if (arabicVoices.length > 0) {
+          if (selectedTeacher?.gender === 'female') {
+            // ابحث عن صوت أنثى
+            selectedVoice = arabicVoices.find(v =>
+              v.name.toLowerCase().includes('female') ||
+              v.name.toLowerCase().includes('woman') ||
+              v.name.toLowerCase().includes('amira') ||
+              v.name.toLowerCase().includes('salma') ||
+              v.name.toLowerCase().includes('laila') ||
+              v.name.toLowerCase().includes('hoda')
+            ) || arabicVoices[0];
+          } else {
+            // ابحث عن صوت راجل
+            selectedVoice = arabicVoices.find(v =>
+              v.name.toLowerCase().includes('male') ||
+              v.name.toLowerCase().includes('man') ||
+              v.name.toLowerCase().includes('tarik') ||
+              v.name.toLowerCase().includes('maged') ||
+              v.name.toLowerCase().includes('naayf')
+            ) || arabicVoices[0];
+          }
+        }
+
+        if (selectedVoice) utterance.voice = selectedVoice;
 
         utterance.onstart = () => {
           setSpeaking(true);
