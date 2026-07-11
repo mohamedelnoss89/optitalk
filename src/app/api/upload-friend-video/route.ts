@@ -1,15 +1,16 @@
 // ===== OptiTalk - Upload Friend Video API =====
 // POST /api/upload-friend-video
 // Body: FormData with file and friendId
-// Saves to public/videos/{friendId}.mp4
+// Saves to public/videos/{friendId}.mp4 (both standalone and source)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { existsSync } from 'fs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,19 +26,25 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const videosDir = join(process.cwd(), 'public', 'videos');
     
-    // تأكد إن المجلد موجود
-    try {
-      await mkdir(videosDir, { recursive: true });
-    } catch {
-      // already exists
+    // ===== احفظ في كل المسارات الممكنة =====
+    const paths = [
+      join(process.cwd(), 'public', 'videos'),           // standalone
+      '/home/z/my-project/repos/optitalk/public/videos',  // source
+    ];
+
+    for (const dir of paths) {
+      try {
+        if (!existsSync(dir)) {
+          await mkdir(dir, { recursive: true });
+        }
+        const filePath = join(dir, `${friendId}.mp4`);
+        await writeFile(filePath, buffer);
+        console.log(`[Upload] Saved to: ${filePath} (${buffer.length} bytes)`);
+      } catch (err) {
+        console.warn(`[Upload] Could not save to ${dir}:`, err);
+      }
     }
-
-    const filePath = join(videosDir, `${friendId}.mp4`);
-    await writeFile(filePath, buffer);
-
-    console.log(`[Upload] Saved: ${friendId}.mp4 (${buffer.length} bytes)`);
 
     return NextResponse.json({
       success: true,
