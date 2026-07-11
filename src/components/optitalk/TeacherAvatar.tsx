@@ -30,7 +30,15 @@ export function TeacherAvatar({
       video.currentTime = 0;
       video.muted = true;
       video.loop = true;
-      video.play().catch(() => {});
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.play().catch((e) => {
+        console.warn('[TeacherAvatar] Video play failed:', e);
+        // retry بعد 200ms
+        setTimeout(() => {
+          video.play().catch(() => {});
+        }, 200);
+      });
     } else {
       video.pause();
       video.currentTime = 0;

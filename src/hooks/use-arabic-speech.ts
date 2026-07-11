@@ -133,9 +133,38 @@ export function useArabicSpeech(
     if (typeof window === 'undefined') return;
     const audio = new Audio();
     audio.preload = 'auto';
+    // ===== مهم للموبايل: السماح بالتشغيل التلقائي =====
+    audio.setAttribute('playsinline', 'true');
+    audio.setAttribute('webkit-playsinline', 'true');
     audioRef.current = audio;
 
+    // ===== أهم خطوة للموبايل: unlock الصوت بأول تفاعل =====
+    // الموباير بيبقى الصوت muted تلقائياً حتى يحصل تفاعل
+    const unlockAudio = () => {
+      try {
+        audio.muted = true;
+        audio.play().then(() => {
+          audio.pause();
+          audio.muted = false;
+          audio.currentTime = 0;
+          console.log('[ArabicSpeech] 🔓 Audio unlocked for mobile');
+        }).catch(() => {
+          audio.muted = false;
+        });
+      } catch {
+        // ignore
+      }
+    };
+
+    // unlock بأول تفاعل (touch, click, keydown)
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+
     return () => {
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
       try {
         audio.onplay = null;
         audio.onended = null;
