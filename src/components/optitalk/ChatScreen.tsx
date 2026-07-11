@@ -555,11 +555,11 @@ export function ChatScreen() {
       {/* ===== الطالب + المحادثة + التحكم - 65% ===== */}
       <section className="relative z-10 flex flex-col overflow-hidden" style={{ height: '65%', flexShrink: 0 }}>
         {/* كاميرا الطالب */}
-        <div className="relative flex-1 min-h-0">
+        <div className="relative shrink-0" style={{ height: '120px' }}>
           <StudentCamera
             enabled={cameraEnabled}
             onToggle={handleToggleCamera}
-            compact={false}
+            compact={true}
           />
         </div>
 
