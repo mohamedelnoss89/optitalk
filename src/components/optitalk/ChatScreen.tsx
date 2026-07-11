@@ -434,6 +434,25 @@ export function ChatScreen() {
     setScreen('teacher-select');
   }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
 
+  // ===== Go Home (ارجع لأول صفحة وامسح المحادثة) =====
+  const handleGoHome = useCallback(() => {
+    synthesis.cancel();
+    arabicSpeech.cancel();
+    recognition.stop();
+    setListening(false);
+    setAiThinking(false);
+    setSpeakingId(null);
+    clearMessages();
+    setConversationId(null);
+    setCurrentTargetWord(null);
+    setInReviewMode(false);
+    setInSentenceBuilderMode(false);
+    greetingSentRef.current = false;
+    convIdRef.current = null;
+    // ارجع لأول صفحة (welcome screen)
+    setScreen('welcome');
+  }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
+
   // ===== Replay a message =====
   const handleReplay = useCallback(
     (msg: ChatMessage) => {
@@ -487,7 +506,7 @@ export function ChatScreen() {
           </button>
           {/* ===== زرار الصفحة الرئيسية ===== */}
           <button
-            onClick={handleEnd}
+            onClick={handleGoHome}
             className="flex h-7 w-7 items-center justify-center rounded-lg opti-glass text-opti-gold hover:bg-opti-gold/10"
             aria-label="الصفحة الرئيسية"
             title="الصفحة الرئيسية"
