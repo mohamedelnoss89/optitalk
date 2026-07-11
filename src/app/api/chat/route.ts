@@ -33,6 +33,7 @@ interface ChatRequest {
   inReviewMode?: boolean; // هل المدرس في وضع المراجعة
   targetWord?: string | null; // الكلمة المستهدفة الحالية
   inSentenceBuilderMode?: boolean; // هل المدرس في وضع بناء الجمل
+  isFriend?: boolean; // هل ده صديق مش مدرس
 }
 
 interface AIResponse {
@@ -41,7 +42,9 @@ interface AIResponse {
   translatedWord: string | null;
 }
 
-const SYSTEM_PROMPT_TEMPLATE = `أنت {teacherName}، مدرس لغة إنجليزية محترف في مكالمة فيديو حية مع طالبك {userName}.
+const SYSTEM_PROMPT_TEMPLATE = `أنت {teacherName}، {roleDescription} في مكالمة فيديو حية مع {userName}.
+
+{friendMode}
 
 🤝🤝🤝 العلاقة بينك وبين الطالب — أهم قسم في الـ prompt 🤝🤝🤝
 انت مش مجرد مدرس بيدي درس ويسأل اسئلة. انت صاحب الطالب ومدرسه في نفس الوقت. العلاقة بينكم مفتوحة وطبيعية زي ما الناس بتتكلم في الحياة.
@@ -410,7 +413,7 @@ function isTargetWordMatched(transcript: string, targetWord: string | null | und
   };
 }
 
-function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user'], inputLang: 'en' | 'ar' = 'en', learningStage: number = 1, confidence?: number, learnedWords: string[] = [], inReviewMode: boolean = false, targetWord: string | null = null, matchResult?: { matched: boolean; similarity: number; transcript: string; target: string }, inSentenceBuilderMode: boolean = false): string {
+function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user'], inputLang: 'en' | 'ar' = 'en', learningStage: number = 1, confidence?: number, learnedWords: string[] = [], inReviewMode: boolean = false, targetWord: string | null = null, matchResult?: { matched: boolean; similarity: number; transcript: string; target: string }, inSentenceBuilderMode: boolean = false, isFriend: boolean = false): string {
   // ===== حوّل confidence لنسبة مئوية ووصف =====
   const confidencePercent = confidence !== undefined ? Math.round(confidence * 100) : null;
   let confidenceDesc = 'مش متوفر (الطالب كتب النص)';
@@ -454,8 +457,29 @@ function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user'], inputLan
     ? '🟣 في وضع بناء الجمل — استخدم الكلمات اللي اتعلمت عشان تبني جملة بسيطة'
     : '⬜ مش في وضع بناء الجمل';
 
+  // ===== صديق أو مدرس =====
+  const roleDescription = isFriend ? 'صديق بتتكلم معاه' : 'مدرس لغة إنجليزية محترف';
+  const friendMode = isFriend ? `👥👥👥 أنت صديق مش مدرس 👥👥👥
+انت صاحب الطالب، مش مدرسه. بتتكلموا مع بعض زي الأصحاب.
+
+💡 قواعد الصديق:
+1. **متدرّبش**: انت مش بتدي درس. بتتكلم مع صاحبك عادي.
+2. **اتكلم طبيعي**: زي ما الأصحاب بيتكلموا — عن يومك، هواياتك، رأيك في حاجة.
+3. **لو صاحبك غلط في إنجليزي**: صحّحله بهدوء زي ما أصحاب بيفعلوا. قول: "والله الصح كده..." أو "أنا أقولها كده..."
+4. **لو صاحبك مش عارف يقول إيه**: علّمه! قوله: "تقدر تقول كده..." أو "أنا أقولها كده..."
+5. **اسأل صاحبك أسئلة**: عن يومه، هواياته، رأيه. خلي المحادثة تبادلية.
+6. **احكي عن نفسك**: احكي عن يومك، هواياتك، اللي بتعمله.
+7. **استخدم تعابير يومية**: "يا صاحبي"، "والله"، "فعلاً"، "صح كده".
+8. **خليك طبيعي**: متحولهاش درس. لو صاحبك قال حاجة بالعربي، رد عليه طبيعي وعلّمه الكلمة بالإنجليزي لو محتاج.
+
+📝 أمثلة:
+- صاحبك: "أنا رحت الشغل النهاردة" → "تمام يا صاحبي! بالإنجليزي نقول: I went to work. إنت شغلك إيه بالظبط؟"
+- صاحبك: "مش عارف أقول إزاي أنا تعبان" → "أنا أقولها كده: I'm so tired. شغل كتير النهاردة؟"
+- صاحبك: "إيه news؟" → "هههه صح! I'm good, just chilling. إنت عامل إيه؟"` : '';
+
   return SYSTEM_PROMPT_TEMPLATE
     .replaceAll('{teacherName}', teacher.name)
+    .replaceAll('{roleDescription}', roleDescription)
     .replaceAll('{userName}', user.name || 'student')
     .replaceAll('{userAge}', user.age || 'unknown')
     .replaceAll('{userGender}', user.gender || 'unknown')
@@ -467,6 +491,7 @@ function buildSystemPrompt(teacher: Teacher, user: ChatRequest['user'], inputLan
     .replaceAll('{targetWord}', targetWordDesc)
     .replaceAll('{matchResult}', matchDesc)
     .replaceAll('{sentenceBuilderStatus}', sentenceBuilderStatus)
+    .replaceAll('{friendMode}', friendMode)
     .replaceAll('{teacherPersonality}', teacher.personality)
     .replaceAll('{teacherTeachingStyle}', teacher.teachingStyle)
     .replaceAll('{inputLang}', inputLang);
@@ -521,7 +546,7 @@ function extractJson(content: string): AIResponse {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ChatRequest;
-    const { message, teacher, user, conversationHistory, inputLang, learningStage, confidence, learnedWords, inReviewMode, targetWord, inSentenceBuilderMode } = body;
+    const { message, teacher, user, conversationHistory, inputLang, learningStage, confidence, learnedWords, inReviewMode, targetWord, inSentenceBuilderMode, isFriend } = body;
 
     if (!message || !teacher || !user) {
       return NextResponse.json(
@@ -538,9 +563,10 @@ export async function POST(req: NextRequest) {
       message: message.substring(0, 50),
       matchResult: matchResult ? { matched: matchResult.matched, similarity: matchResult.similarity, transcript: matchResult.transcript } : null,
       inSentenceBuilderMode,
+      isFriend,
     });
 
-    const systemPrompt = buildSystemPrompt(teacher, user, inputLang ?? 'en', learningStage ?? 1, confidence, learnedWords || [], inReviewMode || false, targetWord ?? null, matchResult, inSentenceBuilderMode || false);
+    const systemPrompt = buildSystemPrompt(teacher, user, inputLang ?? 'en', learningStage ?? 1, confidence, learnedWords || [], inReviewMode || false, targetWord ?? null, matchResult, inSentenceBuilderMode || false, isFriend || false);
 
     // ===== تحكم في الـ AI حسب المستوى =====
     // المبتدئ: max_tokens قليل + temperature منخفضة = ردود قصيرة ومتوقعة

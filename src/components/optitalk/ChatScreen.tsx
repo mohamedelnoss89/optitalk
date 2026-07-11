@@ -275,6 +275,7 @@ export function ChatScreen() {
             inReviewMode, // هل في وضع المراجعة
             targetWord: currentTargetWord, // الكلمة المستهدفة الحالية
             inSentenceBuilderMode, // هل في وضع بناء الجمل
+            isFriend: selectedTeacher?.id.startsWith('friend-'), // هل ده صديق
           }),
         });
 
