@@ -611,19 +611,20 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = buildSystemPrompt(teacher, user, inputLang ?? 'en', learningStage ?? 1, confidence, learnedWords || [], inReviewMode || false, targetWord ?? null, matchResult, inSentenceBuilderMode || false, isFriend || false);
 
-    // ===== تحكم في الـ AI حسب المستوى =====
-    // المبتدئ: max_tokens قليل + temperature منخفضة = ردود قصيرة ومتوقعة
-    // المتوسط: max_tokens متوسط + temperature متوسطة
-    // المتقدم: max_tokens أعلى + temperature أعلى = ردود طبيعية ومتنوعة
-    const level = user.level || 'beginner';
+    // ===== تحكم في الـ AI حسب النوع والمستوى =====
     let maxTokens: number;
     let temperature: number;
     let historyLimit: number;
 
-    if (level === 'beginner') {
-      maxTokens = 400;       // ردود قصيرة جداً
-      temperature = 0.5;     // ردود متوقعة ومتسقة
-      historyLimit = 4;      // history قصير عشان الـ AI ما يتأثرش بالردود الطويلة القديمة
+    if (isFriend) {
+      // ===== الأصدقاء: ردود طبيعية، متنوعة، تفتكر المحادثة كلها =====
+      maxTokens = 800;
+      temperature = 0.9;     // تنوع عالي عشان المحادثة تكون طبيعية
+      historyLimit = 12;     // تفتكر محادثة أطول
+    } else if (level === 'beginner') {
+      maxTokens = 400;
+      temperature = 0.5;
+      historyLimit = 4;
     } else if (level === 'intermediate') {
       maxTokens = 700;
       temperature = 0.7;
@@ -637,47 +638,49 @@ export async function POST(req: NextRequest) {
     // Build messages for the AI
     const recentHistory = (conversationHistory || []).slice(-historyLimit);
 
-    // ===== أضف context للـ user message عشان الـ AI ياخد باله من الـ confidence والمراجعة والكلمة المستهدفة =====
+    // ===== أضف context للـ user message =====
     let userMessageWithContext = message;
     const contextParts: string[] = [];
 
-    if (confidence !== undefined) {
-      const confidencePercent = Math.round(confidence * 100);
-      let pronunciationNote = '';
-      if (confidencePercent >= 80) {
-        pronunciationNote = `(نطق ممتاز ${confidencePercent}%)`;
-      } else if (confidencePercent >= 60) {
-        pronunciationNote = `(نطق كويس ${confidencePercent}% — يحتاج تحسّن بسيط)`;
-      } else if (confidencePercent >= 40) {
-        pronunciationNote = `(نطق متوسط ${confidencePercent}% — النطق محتاج شغل)`;
-      } else {
-        pronunciationNote = `(نطق ضعيف ${confidencePercent}% — الكلمات مش واضحة)`;
+    // ===== للأصدقاء: مفيش targetWord ولا confidence context =====
+    if (!isFriend) {
+      if (confidence !== undefined) {
+        const confidencePercent = Math.round(confidence * 100);
+        let pronunciationNote = '';
+        if (confidencePercent >= 80) {
+          pronunciationNote = `(نطق ممتاز ${confidencePercent}%)`;
+        } else if (confidencePercent >= 60) {
+          pronunciationNote = `(نطق كويس ${confidencePercent}% — يحتاج تحسّن بسيط)`;
+        } else if (confidencePercent >= 40) {
+          pronunciationNote = `(نطق متوسط ${confidencePercent}% — النطق محتاج شغل)`;
+        } else {
+          pronunciationNote = `(نطق ضعيف ${confidencePercent}% — الكلمات مش واضحة)`;
+        }
+        contextParts.push(pronunciationNote);
       }
-      contextParts.push(pronunciationNote);
-    }
 
-    if (targetWord && matchResult) {
-      const matchNote = matchResult.matched
-        ? `[✅ الكلمة المطلوبة "${targetWord}" — الطالب نطق "${matchResult.transcript}" — مطابق (تشابه ${matchResult.similarity}%)]`
-        : `[❌ الكلمة المطلوبة "${targetWord}" — الطالب نطق "${matchResult.transcript}" — غير مطابق (تشابه ${matchResult.similarity}%) — نطقها غلط]`;
-      contextParts.push(matchNote);
-    }
+      if (targetWord && matchResult) {
+        const matchNote = matchResult.matched
+          ? `[✅ الكلمة المطلوبة "${targetWord}" — الطالب نطق "${matchResult.transcript}" — مطابق (تشابه ${matchResult.similarity}%)]`
+          : `[❌ الكلمة المطلوبة "${targetWord}" — الطالب نطق "${matchResult.transcript}" — غير مطابق (تشابه ${matchResult.similarity}%) — نطقها غلط]`;
+        contextParts.push(matchNote);
+      }
 
-    if (inReviewMode) {
-      contextParts.push(`[🟡 في وضع المراجعة — راجع الكلمات: ${(learnedWords || []).slice(-8).join('، ')}]`);
-    }
+      if (inReviewMode) {
+        contextParts.push(`[🟡 في وضع المراجعة — راجع الكلمات: ${(learnedWords || []).slice(-8).join('، ')}]`);
+      }
 
-    if (inSentenceBuilderMode) {
-      contextParts.push(`[🟣 في وضع بناء الجمل — ابنى جملة من: ${(learnedWords || []).slice(-8).join('، ')}]`);
+      if (inSentenceBuilderMode) {
+        contextParts.push(`[🟣 في وضع بناء الجمل — ابنى جملة من: ${(learnedWords || []).slice(-8).join('، ')}]`);
+      }
     }
 
     if (contextParts.length > 0) {
       userMessageWithContext = `[الطالب قال]: "${message}" ${contextParts.join(' ')}`;
     }
 
-    // ===== أضف تذكير للـ AI بخصوص المحادثة الطبيعية =====
+    // ===== أضف تذكير للـ AI بخصوص المحادثة الطبيعية (للمدرسين فقط) =====
     if (!isFriend && !inReviewMode && !inSentenceBuilderMode) {
-      // لو الطالب بيتكلم في حاجة مش درس (فيها عربي أو حكي)
       const hasArabic = /[\u0600-\u06FF]/.test(message);
       const isCasualChat = hasArabic && !targetWord;
       if (isCasualChat) {
