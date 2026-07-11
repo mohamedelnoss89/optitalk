@@ -240,7 +240,7 @@ async function generateWithEspeak(
   }
 }
 
-// ===== توليد الصوت (صوت مختلف حسب الجنس) =====
+// ===== توليد الصوت (صوت مختلف حسب الجنس - جودة عالية) =====
 async function generateArabicTTS(
   text: string,
   options: { gender?: string; speed?: number; pitch?: number }
@@ -252,10 +252,10 @@ async function generateArabicTTS(
   console.log(`[TTS-Arabic] Text: "${text.substring(0, 80)}" | dominant lang: ${lang} | gender: ${gender}`);
 
   // ===== استراتيجية مختلفة حسب الجنس =====
-  // - female → Google Translate TTS (صوت أنثوي طبيعي)
-  // - male → espeak-ng بصوت ذكوري (pitch منخفض)
+  // - female → Google Translate TTS (صوت أنثوي طبيعي عالي الجودة)
+  // - male → Google Translate TTS + ffmpeg pitch shift (صوت ذكوري عالي الجودة)
   if (gender === 'female') {
-    // ست → Google TTS (صوت أنثوي)
+    // ست → Google TTS مباشرة (صوت أنثوي)
     console.log(`[TTS-Arabic] Female voice → Google TTS (tl=${lang})`);
     const googleMp3 = await generateWithGoogleTTS(text, lang);
     if (googleMp3 && googleMp3.length > 1000) {
@@ -267,20 +267,81 @@ async function generateArabicTTS(
     const wav = await generateWithEspeak(text, lang, { ...options, gender: 'female' });
     return { buffer: wav, contentType: 'audio/wav' };
   } else {
-    // راجل → espeak-ng بصوت ذكوري (pitch منخفض)
-    console.log(`[TTS-Arabic] Male voice → espeak-ng (pitch=35)`);
+    // راجل → Google TTS + ffmpeg pitch shift
+    console.log(`[TTS-Arabic] Male voice → Google TTS + ffmpeg pitch shift`);
     try {
-      const wav = await generateWithEspeak(text, lang, { ...options, gender: 'male' });
-      console.log(`[TTS-Arabic] espeak-ng success: ${wav.length} bytes (male)`);
-      return { buffer: wav, contentType: 'audio/wav' };
-    } catch (err) {
-      console.warn(`[TTS-Arabic] espeak-ng failed, falling back to Google TTS:`, err);
+      // ابدأ بـ Google TTS
       const googleMp3 = await generateWithGoogleTTS(text, lang);
       if (googleMp3 && googleMp3.length > 1000) {
+        // طبّق pitch shift بـ ffmpeg عشان نخليه صوت راجل
+        console.log(`[TTS-Arabic] Applying ffmpeg pitch shift to make male voice`);
+        const maleMp3 = await applyMalePitchShift(googleMp3);
+        if (maleMp3 && maleMp3.length > 1000) {
+          console.log(`[TTS-Arabic] Male voice success: ${maleMp3.length} bytes`);
+          return { buffer: maleMp3, contentType: 'audio/mpeg' };
+        }
+        // لو ffmpeg فشل، استخدم Google TTS زي ما هو
+        console.warn(`[TTS-Arabic] ffmpeg pitch shift failed, using original Google TTS`);
         return { buffer: googleMp3, contentType: 'audio/mpeg' };
       }
-      throw new Error('All TTS methods failed for male voice');
+      // fallback إلى espeak-ng بصوت ذكوري
+      console.warn(`[TTS-Arabic] Google TTS failed, falling back to espeak-ng (male)`);
+      const wav = await generateWithEspeak(text, lang, { ...options, gender: 'male' });
+      return { buffer: wav, contentType: 'audio/wav' };
+    } catch (err) {
+      console.warn(`[TTS-Arabic] Male voice generation failed:`, err);
+      // fallback أخير إلى espeak-ng
+      try {
+        const wav = await generateWithEspeak(text, lang, { ...options, gender: 'male' });
+        return { buffer: wav, contentType: 'audio/wav' };
+      } catch {
+        throw new Error('All TTS methods failed for male voice');
+      }
     }
+  }
+}
+
+// ===== تطبيق pitch shift بـ ffmpeg عشان نخليه صوت راجل =====
+async function applyMalePitchShift(inputBuffer: Buffer): Promise<Buffer | null> {
+  const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-pitch-'));
+  const inputPath = join(tmpDir, 'input.mp3');
+  const outputPath = join(tmpDir, 'output.mp3');
+
+  try {
+    await writeFile(inputPath, inputBuffer);
+
+    // ffmpeg filter لتحويل الصوت من أنثوي لذكوري:
+    // asetrate=44100*0.75 → أخفض sample rate (يخلي الصوت أعمق)
+    // aresample=44100 → رجّع sample rate للطبيعي
+    // atempo=1.25 → سرّع عشان نرجع السرعة الأصلية
+    await new Promise<void>((resolve, reject) => {
+      const ffmpeg = spawn('ffmpeg', [
+        '-y',
+        '-i', inputPath,
+        '-af', 'asetrate=44100*0.72,aresample=44100,atempo=1.28',
+        '-ac', '1',           // mono
+        '-ar', '22050',       // sample rate
+        '-b:a', '64k',        // bitrate
+        outputPath,
+      ], { stdio: ['pipe', 'pipe', 'pipe'] });
+
+      let stderr = '';
+      ffmpeg.stderr.on('data', (d) => { stderr += d.toString(); });
+      ffmpeg.on('error', (err) => reject(new Error(`ffmpeg failed: ${err.message}`)));
+      ffmpeg.on('close', (code) => {
+        if (code !== 0) reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-300)}`));
+        else resolve();
+      });
+      ffmpeg.stdin.end();
+    });
+
+    const outputBuffer = await readFile(outputPath);
+    return outputBuffer;
+  } catch (err) {
+    console.error('[TTS-Arabic] ffmpeg pitch shift error:', err);
+    return null;
+  } finally {
+    try { await rm(tmpDir, { recursive: true, force: true }); } catch {}
   }
 }
 
