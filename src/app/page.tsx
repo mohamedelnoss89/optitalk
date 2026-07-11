@@ -41,7 +41,7 @@ export default function Home() {
 
       // مسجل
       if (user && selectedTeacher) {
-        if (currentScreen !== 'chat' && currentScreen !== 'welcome' && currentScreen !== 'teacher-select') {
+        if (currentScreen !== 'chat' && currentScreen !== 'welcome' && currentScreen !== 'teacher-select' && currentScreen !== 'onboarding') {
           setScreen('chat');
         }
       }
