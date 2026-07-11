@@ -121,121 +121,107 @@ export function ControlBar({
         </div>
       ) : (
         <>
-          {/* Interim transcript display */}
-          {(isListening || interim) && (
-            <div className="mb-2 rounded-xl opti-glass-teal px-3 py-2">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">
-                  <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
-                  <span className="opti-wave-bar h-3" style={{ animationDelay: '100ms' }} />
-                  <span className="opti-wave-bar h-3" style={{ animationDelay: '200ms' }} />
-                </div>
-                <span className="text-[11px] text-opti-text/70" dir="rtl">
-                  {interim || 'استمع... اتكلم بأي لغة (عربي أو إنجليزي)'}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Buttons row - دايماً باين */}
-          <div className="flex items-center justify-center gap-3">
-            {/* End conversation */}
-            <button
-              onClick={onEndConversation}
-              className="flex h-11 w-11 items-center justify-center rounded-full opti-glass text-opti-error transition-all hover:scale-105 active:scale-95"
-              aria-label="إنهاء المحادثة"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {/* زرار تبديل لغة الميكروفون - AR/EN */}
-            <button
-              onClick={onToggleLang}
-              className={cn(
-                'flex h-11 w-11 flex-col items-center justify-center rounded-full transition-all active:scale-95',
-                speechLang === 'ar'
-                  ? 'opti-glass-teal text-opti-accent border border-opti-accent/40'
-                  : 'opti-glass text-opti-text/70 border border-opti-primary/30 hover:scale-105'
-              )}
-              aria-label={speechLang === 'ar' ? 'تبديل للإنجليزي' : 'تبديل للعربي'}
-              title={speechLang === 'ar' ? 'الميكروفون بيسمع عربي - اضغط للإنجليزي' : 'الميكروفون بيسمع إنجليزي - اضغط للعربي'}
-            >
-              <span className="text-[11px] font-black leading-none">
-                {speechLang === 'ar' ? 'ع' : 'EN'}
-              </span>
-              <span className="text-[7px] font-medium leading-none mt-0.5 opacity-60">
-                {speechLang === 'ar' ? 'عربي' : 'English'}
-              </span>
-            </button>
-
-            {/* Main mic / stop button - كبير وواضح دايماً */}
-            {/* ضغطة عادية = تشغيل/إيقاف | ضغطة مطوّلة (800ms) = إعادة تشغيل قسرية */}
-            <button
-              onClick={isSpeaking ? onStopSpeaking : undefined}
-              onMouseDown={isSpeaking ? undefined : handleMicMouseDown}
-              onMouseUp={isSpeaking ? undefined : handleMicMouseUp}
-              onMouseLeave={isSpeaking ? undefined : () => {
-                if (longPressTimerRef.current) {
-                  clearTimeout(longPressTimerRef.current);
-                  longPressTimerRef.current = null;
-                }
-              }}
-              onTouchStart={isSpeaking ? undefined : handleMicTouchStart}
-              onTouchEnd={isSpeaking ? undefined : handleMicTouchEnd}
-              disabled={isAiThinking}
-              title={isSpeaking ? 'إيقاف الصوت' : isListening ? 'اضغط للإيقاف • اضغط مطولاً لإعادة التشغيل' : 'اضغط للتحدث • اضغط مطولاً لإعادة التشغيل'}
-              className={cn(
-                'relative flex h-16 w-16 items-center justify-center rounded-full transition-all duration-300 select-none',
-                isListening
-                  ? 'bg-opti-error text-white opti-glow scale-110'
-                  : isSpeaking
-                  ? 'opti-glass-teal text-opti-accent'
-                  : isAiThinking
-                  ? 'opti-glass text-opti-text/40 cursor-not-allowed'
-                  : 'opti-primary-gradient text-white opti-glow hover:scale-105 active:scale-95'
-              )}
-              aria-label={isListening ? 'إيقاف الاستماع' : 'تحدث'}
-            >
-              {isListening && (
-                <motion.span
-                  className="absolute inset-0 rounded-full border-2 border-opti-error"
-                  animate={{ scale: [1, 1.4], opacity: [0.8, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-              )}
-              {isListening ? (
-                <Square className="h-5 w-5 fill-current" />
-              ) : isSpeaking ? (
-                <MicOff className="h-6 w-6" />
+          {/* ===== صف واحد: مساحة الكلام (يسار) + زراير التحكم (يمين) ===== */}
+          <div className="flex items-center gap-2">
+            {/* ===== مساحة الكلام ===== */}
+            <div className="flex-1 min-h-[48px] rounded-xl opti-glass-teal px-3 py-2 flex items-center gap-2">
+              {(isListening || interim) ? (
+                <>
+                  <div className="flex gap-0.5 shrink-0">
+                    <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
+                    <span className="opti-wave-bar h-3" style={{ animationDelay: '100ms' }} />
+                    <span className="opti-wave-bar h-3" style={{ animationDelay: '200ms' }} />
+                  </div>
+                  <span className="text-[12px] text-opti-text/80 truncate" dir="rtl">
+                    {interim || 'استمع... اتكلم بأي لغة'}
+                  </span>
+                </>
               ) : (
-                <Mic className="h-7 w-7" />
+                <span className="text-[11px] text-opti-text/50">
+                  {isAiThinking ? 'صاحبك بيفكر...' : isSpeaking ? 'اضغط عشان توقف الصوت' : 'اضغط عشان تتكلم'}
+                </span>
               )}
-            </button>
-
-            {/* Toggle text mode */}
-            <button
-              onClick={() => setTextMode(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full opti-glass text-opti-text/70 transition-all hover:scale-105 hover:text-opti-text active:scale-95"
-              aria-label="الكتابة"
-            >
-              <Keyboard className="h-5 w-5" />
-            </button>
-
-            {/* Toggle camera */}
-            <div className="flex h-11 w-11 items-center justify-center">
-              {/* مكان فارغ عشان نظم المسافة - ممكن يحت كاميرا بعدين */}
             </div>
-          </div>
 
-          {/* Status hint */}
-          <div className="mt-2 text-center text-[11px] font-medium text-opti-text/50">
-            {isAiThinking
-              ? 'صاحبك بيفكر...'
-              : isSpeaking
-              ? 'اضغط عشان توقف الصوت'
-              : isListening
-              ? 'بسمعك... اضغط عشان توقف'
-              : 'اضغط عشان تتكلم'}
+            {/* ===== زراير التحكم (يمين) ===== */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* زرار تبديل اللغة */}
+              <button
+                onClick={onToggleLang}
+                className={cn(
+                  'flex h-9 w-9 flex-col items-center justify-center rounded-full transition-all active:scale-95',
+                  speechLang === 'ar'
+                    ? 'opti-glass-teal text-opti-accent border border-opti-accent/40'
+                    : 'opti-glass text-opti-text/70 border border-opti-primary/30 hover:scale-105'
+                )}
+                aria-label={speechLang === 'ar' ? 'تبديل للإنجليزي' : 'تبديل للعربي'}
+              >
+                <span className="text-[10px] font-black leading-none">
+                  {speechLang === 'ar' ? 'ع' : 'EN'}
+                </span>
+              </button>
+
+              {/* زرار الكتابة */}
+              <button
+                onClick={() => setTextMode(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-full opti-glass text-opti-text/70 transition-all hover:scale-105 hover:text-opti-text active:scale-95"
+                aria-label="الكتابة"
+              >
+                <Keyboard className="h-4 w-4" />
+              </button>
+
+              {/* الميك الكبير */}
+              <button
+                onClick={isSpeaking ? onStopSpeaking : undefined}
+                onMouseDown={isSpeaking ? undefined : handleMicMouseDown}
+                onMouseUp={isSpeaking ? undefined : handleMicMouseUp}
+                onMouseLeave={isSpeaking ? undefined : () => {
+                  if (longPressTimerRef.current) {
+                    clearTimeout(longPressTimerRef.current);
+                    longPressTimerRef.current = null;
+                  }
+                }}
+                onTouchStart={isSpeaking ? undefined : handleMicTouchStart}
+                onTouchEnd={isSpeaking ? undefined : handleMicTouchEnd}
+                disabled={isAiThinking}
+                title={isSpeaking ? 'إيقاف الصوت' : isListening ? 'اضغط للإيقاف' : 'اضغط للتحدث'}
+                className={cn(
+                  'relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 select-none',
+                  isListening
+                    ? 'bg-opti-error text-white opti-glow scale-110'
+                    : isSpeaking
+                    ? 'opti-glass-teal text-opti-accent'
+                    : isAiThinking
+                    ? 'opti-glass text-opti-text/40 cursor-not-allowed'
+                    : 'opti-primary-gradient text-white opti-glow hover:scale-105 active:scale-95'
+                )}
+                aria-label={isListening ? 'إيقاف الاستماع' : 'تحدث'}
+              >
+                {isListening && (
+                  <motion.span
+                    className="absolute inset-0 rounded-full border-2 border-opti-error"
+                    animate={{ scale: [1, 1.4], opacity: [0.8, 0] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
+                )}
+                {isListening ? (
+                  <Square className="h-5 w-5 fill-current" />
+                ) : isSpeaking ? (
+                  <MicOff className="h-6 w-6" />
+                ) : (
+                  <Mic className="h-6 w-6" />
+                )}
+              </button>
+
+              {/* زرار إنهاء */}
+              <button
+                onClick={onEndConversation}
+                className="flex h-9 w-9 items-center justify-center rounded-full opti-glass text-opti-error transition-all hover:scale-105 active:scale-95"
+                aria-label="إنهاء المحادثة"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </>
       )}
