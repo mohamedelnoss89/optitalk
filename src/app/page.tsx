@@ -2,7 +2,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { WelcomeScreen } from '@/components/optitalk/WelcomeScreen';
 import { OnboardingScreen } from '@/components/optitalk/OnboardingScreen';
@@ -17,18 +17,25 @@ export default function Home() {
   const isAuthenticated = useStore((s) => s.isAuthenticated);
   const setScreen = useStore((s) => s.setScreen);
 
+  // ===== flag عشان نمنع الـ redirect التلقائي بعد ما المستخدم يروح لـ welcome يدوياً =====
+  const userNavigatedToWelcomeRef = useRef(false);
+
   // ===== التحقق عند تحميل التطبيق =====
   useEffect(() => {
     const timer = setTimeout(() => {
       // ===== الحالات =====
       // 1. مش مسجل → welcome (يفضل there)
-      // 2. مسجل + فيه user + teacher → chat
+      // 2. مسجل + فيه user + teacher → chat (بس لو المستخدم ماروحش welcome يدوياً)
       // 3. مسجل + فيه user بس مفيش teacher → onboarding
-      // 4. مسجل + مفيش user → onboarding
       if (!isAuthenticated) {
         if (currentScreen !== 'welcome') {
           setScreen('welcome');
         }
+        return;
+      }
+
+      // لو المستخدم راح welcome يدوياً (عبر زرار الصفحة الرئيسية) → سيبه هناك
+      if (userNavigatedToWelcomeRef.current && currentScreen === 'welcome') {
         return;
       }
 
@@ -37,14 +44,22 @@ export default function Home() {
         if (currentScreen !== 'chat' && currentScreen !== 'welcome' && currentScreen !== 'teacher-select') {
           setScreen('chat');
         }
-      } else if (currentScreen === 'welcome') {
-        // لو مسجل بس لسه على welcome، سيبه يختار بنفسه
-        // مش نروح onboarding تلقائياً عشان يقدر يشوف الـ welcome
       }
     }, 100);
 
     return () => clearTimeout(timer);
   }, [user, selectedTeacher, currentScreen, isAuthenticated, setScreen]);
+
+  // ===== رصد لو المستخدم راح welcome يدوياً =====
+  useEffect(() => {
+    if (currentScreen === 'welcome' && isAuthenticated) {
+      userNavigatedToWelcomeRef.current = true;
+    }
+    // لما يخرج من welcome، نسمح بالـ redirect تاني
+    if (currentScreen !== 'welcome') {
+      userNavigatedToWelcomeRef.current = false;
+    }
+  }, [currentScreen, isAuthenticated]);
 
   return (
     <div className="relative mx-auto min-h-[100dvh] w-full max-w-md bg-background">
