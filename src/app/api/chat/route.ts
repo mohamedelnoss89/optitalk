@@ -612,6 +612,7 @@ export async function POST(req: NextRequest) {
     const systemPrompt = buildSystemPrompt(teacher, user, inputLang ?? 'en', learningStage ?? 1, confidence, learnedWords || [], inReviewMode || false, targetWord ?? null, matchResult, inSentenceBuilderMode || false, isFriend || false);
 
     // ===== تحكم في الـ AI حسب النوع والمستوى =====
+    const level = user.level || 'beginner';
     let maxTokens: number;
     let temperature: number;
     let historyLimit: number;
