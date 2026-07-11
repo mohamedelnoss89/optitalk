@@ -434,7 +434,7 @@ export function ChatScreen() {
     setScreen('teacher-select');
   }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
 
-  // ===== Go Home (ارجع لأول صفحة وامسح المحادثة) =====
+  // ===== Go Home (ارجع لصفحة المعلومات الأساسية - onboarding) =====
   const handleGoHome = useCallback(() => {
     synthesis.cancel();
     arabicSpeech.cancel();
@@ -449,8 +449,8 @@ export function ChatScreen() {
     setInSentenceBuilderMode(false);
     greetingSentRef.current = false;
     convIdRef.current = null;
-    // ارجع لأول صفحة (welcome screen)
-    setScreen('welcome');
+    // ارجع لصفحة المعلومات الأساسية (onboarding)
+    setScreen('onboarding');
   }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
 
   // ===== Replay a message =====
