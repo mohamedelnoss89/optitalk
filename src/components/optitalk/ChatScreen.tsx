@@ -187,6 +187,7 @@ export function ChatScreen() {
 
     // ===== greeting متغير كل مرة من الـ pool الموسّع =====
     const level = user?.level || 'beginner';
+    const isFriend = selectedTeacher.id.startsWith('friend-');
     const ctx: GreetingContext = {
       userName: user?.name || 'صديقي',
       teacherNameAr: selectedTeacher.nameAr || selectedTeacher.name,
@@ -196,8 +197,35 @@ export function ChatScreen() {
       streak,
     };
 
-    const { content: greetingContent, index } = getGreeting(level, ctx, lastGreetingIndex);
-    setLastGreetingIndex(index);
+    let greetingContent: string;
+
+    if (isFriend) {
+      // ===== greeting للأصدقاء (محادثة طبيعية، مش درس) =====
+      const friendGreetings = [
+        `أهلاً يا ${user?.name || 'صاحبي'}! أنا ${selectedTeacher.nameAr}. إزيك النهاردة؟`,
+        `يا هلا يا ${user?.name || 'صاحبي'}! أنا ${selectedTeacher.nameAr}. عامل إيه؟`,
+        `أهلاً وسهلاً! أنا ${selectedTeacher.nameAr}. إنت إزيك؟`,
+        `هلا يا ${user?.name || 'صاحبي'}! أنا ${selectedTeacher.nameAr}. خبارك إيه؟`,
+        `مرحبتين! أنا ${selectedTeacher.nameAr}. يومك عامل إيه؟`,
+      ];
+      greetingContent = friendGreetings[Math.floor(Math.random() * friendGreetings.length)];
+      // الأصدقاء مفيش لهم targetWord
+      setCurrentTargetWord(null);
+    } else {
+      const { content: content, index } = getGreeting(level, ctx, lastGreetingIndex);
+      greetingContent = content;
+      setLastGreetingIndex(index);
+
+      // ===== استخرج الكلمة المستهدفة من الترحيب =====
+      if (level === 'beginner') {
+        const englishMatch = greetingContent.match(/\b(Hello|Hi|Welcome|Yes|No|Thank you|Please|Good)\b/i);
+        if (englishMatch) {
+          const firstWord = englishMatch[0];
+          console.log('[OptiTalk] Initial target word from greeting:', firstWord);
+          setCurrentTargetWord(firstWord);
+        }
+      }
+    }
 
     const greeting: ChatMessage = {
       id: `greeting-${Date.now()}`,
@@ -208,18 +236,6 @@ export function ChatScreen() {
       createdAt: Date.now(),
     };
     addMessage(greeting);
-
-    // ===== استخرج الكلمة المستهدفة من الترحيب =====
-    // لو الترحيب فيه كلمة إنجليزي (للمبتدئ)، احفظها كـ targetWord
-    if (level === 'beginner') {
-      // ابحث عن أول كلمة إنجليزي في الترحيب
-      const englishMatch = greetingContent.match(/\b(Hello|Hi|Welcome|Yes|No|Thank you|Please|Good)\b/i);
-      if (englishMatch) {
-        const firstWord = englishMatch[0];
-        console.log('[OptiTalk] Initial target word from greeting:', firstWord);
-        setCurrentTargetWord(firstWord);
-      }
-    }
 
     // Speak the greeting after a brief delay
     speakText(greeting.content, greeting.id);
