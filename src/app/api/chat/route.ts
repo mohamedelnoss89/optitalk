@@ -632,6 +632,16 @@ export async function POST(req: NextRequest) {
       userMessageWithContext = `[الطالب قال]: "${message}" ${contextParts.join(' ')}`;
     }
 
+    // ===== أضف تذكير للـ AI بخصوص المحادثة الطبيعية =====
+    if (!isFriend && !inReviewMode && !inSentenceBuilderMode) {
+      // لو الطالب بيتكلم في حاجة مش درس (فيها عربي أو حكي)
+      const hasArabic = /[\u0600-\u06FF]/.test(message);
+      const isCasualChat = hasArabic && !targetWord;
+      if (isCasualChat) {
+        userMessageWithContext += `\n\n🚨 تذكير: الطالب بيتكلم معاك طبيعي. رد عليه طبيعي زي الأصحاب (2-3 جمل). ممنوع تقول "يلا نتعلم كلمة جديدة" على طول. تفاعل معاه الأول!`;
+      }
+    }
+
     const aiMessages = [
       { role: 'system', content: systemPrompt },
       ...recentHistory.map((m) => ({
