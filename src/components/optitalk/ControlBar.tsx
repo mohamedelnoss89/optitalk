@@ -125,27 +125,19 @@ export function ControlBar({
   // ===== Voice mode: عمودي على اليمين =====
   return (
     <>
-      {/* ===== مساحة الكلام (تملا الشاشة) ===== */}
-      <div className="border-t border-opti-primary/15 opti-glass px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="min-h-[48px] rounded-xl opti-glass-teal px-3 py-2 flex items-center gap-2">
-          {(isListening || interim) ? (
-            <>
-              <div className="flex gap-0.5 shrink-0">
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '100ms' }} />
-                <span className="opti-wave-bar h-3" style={{ animationDelay: '200ms' }} />
-              </div>
-              <span className="text-[12px] text-opti-text/80 truncate" dir="rtl">
-                {interim || 'استمع... اتكلم بأي لغة'}
-              </span>
-            </>
-          ) : (
-            <span className="text-[11px] text-opti-text/50">
-              {isAiThinking ? 'صاحبك بيفكر...' : isSpeaking ? 'اضغط عشان توقف الصوت' : 'اضغط عشان تتكلم'}
-            </span>
-          )}
+      {/* ===== مساحة الكلام (بس لما بيسمع) ===== */}
+      {(isListening || interim) && (
+        <div className="fixed bottom-4 left-3 right-20 z-50 rounded-xl opti-glass-teal px-3 py-2 flex items-center gap-2">
+          <div className="flex gap-0.5 shrink-0">
+            <span className="opti-wave-bar h-3" style={{ animationDelay: '0ms' }} />
+            <span className="opti-wave-bar h-3" style={{ animationDelay: '100ms' }} />
+            <span className="opti-wave-bar h-3" style={{ animationDelay: '200ms' }} />
+          </div>
+          <span className="text-[12px] text-opti-text/80 truncate" dir="rtl">
+            {interim || 'استمع... اتكلم بأي لغة'}
+          </span>
         </div>
-      </div>
+      )}
 
       {/* ===== زراير التحكم (عمودي على اليمين - مرفوعة فوق) ===== */}
       <div className="fixed right-3 top-[35%] -translate-y-1/2 z-50 flex flex-col items-center gap-3">
