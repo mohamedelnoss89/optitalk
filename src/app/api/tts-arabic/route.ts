@@ -293,12 +293,24 @@ async function generateWithEdgeTTS(text: string, gender: string): Promise<Buffer
   const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-edge-'));
   const outputPath = join(tmpDir, 'output.mp3');
 
+  // ===== معالجة النص عشان يقرأ بالعامية المصرية مش الفصحى =====
+  let processedText = text;
+  // شيل التنوين (ًٌٍَُِّ)
+  processedText = processedText
+    .replace(/[\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652]/g, '') // شيل التشكيل والتنوين
+    .replace(/\s+/g, ' ') // ادمج المسافات
+    .trim();
+
+  console.log(`[TTS-Arabic] Edge TTS voice: ${voice}`);
+  console.log(`[TTS-Arabic] Original: "${text.substring(0, 80)}"`);
+  console.log(`[TTS-Arabic] Processed: "${processedText.substring(0, 80)}"`);
+
   try {
     // edge-tts CLI command
     await new Promise<void>((resolve, reject) => {
       const edgeTts = spawn('edge-tts', [
         '--voice', voice,
-        '--text', text,
+        '--text', processedText,
         '--write-media', outputPath,
       ], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}` } });
 
