@@ -9,8 +9,10 @@ import { TEACHERS, type Teacher } from '@/lib/teachers';
 import { FRIENDS, type Friend } from '@/lib/friends';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAudioUnlock } from '@/hooks/use-audio-unlock';
 
 export function TeacherSelectionScreen() {
+  useAudioUnlock();
   const setScreen = useStore((s) => s.setScreen);
   const setTeacher = useStore((s) => s.setTeacher);
   const clearMessages = useStore((s) => s.clearMessages);

@@ -7,8 +7,10 @@ import { Sparkles, Mic, MessageCircle, ArrowLeft, RotateCcw, History, LogIn, Use
 import { useStore } from '@/lib/store';
 import { STAGE_INFO } from '@/lib/greetings';
 import { AuthDialog } from './AuthDialog';
+import { useAudioUnlock } from '@/hooks/use-audio-unlock';
 
 export function WelcomeScreen() {
+  useAudioUnlock();
   const setScreen = useStore((s) => s.setScreen);
   const user = useStore((s) => s.user);
   const selectedTeacher = useStore((s) => s.selectedTeacher);

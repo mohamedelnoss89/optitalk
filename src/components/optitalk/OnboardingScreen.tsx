@@ -20,10 +20,12 @@ import { useStore } from '@/lib/store';
 import { TEACHERS, AGE_GROUPS, LEVELS, type Teacher, type Level } from '@/lib/teachers';
 import { FRIENDS, type Friend } from '@/lib/friends';
 import { cn } from '@/lib/utils';
+import { useAudioUnlock } from '@/hooks/use-audio-unlock';
 
 type Step = 1 | 2 | 3;
 
 export function OnboardingScreen() {
+  useAudioUnlock();
   const setScreen = useStore((s) => s.setScreen);
   const setUser = useStore((s) => s.setUser);
   const setTeacher = useStore((s) => s.setTeacher);
