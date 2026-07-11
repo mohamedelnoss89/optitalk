@@ -71,7 +71,10 @@ export function TeacherAvatar({
               style={{ objectPosition: 'center 20%' }}
               onError={() => setVideoError(true)}
               playsInline
-              preload="metadata"
+              muted
+              loop
+              preload="auto"
+              webkit-playsinline="true"
             />
           )}
 
