@@ -489,7 +489,7 @@ export function ChatScreen() {
     : null;
 
   return (
-    <div className="relative flex h-[100dvh] flex-col opti-gradient overflow-hidden">
+    <div className="relative flex h-[100dvh] flex-col opti-gradient overflow-y-auto">
       {/* ===== Header (صغير فوق) ===== */}
       <header className="z-20 flex items-center justify-between px-3 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))]">
         <button
