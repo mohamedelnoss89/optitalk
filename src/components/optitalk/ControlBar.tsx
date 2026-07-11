@@ -230,12 +230,12 @@ export function ControlBar({
           {/* Status hint */}
           <div className="mt-2 text-center text-[11px] font-medium text-opti-text/50">
             {isAiThinking
-              ? 'المدرس بيفكر...'
+              ? 'صاحبك بيفكر...'
               : isSpeaking
-              ? 'اضغط لإيقاف الصوت'
+              ? 'اضغط عشان توقف الصوت'
               : isListening
-              ? `بتتكلم ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'}... اضغط للإيقاف`
-              : `الميكروفون بيسمع ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'} — اضغط (ع/EN) للتبديل`}
+              ? 'بسمعك... اضغط عشان توقف'
+              : 'اضغط عشان تتكلم'}
           </div>
         </>
       )}
