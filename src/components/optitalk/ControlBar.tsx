@@ -248,18 +248,18 @@ export function ControlBar({
               {onNewConversation && (
                 <button
                   onClick={onNewConversation}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl opti-glass px-3 py-2 text-[11px] font-bold text-opti-text/70 transition-all hover:scale-[1.02] hover:text-opti-text active:scale-95"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl opti-glass border border-opti-primary/20 px-3 py-3 text-xs font-bold text-opti-text/80 transition-all hover:scale-[1.02] hover:bg-opti-primary/10 hover:text-opti-text active:scale-95"
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-4 w-4 text-opti-accent" />
                   <span>محادثة جديدة</span>
                 </button>
               )}
               {onGoHome && (
                 <button
                   onClick={onGoHome}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl opti-glass px-3 py-2 text-[11px] font-bold text-opti-text/70 transition-all hover:scale-[1.02] hover:text-opti-text active:scale-95"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl opti-glass border border-opti-primary/20 px-3 py-3 text-xs font-bold text-opti-text/80 transition-all hover:scale-[1.02] hover:bg-opti-primary/10 hover:text-opti-text active:scale-95"
                 >
-                  <Home className="h-3.5 w-3.5" />
+                  <Home className="h-4 w-4 text-opti-gold" />
                   <span>الصفحة الرئيسية</span>
                 </button>
               )}
