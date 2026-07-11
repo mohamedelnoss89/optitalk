@@ -287,6 +287,8 @@ async function generateArabicTTS(
 
 // ===== Microsoft Edge TTS (أصوات مصرية طبيعية عالية الجودة) =====
 async function generateWithEdgeTTS(text: string, gender: string): Promise<Buffer | null> {
+  // ===== استخدم نفس الصوت لكل اللغات (عربي، إنجليزي، خليط) =====
+  // كده الصوت مبيتغيرش بين الردود
   const voice = gender === 'female' ? 'ar-EG-SalmaNeural' : 'ar-EG-ShakirNeural';
   const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-edge-'));
   const outputPath = join(tmpDir, 'output.mp3');

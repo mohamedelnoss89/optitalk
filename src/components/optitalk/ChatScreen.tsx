@@ -137,38 +137,26 @@ export function ChatScreen() {
   });
 
   // ===== Speak helper =====
-  // كل النطق بيتم هنا:
-  // - عربي أو خليط عربي+إنجليزي → useArabicSpeech (Web Speech API موثوق)
-  // - إنجليزي خالص → z-ai TTS (جودة أعلى)
+  // كل النطق بيتم هنا باستخدام Edge TTS (نفس الصوت دايماً)
+  // Edge TTS بيتحكم في كل حاجة: عربي، إنجليزي، خليط — كله بنفس الصوت
   const speakText = useCallback(
     (text: string, msgId?: string) => {
       const clean = text.replace(/\([^)]*\)/g, '').replace(/[""]/g, '').trim();
       if (!clean) return;
       if (msgId) setSpeakingId(msgId);
 
-      // ===== نحسب نسبة العربي =====
-      const arabicChars = (clean.match(/[\u0600-\u06FF]/g) || []).length;
-      const hasArabic = arabicChars > 0;
-
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-      // أوقف أي نطق حالي (سواء عربي أو إنجليزي)
+      // أوقف أي نطق حالي
       arabicSpeech.cancel();
       synthesis.cancel();
       window.speechSynthesis.cancel();
       setSpeaking(false);
 
-      if (hasArabic) {
-        // === عربي أو خليط → useArabicSpeech ===
-        // الـ hook بيتحكم في: تحميل الأصوات، Chrome cancel+speak delay،
-        // keep-alive لمنع التعليق، اختيار صوت عربي مناسب للجنس
-        console.log('[ChatScreen] بدء النطق العربي:', clean.substring(0, 80));
-        arabicSpeech.speak(clean);
-      } else {
-        // === إنجليزي خالص → z-ai TTS ===
-        console.log('[ChatScreen] بدء النطق الإنجليزي:', clean.substring(0, 80));
-        synthesis.speak(clean);
-      }
+      // ===== استخدم Edge TTS لكل حاجة (عربي، إنجليزي، خليط) =====
+      // كده الصوت مبيتغيرش بين الردود
+      console.log('[ChatScreen] بدء النطق:', clean.substring(0, 80));
+      arabicSpeech.speak(clean);
     },
     [synthesis, arabicSpeech, setSpeaking, setSpeakingId]
   );
