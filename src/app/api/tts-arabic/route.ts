@@ -240,64 +240,83 @@ async function generateWithEspeak(
   }
 }
 
-// ===== توليد الصوت (صوت مختلف حسب الجنس - جودة عالية) =====
+// ===== توليد الصوت (صوت مختلف حسب الجنس - جودة عالية جداً) =====
 async function generateArabicTTS(
   text: string,
   options: { gender?: string; speed?: number; pitch?: number }
 ): Promise<{ buffer: Buffer; contentType: string }> {
-  // حدد اللغة الغالبة (لو فيه أي عربي → استخدم عربي)
-  const lang = detectDominantLanguage(text);
   const gender = options.gender || 'male';
 
-  console.log(`[TTS-Arabic] Text: "${text.substring(0, 80)}" | dominant lang: ${lang} | gender: ${gender}`);
+  console.log(`[TTS-Arabic] Text: "${text.substring(0, 80)}" | gender: ${gender}`);
 
-  // ===== استراتيجية مختلفة حسب الجنس =====
-  // - female → Google Translate TTS (صوت أنثوي طبيعي عالي الجودة)
-  // - male → Google Translate TTS + ffmpeg pitch shift (صوت ذكوري عالي الجودة)
-  if (gender === 'female') {
-    // ست → Google TTS مباشرة (صوت أنثوي)
-    console.log(`[TTS-Arabic] Female voice → Google TTS (tl=${lang})`);
-    const googleMp3 = await generateWithGoogleTTS(text, lang);
-    if (googleMp3 && googleMp3.length > 1000) {
-      console.log(`[TTS-Arabic] Google TTS success: ${googleMp3.length} bytes (female)`);
-      return { buffer: googleMp3, contentType: 'audio/mpeg' };
+  // ===== استراتيجية: Microsoft Edge TTS (أصوات مصرية طبيعية عالية الجودة) =====
+  // - male → ar-EG-ShakirNeural (صوت راجل مصري طبيعي)
+  // - female → ar-EG-SalmaNeural (صوت ست مصرية طبيعية)
+  try {
+    console.log(`[TTS-Arabic] Trying Edge TTS (gender: ${gender})`);
+    const edgeMp3 = await generateWithEdgeTTS(text, gender);
+    if (edgeMp3 && edgeMp3.length > 1000) {
+      console.log(`[TTS-Arabic] Edge TTS success: ${edgeMp3.length} bytes (${gender})`);
+      return { buffer: edgeMp3, contentType: 'audio/mpeg' };
     }
-    // fallback إلى espeak-ng بصوت أنثوي
-    console.warn(`[TTS-Arabic] Google TTS failed, falling back to espeak-ng (female)`);
-    const wav = await generateWithEspeak(text, lang, { ...options, gender: 'female' });
-    return { buffer: wav, contentType: 'audio/wav' };
-  } else {
-    // راجل → Google TTS + ffmpeg pitch shift
-    console.log(`[TTS-Arabic] Male voice → Google TTS + ffmpeg pitch shift`);
-    try {
-      // ابدأ بـ Google TTS
-      const googleMp3 = await generateWithGoogleTTS(text, lang);
-      if (googleMp3 && googleMp3.length > 1000) {
-        // طبّق pitch shift بـ ffmpeg عشان نخليه صوت راجل
-        console.log(`[TTS-Arabic] Applying ffmpeg pitch shift to make male voice`);
-        const maleMp3 = await applyMalePitchShift(googleMp3);
-        if (maleMp3 && maleMp3.length > 1000) {
-          console.log(`[TTS-Arabic] Male voice success: ${maleMp3.length} bytes`);
-          return { buffer: maleMp3, contentType: 'audio/mpeg' };
-        }
-        // لو ffmpeg فشل، استخدم Google TTS زي ما هو
-        console.warn(`[TTS-Arabic] ffmpeg pitch shift failed, using original Google TTS`);
-        return { buffer: googleMp3, contentType: 'audio/mpeg' };
-      }
-      // fallback إلى espeak-ng بصوت ذكوري
-      console.warn(`[TTS-Arabic] Google TTS failed, falling back to espeak-ng (male)`);
-      const wav = await generateWithEspeak(text, lang, { ...options, gender: 'male' });
-      return { buffer: wav, contentType: 'audio/wav' };
-    } catch (err) {
-      console.warn(`[TTS-Arabic] Male voice generation failed:`, err);
-      // fallback أخير إلى espeak-ng
-      try {
-        const wav = await generateWithEspeak(text, lang, { ...options, gender: 'male' });
-        return { buffer: wav, contentType: 'audio/wav' };
-      } catch {
-        throw new Error('All TTS methods failed for male voice');
+  } catch (err) {
+    console.warn(`[TTS-Arabic] Edge TTS failed:`, err);
+  }
+
+  // ===== Fallback 1: Google Translate TTS =====
+  const lang = detectDominantLanguage(text);
+  console.warn(`[TTS-Arabic] Falling back to Google TTS (tl=${lang})`);
+  const googleMp3 = await generateWithGoogleTTS(text, lang);
+  if (googleMp3 && googleMp3.length > 1000) {
+    if (gender === 'male') {
+      // للرجالة: طبّق pitch shift بـ ffmpeg
+      console.log(`[TTS-Arabic] Applying ffmpeg pitch shift for male voice`);
+      const maleMp3 = await applyMalePitchShift(googleMp3);
+      if (maleMp3 && maleMp3.length > 1000) {
+        return { buffer: maleMp3, contentType: 'audio/mpeg' };
       }
     }
+    return { buffer: googleMp3, contentType: 'audio/mpeg' };
+  }
+
+  // ===== Fallback 2: espeak-ng =====
+  console.warn(`[TTS-Arabic] Falling back to espeak-ng`);
+  const wav = await generateWithEspeak(text, lang, { ...options, gender });
+  return { buffer: wav, contentType: 'audio/wav' };
+}
+
+// ===== Microsoft Edge TTS (أصوات مصرية طبيعية عالية الجودة) =====
+async function generateWithEdgeTTS(text: string, gender: string): Promise<Buffer | null> {
+  const voice = gender === 'female' ? 'ar-EG-SalmaNeural' : 'ar-EG-ShakirNeural';
+  const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-edge-'));
+  const outputPath = join(tmpDir, 'output.mp3');
+
+  try {
+    // edge-tts CLI command
+    await new Promise<void>((resolve, reject) => {
+      const edgeTts = spawn('edge-tts', [
+        '--voice', voice,
+        '--text', text,
+        '--write-media', outputPath,
+      ], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}` } });
+
+      let stderr = '';
+      edgeTts.stderr.on('data', (d) => { stderr += d.toString(); });
+      edgeTts.on('error', (err) => reject(new Error(`edge-tts failed: ${err.message}`)));
+      edgeTts.on('close', (code) => {
+        if (code !== 0) reject(new Error(`edge-tts exited ${code}: ${stderr.slice(-300)}`));
+        else resolve();
+      });
+      edgeTts.stdin.end();
+    });
+
+    const outputBuffer = await readFile(outputPath);
+    return outputBuffer;
+  } catch (err) {
+    console.error('[TTS-Arabic] Edge TTS error:', err);
+    return null;
+  } finally {
+    try { await rm(tmpDir, { recursive: true, force: true }); } catch {}
   }
 }
 
