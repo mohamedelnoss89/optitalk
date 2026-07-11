@@ -240,27 +240,48 @@ async function generateWithEspeak(
   }
 }
 
-// ===== توليد الصوت (صوت واحد متسق) =====
+// ===== توليد الصوت (صوت مختلف حسب الجنس) =====
 async function generateArabicTTS(
   text: string,
   options: { gender?: string; speed?: number; pitch?: number }
 ): Promise<{ buffer: Buffer; contentType: string }> {
   // حدد اللغة الغالبة (لو فيه أي عربي → استخدم عربي)
   const lang = detectDominantLanguage(text);
-  console.log(`[TTS-Arabic] Text: "${text.substring(0, 80)}" | dominant lang: ${lang}`);
+  const gender = options.gender || 'male';
 
-  // جرّب Google Translate TTS بصوت واحد
-  console.log(`[TTS-Arabic] Trying Google TTS with single voice (tl=${lang})`);
-  const googleMp3 = await generateWithGoogleTTS(text, lang);
-  if (googleMp3 && googleMp3.length > 1000) {
-    console.log(`[TTS-Arabic] Google TTS success: ${googleMp3.length} bytes (single voice)`);
-    return { buffer: googleMp3, contentType: 'audio/mpeg' };
+  console.log(`[TTS-Arabic] Text: "${text.substring(0, 80)}" | dominant lang: ${lang} | gender: ${gender}`);
+
+  // ===== استراتيجية مختلفة حسب الجنس =====
+  // - female → Google Translate TTS (صوت أنثوي طبيعي)
+  // - male → espeak-ng بصوت ذكوري (pitch منخفض)
+  if (gender === 'female') {
+    // ست → Google TTS (صوت أنثوي)
+    console.log(`[TTS-Arabic] Female voice → Google TTS (tl=${lang})`);
+    const googleMp3 = await generateWithGoogleTTS(text, lang);
+    if (googleMp3 && googleMp3.length > 1000) {
+      console.log(`[TTS-Arabic] Google TTS success: ${googleMp3.length} bytes (female)`);
+      return { buffer: googleMp3, contentType: 'audio/mpeg' };
+    }
+    // fallback إلى espeak-ng بصوت أنثوي
+    console.warn(`[TTS-Arabic] Google TTS failed, falling back to espeak-ng (female)`);
+    const wav = await generateWithEspeak(text, lang, { ...options, gender: 'female' });
+    return { buffer: wav, contentType: 'audio/wav' };
+  } else {
+    // راجل → espeak-ng بصوت ذكوري (pitch منخفض)
+    console.log(`[TTS-Arabic] Male voice → espeak-ng (pitch=35)`);
+    try {
+      const wav = await generateWithEspeak(text, lang, { ...options, gender: 'male' });
+      console.log(`[TTS-Arabic] espeak-ng success: ${wav.length} bytes (male)`);
+      return { buffer: wav, contentType: 'audio/wav' };
+    } catch (err) {
+      console.warn(`[TTS-Arabic] espeak-ng failed, falling back to Google TTS:`, err);
+      const googleMp3 = await generateWithGoogleTTS(text, lang);
+      if (googleMp3 && googleMp3.length > 1000) {
+        return { buffer: googleMp3, contentType: 'audio/mpeg' };
+      }
+      throw new Error('All TTS methods failed for male voice');
+    }
   }
-
-  // fallback إلى espeak-ng
-  console.warn(`[TTS-Arabic] Google TTS failed, falling back to espeak-ng`);
-  const wav = await generateWithEspeak(text, lang, options);
-  return { buffer: wav, contentType: 'audio/wav' };
 }
 
 // ===== Routes =====
