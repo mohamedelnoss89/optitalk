@@ -2,7 +2,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Square, X, Keyboard, Send, Home, Plus } from 'lucide-react';
+import { Mic, MicOff, Square, X, Keyboard, Send } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -19,8 +19,6 @@ interface Props {
   onStopSpeaking: () => void;
   onEndConversation: () => void;
   onSendText?: (text: string) => void;
-  onNewConversation?: () => void;
-  onGoHome?: () => void;
 }
 
 export function ControlBar({
@@ -36,8 +34,6 @@ export function ControlBar({
   onStopSpeaking,
   onEndConversation,
   onSendText,
-  onNewConversation,
-  onGoHome,
 }: Props) {
   const [textMode, setTextMode] = useState(false);
   const [textInput, setTextInput] = useState('');
@@ -241,30 +237,6 @@ export function ControlBar({
               ? `بتتكلم ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'}... اضغط للإيقاف`
               : `الميكروفون بيسمع ${speechLang === 'ar' ? 'عربي' : 'إنجليزي'} — اضغط (ع/EN) للتبديل`}
           </div>
-
-          {/* ===== زرارين سريعين: محادثة جديدة + الصفحة الرئيسية ===== */}
-          {(onNewConversation || onGoHome) && (
-            <div className="mt-3 flex gap-2">
-              {onNewConversation && (
-                <button
-                  onClick={onNewConversation}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl opti-glass border border-opti-primary/20 px-3 py-3 text-xs font-bold text-opti-text/80 transition-all hover:scale-[1.02] hover:bg-opti-primary/10 hover:text-opti-text active:scale-95"
-                >
-                  <Plus className="h-4 w-4 text-opti-accent" />
-                  <span>محادثة جديدة</span>
-                </button>
-              )}
-              {onGoHome && (
-                <button
-                  onClick={onGoHome}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl opti-glass border border-opti-primary/20 px-3 py-3 text-xs font-bold text-opti-text/80 transition-all hover:scale-[1.02] hover:bg-opti-primary/10 hover:text-opti-text active:scale-95"
-                >
-                  <Home className="h-4 w-4 text-opti-gold" />
-                  <span>الصفحة الرئيسية</span>
-                </button>
-              )}
-            </div>
-          )}
         </>
       )}
     </div>

@@ -4,7 +4,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Flame, Trophy, LogOut, Settings2, Volume2 } from 'lucide-react';
+import { Flame, Trophy, LogOut, Settings2, Volume2, Home, Plus } from 'lucide-react';
 import { useStore, type ChatMessage } from '@/lib/store';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { useSpeechSynthesis } from '@/hooks/use-speech-synthesis';
@@ -475,7 +475,25 @@ export function ChatScreen() {
         >
           <LogOut className="h-3.5 w-3.5" />
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          {/* ===== زرار محادثة جديدة ===== */}
+          <button
+            onClick={handleNewConversation}
+            className="flex h-7 w-7 items-center justify-center rounded-lg opti-glass text-opti-accent hover:bg-opti-accent/10"
+            aria-label="محادثة جديدة"
+            title="محادثة جديدة"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          {/* ===== زرار الصفحة الرئيسية ===== */}
+          <button
+            onClick={handleEnd}
+            className="flex h-7 w-7 items-center justify-center rounded-lg opti-glass text-opti-gold hover:bg-opti-gold/10"
+            aria-label="الصفحة الرئيسية"
+            title="الصفحة الرئيسية"
+          >
+            <Home className="h-3.5 w-3.5" />
+          </button>
           {/* ===== مؤشر المرحلة للمبتدئ ===== */}
           {user?.level === 'beginner' && (
             <div
@@ -545,8 +563,6 @@ export function ChatScreen() {
           onStopSpeaking={handleStopSpeaking}
           onEndConversation={handleEnd}
           onSendText={(text) => void handleSendMessage(text)}
-          onNewConversation={handleNewConversation}
-          onGoHome={handleEnd}
         />
       </section>
 
