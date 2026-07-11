@@ -554,17 +554,17 @@ export function ChatScreen() {
 
       {/* ===== الطالب + المحادثة + التحكم - 65% ===== */}
       <section className="relative z-10 flex flex-col overflow-hidden" style={{ height: '65%', flexShrink: 0 }}>
-        {/* كاميرا الطالب */}
-        <div className="relative flex-1 min-h-0">
+        {/* كاميرا الطالب - مصغرة */}
+        <div className="relative shrink-0" style={{ height: '60px' }}>
           <StudentCamera
             enabled={cameraEnabled}
             onToggle={handleToggleCamera}
-            compact={false}
+            compact={true}
           />
         </div>
 
         {/* المحادثة */}
-        <div className="overflow-hidden px-2 shrink-0" style={{ height: '90px' }}>
+        <div className="overflow-hidden px-2 flex-1 min-h-0">
           <MessagesList
             messages={messages}
             isThinking={isAiThinking}

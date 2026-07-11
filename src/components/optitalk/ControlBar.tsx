@@ -147,8 +147,8 @@ export function ControlBar({
         </div>
       </div>
 
-      {/* ===== زراير التحكم (عمودي على اليمين في المنتصف) ===== */}
-      <div className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
+      {/* ===== زراير التحكم (عمودي على اليمين - مرفوعة فوق) ===== */}
+      <div className="fixed right-3 top-[35%] -translate-y-1/2 z-50 flex flex-col items-center gap-3">
         {/* زرار تبديل اللغة */}
         <button
           onClick={onToggleLang}
