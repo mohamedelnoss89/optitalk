@@ -128,6 +128,18 @@ export function useArabicSpeech(
     onErrorRef.current = onError;
   }, [onStart, onEnd, onError]);
 
+  // ===== AudioContext للموبايل =====
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      if (AC) {
+        const ctx = new AC();
+        window.__optitalkAudioCtx = ctx;
+      }
+    } catch {}
+  }, []);
+
   // أضف عنصر audio في الـ DOM
   useEffect(() => {
     if (typeof window === 'undefined') return;

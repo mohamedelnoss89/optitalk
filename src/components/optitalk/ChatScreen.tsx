@@ -364,13 +364,7 @@ export function ChatScreen() {
   // ===== Mic toggle =====
   const handleMicToggle = useCallback(() => {
     if (!recognition.supported) {
-      // على الموبايل (Safari) التعرف على الصوت مش متاح
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        toast.info('المتصفح مش بيدعم المايك. استخدم زرار الكتابة ⌨️', { duration: 5000 });
-      } else {
-        toast.error('المتصفح مش بيدعم التعرف على الصوت. استخدم الكتابة');
-      }
+      toast.info('استخدم زرار الكتابة ⌨️', { duration: 3000 });
       return;
     }
     // لو المدرس بيتكلم → وقف الصوت
