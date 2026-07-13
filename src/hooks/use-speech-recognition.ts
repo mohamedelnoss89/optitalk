@@ -416,12 +416,134 @@ export function useSpeechRecognition(
   }, [lang, updateListeningState, clearAllTimers, safeStart]);
 
   const start = useCallback(async () => {
-    const r = recognitionRef.current;
-    if (!r) return;
+    // أنشئ recognition جديد كل مرة
+    const Ctor = getSpeechRecognitionCtor();
+    if (!Ctor) return;
     if (startInProgressRef.current) {
       console.log('[SpeechRecognition] Start already in progress — skipping');
       return;
     }
+
+    // لو فيه recognition قديم، امسحه
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onstart = null;
+        recognitionRef.current.abort();
+      } catch {}
+      recognitionRef.current = null;
+    }
+
+    // أنشئ recognition جديد
+    const r = new Ctor();
+    r.lang = lang;
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 3;
+
+    // ربط الأحداث
+    r.onstart = () => {
+      console.log('[SpeechRecognition] 🎤 Started');
+      isActuallyRunningRef.current = true;
+      isRestartingRef.current = false;
+      restartAttemptsRef.current = 0;
+      hasStartedTalkingRef.current = false;
+      startInProgressRef.current = false;
+      if (userWantsListeningRef.current) {
+        updateListeningState(true);
+      }
+      setInterim('');
+      lastInterimRef.current = '';
+      accumulatedFinalRef.current = '';
+      accumulatedConfidenceRef.current = [];
+      finalSentRef.current = false;
+      startInitialTimer();
+    };
+
+    r.onresult = (event: SpeechRecognitionEvent) => {
+      let interimText = '';
+      let newFinalText = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const bestAlt = result[0];
+        const transcript = bestAlt?.transcript ?? '';
+        const confidence = bestAlt?.confidence ?? 0;
+        if (result.isFinal) {
+          newFinalText += transcript;
+          if (confidence > 0) {
+            accumulatedConfidenceRef.current.push(confidence);
+          }
+        } else {
+          interimText += transcript;
+        }
+      }
+      if (!hasStartedTalkingRef.current && (newFinalText.trim() || interimText.trim())) {
+        hasStartedTalkingRef.current = true;
+        if (initialTimerRef.current) {
+          clearTimeout(initialTimerRef.current);
+          initialTimerRef.current = null;
+        }
+      }
+      if (newFinalText.trim()) {
+        accumulatedFinalRef.current = (accumulatedFinalRef.current + ' ' + newFinalText).trim();
+      }
+      if (interimText !== lastInterimRef.current) {
+        lastInterimRef.current = interimText;
+        const displayText = (accumulatedFinalRef.current + ' ' + interimText).trim();
+        setInterim(displayText);
+        onInterimRef.current?.(displayText);
+      }
+      if (newFinalText.trim() || interimText) {
+        startSilenceTimer();
+      }
+    };
+
+    r.onerror = (e: SpeechRecognitionErrorEvent) => {
+      console.warn('[SpeechRecognition] ❌ Error:', e.error);
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        userWantsListeningRef.current = false;
+        onErrorRef.current?.(e.error);
+        updateListeningState(false);
+      }
+    };
+
+    r.onend = () => {
+      console.log('[SpeechRecognition] 🛑 Ended');
+      clearAllTimers();
+      isActuallyRunningRef.current = false;
+      startInProgressRef.current = false;
+      if (userStoppedRef.current || finalSentRef.current || !userWantsListeningRef.current) {
+        isRestartingRef.current = false;
+        userStoppedRef.current = false;
+        updateListeningState(false);
+        setInterim('');
+        return;
+      }
+      if (restartAttemptsRef.current < 5 && !isRestartingRef.current) {
+        restartAttemptsRef.current++;
+        isRestartingRef.current = true;
+        setTimeout(() => {
+          if (!userWantsListeningRef.current || finalSentRef.current) {
+            isRestartingRef.current = false;
+            updateListeningState(false);
+            return;
+          }
+          try {
+            r.start();
+          } catch {
+            isRestartingRef.current = false;
+            updateListeningState(false);
+          }
+        }, 300);
+      } else {
+        isRestartingRef.current = false;
+        updateListeningState(false);
+      }
+    };
+
+    recognitionRef.current = r;
 
     startInProgressRef.current = true;
     userWantsListeningRef.current = true;

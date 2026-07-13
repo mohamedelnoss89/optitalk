@@ -362,7 +362,7 @@ export function ChatScreen() {
   );
 
   // ===== Mic toggle =====
-  const handleMicToggle = useCallback(() => {
+  const handleMicToggle = useCallback(async () => {
     if (!recognition.supported) {
       toast.info('استخدم زرار الكتابة ⌨️', { duration: 3000 });
       return;
@@ -382,7 +382,18 @@ export function ChatScreen() {
     // أوقف أي صوت أول
     synthesis.cancel();
     arabicSpeech.cancel();
-    // ابدأ الميك — الـ hook هيحدث isListening تلقائياً
+    
+    // طلب إذن الميكروفون (مهم للموبايل)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // أوقف الـ stream فوراً (إحنا بس بنطلب الإذن)
+      stream.getTracks().forEach(t => t.stop());
+    } catch (err) {
+      toast.error('محتاجين إذن الميكروفون 🎤');
+      return;
+    }
+    
+    // ابدأ الميك
     recognition.start();
   }, [recognition, isListening, isSpeaking, synthesis, arabicSpeech]);
 
