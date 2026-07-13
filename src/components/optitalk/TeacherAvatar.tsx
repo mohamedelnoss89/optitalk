@@ -28,17 +28,24 @@ export function TeacherAvatar({
 
     if (isSpeaking) {
       video.currentTime = 0;
-      video.muted = true;
+      video.muted = true; // مهم للموبايل - لازم muted عشان يشتغل
       video.loop = true;
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
-      video.play().catch((e) => {
-        console.warn('[TeacherAvatar] Video play failed:', e);
-        // retry بعد 200ms
-        setTimeout(() => {
-          video.play().catch(() => {});
-        }, 200);
-      });
+
+      const playPromise = video.play();
+      if (playPromise) {
+        playPromise.catch((e) => {
+          console.warn('[TeacherAvatar] Video play failed, retrying...', e);
+          // retry بعد 100ms و 300ms و 500ms
+          [100, 300, 500].forEach(delay => {
+            setTimeout(() => {
+              if (videoRef.current && !videoRef.current.paused) return;
+              videoRef.current?.play().catch(() => {});
+            }, delay);
+          });
+        });
+      }
     } else {
       video.pause();
       video.currentTime = 0;

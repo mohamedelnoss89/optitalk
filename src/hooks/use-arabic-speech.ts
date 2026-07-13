@@ -128,63 +128,30 @@ export function useArabicSpeech(
     onErrorRef.current = onError;
   }, [onStart, onEnd, onError]);
 
-  // أضف عنصر audio في الـ DOM (مش new Audio) عشان يشتغل على الموبايل
+  // أضف عنصر audio في الـ DOM
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // اعمل audio element في الـ DOM
     let audio = document.getElementById('optitalk-tts-audio') as HTMLAudioElement | null;
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'optitalk-tts-audio';
       audio.setAttribute('playsinline', 'true');
       audio.setAttribute('webkit-playsinline', 'true');
-      audio.setAttribute('autoplay', 'true');
       audio.style.display = 'none';
       document.body.appendChild(audio);
     }
     audioRef.current = audio;
 
-    // ===== unlock الصوت بأول تفاعل من المستخدم =====
-    let unlocked = false;
-    const unlockAudio = () => {
-      if (unlocked) return;
-      unlocked = true;
-      try {
-        audio!.muted = true;
-        audio!.play().then(() => {
-          audio!.pause();
-          audio!.muted = false;
-          audio!.currentTime = 0;
-          console.log('[ArabicSpeech] 🔓 Audio unlocked');
-        }).catch(() => {
-          audio!.muted = false;
-          unlocked = false; // جرّب تاني
-        });
-      } catch {
-        unlocked = false;
-      }
-    };
-
-    document.addEventListener('touchstart', unlockAudio, { passive: true });
-    document.addEventListener('click', unlockAudio, { passive: true });
-    document.addEventListener('keydown', unlockAudio, { passive: true });
-
     return () => {
-      document.removeEventListener('touchstart', unlockAudio);
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('keydown', unlockAudio);
       try {
         if (audio) {
           audio.onplay = null;
           audio.onended = null;
           audio.onerror = null;
           audio.pause();
-          audio.src = '';
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     };
   }, []);
 
