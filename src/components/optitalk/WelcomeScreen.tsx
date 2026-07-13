@@ -40,12 +40,6 @@ export function WelcomeScreen() {
   };
 
   const handleStart = () => {
-    // لو مش مسجل → افتح الـ auth dialog
-    if (!isAuthenticated) {
-      setAuthMode('register');
-      setAuthOpen(true);
-      return;
-    }
     setScreen('onboarding');
   };
 

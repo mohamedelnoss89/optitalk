@@ -24,22 +24,13 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => {
       // ===== الحالات =====
-      // 1. مش مسجل → welcome (يفضل there)
-      // 2. مسجل + فيه user + teacher → chat (بس لو المستخدم ماروحش welcome يدوياً)
-      // 3. مسجل + فيه user بس مفيش teacher → onboarding
-      if (!isAuthenticated) {
-        if (currentScreen !== 'welcome') {
-          setScreen('welcome');
-        }
-        return;
-      }
-
+      // ===== تسجيل الدخول معطل مؤقتاً =====
       // لو المستخدم راح welcome يدوياً (عبر زرار الصفحة الرئيسية) → سيبه هناك
       if (userNavigatedToWelcomeRef.current && currentScreen === 'welcome') {
         return;
       }
 
-      // مسجل
+      // لو فيه user + teacher → روح للـ chat
       if (user && selectedTeacher) {
         if (currentScreen !== 'chat' && currentScreen !== 'welcome' && currentScreen !== 'teacher-select' && currentScreen !== 'onboarding') {
           setScreen('chat');

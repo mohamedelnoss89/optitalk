@@ -43,12 +43,12 @@ export function OnboardingScreen() {
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [level, setLevel] = useState<Level | ''>('');
 
-  // ===== لو المستخدم مش مسجل → ارجع للـ welcome =====
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setScreen('welcome');
-    }
-  }, [isAuthenticated, setScreen]);
+  // ===== تسجيل الدخول معطل مؤقتاً =====
+  // useEffect(() => {
+  //   if (!isAuthenticated) {
+  //     setScreen('welcome');
+  //   }
+  // }, [isAuthenticated, setScreen]);
 
   // Step 2 state
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
