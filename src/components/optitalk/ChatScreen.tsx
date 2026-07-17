@@ -138,27 +138,23 @@ export function ChatScreen() {
 
   // ===== Speak helper =====
   // كل النطق بيتم هنا باستخدام Edge TTS (نفس الصوت دايماً)
-  // Edge TTS بيتحكم في كل حاجة: عربي، إنجليزي، خليط — كله بنفس الصوت
   const speakText = useCallback(
     (text: string, msgId?: string) => {
       const clean = text.replace(/\([^)]*\)/g, '').replace(/[""]/g, '').trim();
       if (!clean) return;
       if (msgId) setSpeakingId(msgId);
 
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      if (typeof window === 'undefined') return;
 
       // أوقف أي نطق حالي
       arabicSpeech.cancel();
       synthesis.cancel();
-      window.speechSynthesis.cancel();
-      setSpeaking(false);
 
-      // ===== استخدم Edge TTS لكل حاجة (عربي، إنجليزي، خليط) =====
-      // كده الصوت مبيتغيرش بين الردود
+      // ===== ابدأ النطق فوراً =====
       console.log('[ChatScreen] بدء النطق:', clean.substring(0, 80));
       arabicSpeech.speak(clean);
     },
-    [synthesis, arabicSpeech, setSpeaking, setSpeakingId]
+    [synthesis, arabicSpeech, setSpeakingId]
   );
 
   // ===== Send greeting on first load =====
