@@ -22,34 +22,28 @@ export function TeacherAvatar({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ===== تشغيل/إيقاف الفيديو حسب حالة الكلام =====
+  // الفيديو بيتشغل لما isSpeaking = true (اللي بتحصل لما الصوت يبدأ فعلاً)
   useEffect(() => {
     const video = videoRef.current;
     if (!video || videoError) return;
 
-    if (isSpeaking) {
-      video.currentTime = 0;
-      video.muted = true; // مهم للموبايل - لازم muted عشان يشتغل
-      video.loop = true;
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('webkit-playsinline', 'true');
+    // خلي الفيديو جاهز دايماً (preload)
+    video.muted = true;
+    video.loop = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
 
-      const playPromise = video.play();
-      if (playPromise) {
-        playPromise.catch((e) => {
-          console.warn('[TeacherAvatar] Video play failed, retrying...', e);
-          // retry بعد 100ms و 300ms و 500ms
-          [100, 300, 500].forEach(delay => {
-            setTimeout(() => {
-              if (videoRef.current && !videoRef.current.paused) return;
-              videoRef.current?.play().catch(() => {});
-            }, delay);
-          });
-        });
-      }
+    if (isSpeaking) {
+      // الصوت بدأ فعلاً → شغل الفيديو من الأول
+      video.currentTime = 0;
+      video.play().catch(() => {
+        // retry
+        setTimeout(() => videoRef.current?.play().catch(() => {}), 200);
+      });
     } else {
+      // الصوت خلص → وقف الفيديو
       video.pause();
       video.currentTime = 0;
-      video.loop = false;
     }
   }, [isSpeaking, videoError]);
 
