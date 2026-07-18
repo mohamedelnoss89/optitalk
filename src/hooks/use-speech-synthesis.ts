@@ -98,7 +98,7 @@ export function useSpeechSynthesis(
         audio.src = '';
       } catch { /* ignore */ }
 
-      setSpeaking(false);
+      // مش setSpeaking(false) هنا عشان الفيديو يفضل شغال لحد ما الصوت يبدأ
 
       // تنظيف النص
       const clean = text
@@ -178,10 +178,23 @@ export function useSpeechSynthesis(
           };
 
           audio.play().catch((err) => {
-            console.error('[TTS] play() failed:', err);
-            URL.revokeObjectURL(blobUrl);
-            if (myGeneration !== generationRef.current || cancelledRef.current) return;
-            setSpeaking(false);
+            console.warn('[TTS] play() failed, retrying...', err);
+            // retry 3 مرات بسرعة
+            let retries = 0;
+            const retry = () => {
+              retries++;
+              if (retries > 3 || myGeneration !== generationRef.current || cancelledRef.current) {
+                URL.revokeObjectURL(blobUrl);
+                setSpeaking(false);
+                return;
+              }
+              setTimeout(() => {
+                audio.play().then(() => {
+                  console.log('[TTS] retry success');
+                }).catch(retry);
+              }, 100 * retries);
+            };
+            retry();
           });
         })
         .catch((err) => {
