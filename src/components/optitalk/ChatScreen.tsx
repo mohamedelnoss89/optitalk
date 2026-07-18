@@ -8,7 +8,6 @@ import { Flame, Trophy, LogOut, Settings2, Volume2, Home, Plus } from 'lucide-re
 import { useStore, type ChatMessage } from '@/lib/store';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { useSpeechSynthesis } from '@/hooks/use-speech-synthesis';
-import { useArabicSpeech } from '@/hooks/use-arabic-speech';
 import { TeacherAvatar } from './TeacherAvatar';
 import { StudentCamera } from './StudentCamera';
 import { MessagesList } from './MessagesList';
@@ -96,41 +95,17 @@ export function ChatScreen() {
     },
   });
 
-  // z-ai TTS hook — بس للإنجليزي الخالص، التحكم في isSpeaking بيتم في speakText
+  // ===== TTS hook موحد (عربي + إنجليزي) — بيختار الصوت المناسب حسب اللغة والشخصية =====
   const synthesis = useSpeechSynthesis({
-    lang: 'en-US',
-    rate: 0.9,
-    pitch: 1,
-    preferGender: selectedTeacher?.gender,
-    onStart: () => {
-      // z-ai TTS بدأ → isSpeaking = true
-      setSpeaking(true);
-    },
-    onEnd: () => {
-      // z-ai TTS خلص → isSpeaking = false
-      setSpeaking(false);
-      setSpeakingId(null);
-    },
-  });
-
-  // ===== Arabic speech hook — Web Speech API + fallback إلى /api/tts-arabic =====
-  // z-ai TTS مفيهاش أصوات عربي، فبنستخدم Web Speech API للعربي والخليط
-  // لو مفيش أصوات عربي في المتصفح، بنرجع لـ /api/tts-arabic (espeak-ng على السيرفر)
-  const arabicSpeech = useArabicSpeech({
-    rate: 0.9,
-    pitch: selectedTeacher?.gender === 'female' ? 1.15 : 0.9,
+    rate: 1.0, // سرعة طبيعية
     gender: selectedTeacher?.gender,
+    // صوت خاص بالشخصية المختارة (مدرس أو صديق)
+    voiceIdAr: (selectedTeacher as any)?.voiceIdAr,
+    voiceIdEn: (selectedTeacher as any)?.voiceIdEn,
     onStart: () => {
-      console.log('[ChatScreen] المدرس بدأ ينطق عربي');
       setSpeaking(true);
     },
     onEnd: () => {
-      console.log('[ChatScreen] المدرس خلص نطق عربي');
-      setSpeaking(false);
-      setSpeakingId(null);
-    },
-    onError: () => {
-      console.error('[ChatScreen] خطأ في النطق العربي');
       setSpeaking(false);
       setSpeakingId(null);
     },
@@ -147,14 +122,13 @@ export function ChatScreen() {
       if (typeof window === 'undefined') return;
 
       // أوقف أي نطق حالي
-      arabicSpeech.cancel();
       synthesis.cancel();
 
       // ===== ابدأ النطق فوراً =====
       console.log('[ChatScreen] بدء النطق:', clean.substring(0, 80));
-      arabicSpeech.speak(clean);
+      synthesis.speak(clean);
     },
-    [synthesis, arabicSpeech, setSpeakingId]
+    [synthesis, setSpeakingId]
   );
 
   // ===== Send greeting on first load =====
@@ -229,7 +203,6 @@ export function ChatScreen() {
   useEffect(() => {
     return () => {
       synthesis.cancel();
-      arabicSpeech.cancel();
     };
   }, []);
 
@@ -251,7 +224,6 @@ export function ChatScreen() {
       setAiThinking(true);
       // Stop any ongoing speech — سواء عربي أو إنجليزي
       synthesis.cancel();
-      arabicSpeech.cancel();
 
       try {
         const history = messages
@@ -354,7 +326,7 @@ export function ChatScreen() {
         setAiThinking(false);
       }
     },
-    [user, selectedTeacher, messages, addMessage, addPoints, setAiThinking, synthesis, arabicSpeech, speakText, resetPerfectStreak, bumpPerfectStreak, speechLang, learningStage, learnedWords, inReviewMode, currentTargetWord, inSentenceBuilderMode, addLearnedWord, setInReviewMode, setCurrentTargetWord, setInSentenceBuilderMode]
+    [user, selectedTeacher, messages, addMessage, addPoints, setAiThinking, synthesis, speakText, resetPerfectStreak, bumpPerfectStreak, speechLang, learningStage, learnedWords, inReviewMode, currentTargetWord, inSentenceBuilderMode, addLearnedWord, setInReviewMode, setCurrentTargetWord, setInSentenceBuilderMode]
   );
 
   // ===== Mic toggle =====
@@ -366,7 +338,6 @@ export function ChatScreen() {
     // لو المدرس بيتكلم → وقف الصوت
     if (isSpeaking) {
       synthesis.cancel();
-      arabicSpeech.cancel();
       return;
     }
     // لو الميك شغال → وقفه
@@ -377,10 +348,9 @@ export function ChatScreen() {
     // ===== الميك مفصول → ابدأ =====
     // أوقف أي صوت أول
     synthesis.cancel();
-    arabicSpeech.cancel();
     // ابدأ الميك مباشرة (لازم جوه الـ click event عشان الموبايل)
     recognition.start();
-  }, [recognition, isListening, isSpeaking, synthesis, arabicSpeech]);
+  }, [recognition, isListening, isSpeaking, synthesis]);
 
   // ===== Force restart للحالات العالقة =====
   // بيتنفذ لو المستخدم ضغط مطوّل على زرار الميك
@@ -392,15 +362,13 @@ export function ChatScreen() {
 
   const handleStopSpeaking = useCallback(() => {
     synthesis.cancel();
-    arabicSpeech.cancel();
-  }, [synthesis, arabicSpeech]);
+  }, [synthesis]);
 
   // ===== End conversation (يحفظ المحادثة ولا يمسحها) =====
   // المستخدم لما يضغط X، بنوقف الصوت بس بنحتفظ بالرسائل
   // عشان لما يرجع يكمل من حيث وقف
   const handleEnd = useCallback(() => {
     synthesis.cancel();
-    arabicSpeech.cancel();
     recognition.stop();
     setListening(false);
     setAiThinking(false);
@@ -412,12 +380,11 @@ export function ChatScreen() {
     toast.success('محادثتك محفوظة — تقدر ترجع في أي وقت! 🎓');
     // روح لـ welcome — المستخدم ممكن يرجع يكمل
     setScreen('welcome');
-  }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, setScreen, setConversationId]);
+  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, setScreen, setConversationId]);
 
   // ===== Start new conversation (روح لشاشة اختيار المدرس) =====
   const handleNewConversation = useCallback(() => {
     synthesis.cancel();
-    arabicSpeech.cancel();
     recognition.stop();
     setListening(false);
     setAiThinking(false);
@@ -432,12 +399,11 @@ export function ChatScreen() {
     // روح لشاشة اختيار المدرس
     toast.success('اختار المدرس اللي عايزه! 🎓');
     setScreen('teacher-select');
-  }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
+  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
 
   // ===== Go Home (ارجع لصفحة المعلومات الأساسية - onboarding) =====
   const handleGoHome = useCallback(() => {
     synthesis.cancel();
-    arabicSpeech.cancel();
     recognition.stop();
     setListening(false);
     setAiThinking(false);
@@ -451,7 +417,7 @@ export function ChatScreen() {
     convIdRef.current = null;
     // ارجع لصفحة المعلومات الأساسية (onboarding)
     setScreen('onboarding');
-  }, [synthesis, arabicSpeech, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
+  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
 
   // ===== Replay a message =====
   const handleReplay = useCallback(

@@ -24,6 +24,11 @@ export interface Teacher {
   // صورة إنسان حقيقي - حجم كبير من Unsplash
   // paramters: w=800 (width), q=80 (quality), fit=crop, crop=faces (يركّز على الوش)
   imageUrl: string;
+  // ===== صوت TTS خاص بكل شخصية (Edge TTS voice ID) =====
+  // - للرد العربي: ar-EG-ShakirNeural (راجل), ar-EG-SalmaNeural (ست)
+  // - للرد الإنجليزي: نختار صوت مختلف لكل مدرس عشان الشخصيات تختلف
+  voiceIdAr: string; // صوت عربي (حسب الجنس)
+  voiceIdEn: string; // صوت إنجليزي (حسب الجنس)
 }
 
 // Helper: صورة محلية في public/teachers/ (تم توليدها بـ AI - بورتريه عمودي احترافي)
@@ -50,6 +55,8 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: شرح صبور، كلمات بسيطة، تكرار الجمل الأساسية، سؤال واحد في كل مرة، تصحيح لطيف مع تشجيع. بتستخدم تشبيهات من الحياة اليومية. بتخلّي الطالب يكرر الكلمة 2-3 مرات عشان يثبتها. بتكافئ كل تقدم صغير. بتتكلم ببطء شديد مع المبتدئين. بتستخدم تعابير زي "خد وقتك"، "مش لازم تستعجل"، "إحنا بنتعلم سوا".',
     tags: ['صبور', 'هادئ', 'مثالي للمبتدئين'],
     imageUrl: teacherImg('mr-james.png'),
+    voiceIdAr: 'ar-EG-ShakirNeural',
+    voiceIdEn: 'en-US-GuyNeural',
   },
   {
     id: 'ms-sarah',
@@ -69,6 +76,8 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: محادثة ودودة، استخدام أمثلة من الحياة اليومية، إيموجي أحياناً، نكت خفيفة، أسئلة شخصية مشوقة. بتخلّي الطالب يحس إنه بيتكلم مع صاحبته. بتستخدم مواقف يومية عشان تشرح الكلمات. بتشجّع الطالب يتكلم بدون خوف. بتتنوع بين عربي وإنجليزي بطريقة طبيعية. بتستخدم تعابير شبابية أحياناً.',
     tags: ['مرحة', 'ودودة', 'أمثلة يومية'],
     imageUrl: teacherImg('ms-sarah.png'),
+    voiceIdAr: 'ar-EG-SalmaNeural',
+    voiceIdEn: 'en-US-AriaNeural',
   },
   {
     id: 'professor-david',
@@ -88,6 +97,8 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: تركيز على القواعد، رسمي بس دافئ، يشرح القواعد وأصولها، أمثلة منظمة، تصحيحات مفصلة مع التعليل. بيحب يربط بين القواعد المختلفة. بيستخدم أمثلة من الأدب والتاريخ. بيطلب من الطالب يحلل الأخطاء بنفسه. بيتنقل خطوة خطوة بشكل منهجي. بيستخدم تعابير أكاديمية بس مبسطة.',
     tags: ['أكاديمي', 'دقيق', 'قواعد'],
     imageUrl: teacherImg('professor-david.png'),
+    voiceIdAr: 'ar-EG-ShakirNeural',
+    voiceIdEn: 'en-US-ChristopherNeural',
   },
   {
     id: 'miss-emma',
@@ -107,6 +118,8 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: محادثة تفاعلية، تعاطف، التحقق من الجهد، سيناريوهات role-play، تركيز على الطلاقة بدل القواعد المثالية، تشجيع التعبير عن النفس. بتستخدم مواقف حقيقية. بتسأل أسئلة مفتوحة. بتتفاعل مع إيه الطالب قاله. بتخلّي الطالب يقود المحادثة أحياناً.',
     tags: ['محادثة', 'داعمة', 'ثقة بالنفس'],
     imageUrl: teacherImg('miss-emma.png'),
+    voiceIdAr: 'ar-EG-SalmaNeural',
+    voiceIdEn: 'en-US-JennyNeural',
   },
   {
     id: 'coach-mike',
@@ -126,6 +139,8 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: تحفيزي، تحديات وأهداف، تشبيهات رياضية، طاقة عالية، احتفال بالإنجازات الصغيرة، دفع الطالب يحاول أقوى، جلسات ديناميكية. بتستخدم تشبيهات زي "الإنجليزي زي العضلة — كل ما تتمرن تقوي". بتحدّي الطالب: "تقدر تعملها 5 مرات؟". بتتنقل سريع بين الأنشطة.',
     tags: ['تحفيزي', 'نشيط', 'أهداف'],
     imageUrl: teacherImg('coach-mike.png'),
+    voiceIdAr: 'ar-EG-SalmaNeural',
+    voiceIdEn: 'en-US-MichelleNeural',
   },
   {
     id: 'dr-lisa',
@@ -145,6 +160,8 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: احترافي، منظم، feedback دقيق، مفردات متقدمة بشكل مناسب، تركيز على السياقات المهنية (إيميل، اجتماعات، عروض)، تشجيع النطق الواضح. بتستخدم سيناريوهات عملية. بتدّي الطالب مهام واضحة. بتناقش مواضيع مهنية حقيقية. بتدّي نصائح للترقية المهنية.',
     tags: ['احترافي', 'أكاديمي', 'أعمال'],
     imageUrl: teacherImg('dr-lisa.png'),
+    voiceIdAr: 'ar-EG-SalmaNeural',
+    voiceIdEn: 'en-US-SaraNeural',
   },
 ];
 

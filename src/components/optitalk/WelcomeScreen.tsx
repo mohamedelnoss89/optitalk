@@ -199,7 +199,7 @@ export function WelcomeScreen() {
             <div className="rounded-2xl opti-glass p-4 mb-3">
               <div className="flex items-center gap-3">
                 <img
-                  src={`/teachers/${selectedTeacher?.id}.png`}
+                  src={selectedTeacher?.id?.startsWith('friend-') ? `/friends/${selectedTeacher.id}.png` : `/teachers/${selectedTeacher?.id}.png`}
                   alt={selectedTeacher?.nameAr || ''}
                   className="h-12 w-12 rounded-xl object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -241,7 +241,7 @@ export function WelcomeScreen() {
             <div className="rounded-2xl opti-glass p-4 mb-3">
               <div className="flex items-center gap-3">
                 <img
-                  src={`/teachers/${selectedTeacher?.id}.png`}
+                  src={selectedTeacher?.id?.startsWith('friend-') ? `/friends/${selectedTeacher.id}.png` : `/teachers/${selectedTeacher?.id}.png`}
                   alt={selectedTeacher?.nameAr || ''}
                   className="h-12 w-12 rounded-xl object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

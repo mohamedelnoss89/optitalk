@@ -113,6 +113,8 @@ export function OnboardingScreen() {
           teachingStyle: friend.conversationStyle,
           tags: friend.tags,
           imageUrl: friend.imageUrl,
+          voiceIdAr: friend.voiceIdAr,
+          voiceIdEn: friend.voiceIdEn,
         });
       }
     }
