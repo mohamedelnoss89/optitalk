@@ -56,9 +56,8 @@ export const TEACHERS: Teacher[] = [
     tags: ['صبور', 'هادئ', 'مثالي للمبتدئين'],
     imageUrl: teacherImg('mr-james.png'),
     voiceIdAr: 'ar-EG-ShakirNeural',
-    voiceIdEn: 'ar-EG-ShakirNeural',
-    voiceIdAr: 'ar-EG-ShakirNeural',
     voiceIdEn: 'en-US-GuyNeural',
+    voiceIdEn: 'ar-EG-ShakirNeural',
   },
   {
     id: 'ms-sarah',
@@ -79,9 +78,8 @@ export const TEACHERS: Teacher[] = [
     tags: ['مرحة', 'ودودة', 'أمثلة يومية'],
     imageUrl: teacherImg('ms-sarah.png'),
     voiceIdAr: 'ar-EG-SalmaNeural',
-    voiceIdEn: 'ar-EG-SalmaNeural',
-    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-AriaNeural',
+    voiceIdEn: 'ar-EG-SalmaNeural',
   },
   {
     id: 'professor-david',
@@ -102,9 +100,8 @@ export const TEACHERS: Teacher[] = [
     tags: ['أكاديمي', 'دقيق', 'قواعد'],
     imageUrl: teacherImg('professor-david.png'),
     voiceIdAr: 'ar-SA-HamedNeural',
-    voiceIdEn: 'ar-SA-HamedNeural',
-    voiceIdAr: 'ar-EG-ShakirNeural',
     voiceIdEn: 'en-US-ChristopherNeural',
+    voiceIdEn: 'ar-SA-HamedNeural',
   },
   {
     id: 'miss-emma',
@@ -125,9 +122,8 @@ export const TEACHERS: Teacher[] = [
     tags: ['محادثة', 'داعمة', 'ثقة بالنفس'],
     imageUrl: teacherImg('miss-emma.png'),
     voiceIdAr: 'ar-LB-LaylaNeural',
-    voiceIdEn: 'ar-LB-LaylaNeural',
-    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-JennyNeural',
+    voiceIdEn: 'ar-LB-LaylaNeural',
   },
   {
     id: 'coach-mike',
@@ -148,9 +144,8 @@ export const TEACHERS: Teacher[] = [
     tags: ['تحفيزي', 'نشيط', 'أهداف'],
     imageUrl: teacherImg('coach-mike.png'),
     voiceIdAr: 'ar-JO-SanaNeural',
-    voiceIdEn: 'ar-JO-SanaNeural',
-    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-MichelleNeural',
+    voiceIdEn: 'ar-JO-SanaNeural',
   },
   {
     id: 'dr-lisa',
@@ -171,9 +166,8 @@ export const TEACHERS: Teacher[] = [
     tags: ['احترافي', 'أكاديمي', 'أعمال'],
     imageUrl: teacherImg('dr-lisa.png'),
     voiceIdAr: 'ar-QA-AmalNeural',
-    voiceIdEn: 'ar-QA-AmalNeural',
-    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-SaraNeural',
+    voiceIdEn: 'ar-QA-AmalNeural',
   },
 ];
 

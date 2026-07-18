@@ -10,38 +10,39 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 // ===== خريطة الأصوات — كل شخصية ليها صوت مختلف =====
+// ملاحظة: تم تصحيح جنس الأصدقاء (friend-yara=يحيى ذكر، friend-hassan=حسنة أنثى، friend-dina=نديم ذكر)
 const VOICE_MAP: Record<string, string> = {
   // === المدرسين الرجالة ===
-  'mr-james': 'ar-EG-ShakirNeural',        // صوت رجالي مصري هادي
-  'professor-david': 'ar-SA-HamedNeural',   // صوت رجالي سعودي أكاديمي
+  'mr-james': 'ar-EG-ShakirNeural',        // مستر جيمس — مصري
+  'professor-david': 'ar-SA-HamedNeural',   // بروفيسور ديفيد — سعودي
 
   // === المدرسات الستات ===
-  'ms-sarah': 'ar-EG-SalmaNeural',          // صوت أنثوي مصري مرح
-  'miss-emma': 'ar-LB-LaylaNeural',         // صوت أنثوي لبناني دافئ
-  'coach-mike': 'ar-JO-SanaNeural',         // صوت أنثوي أردني نشيط
-  'dr-lisa': 'ar-QA-AmalNeural',            // صوت أنثوي قطري احترافي
+  'ms-sarah': 'ar-EG-SalmaNeural',          // مس سارة — مصرية
+  'miss-emma': 'ar-LB-LaylaNeural',         // مس غالية — لبنانية
+  'coach-mike': 'ar-JO-SanaNeural',         // مس بسنت — أردنية
+  'dr-lisa': 'ar-QA-AmalNeural',            // مس سجدة — قطرية
 
-  // === الأصدقاء الرجالة ===
-  'friend-alex': 'ar-EG-ShakirNeural',      // صوت رجالي مصري
-  'friend-omar': 'ar-LY-OmarNeural',        // صوت رجالي ليبي
-  'friend-karim': 'ar-SY-LaithNeural',      // صوت رجالي سوري
-  'friend-sami': 'ar-MA-JamalNeural',       // صوت رجالي مغربي
-  'friend-tarek': 'ar-BH-AliNeural',        // صوت رجالي بحريني
-  'friend-amir': 'ar-KW-FahedNeural',       // صوت رجالي كويتي
-  'friend-ziad': 'ar-IQ-BasselNeural',      // صوت رجالي عراقي
-  'friend-khaled': 'ar-OM-AbdullahNeural',  // صوت رجالي عماني
-  'friend-hassan': 'ar-TN-HediNeural',      // صوت رجالي تونسي
+  // === الأصدقاء الرجالة (10) ===
+  'friend-alex': 'ar-EG-ShakirNeural',      // أليكس — مصري
+  'friend-omar': 'ar-LY-OmarNeural',        // عمر — ليبي
+  'friend-karim': 'ar-SY-LaithNeural',      // كريم — سوري
+  'friend-sami': 'ar-MA-JamalNeural',       // سامي — مغربي
+  'friend-tarek': 'ar-BH-AliNeural',        // طارق — بحريني
+  'friend-amir': 'ar-KW-FahedNeural',       // أمير — كويتي
+  'friend-ziad': 'ar-IQ-BasselNeural',      // زياد — عراقي
+  'friend-khaled': 'ar-OM-AbdullahNeural',  // خالد — عماني
+  'friend-yara': 'ar-TN-HediNeural',        // يحيى — تونسي (كان اسمه Yara بالغلط في الصورة)
+  'friend-dina': 'ar-YE-SalehNeural',       // نديم — يمني (كان اسمه Dina بالغلط في الصورة)
 
-  // === الأصدقاء الستات ===
-  'friend-layla': 'ar-EG-SalmaNeural',      // صوت أنثوي مصري
-  'friend-sara': 'ar-LB-LaylaNeural',       // صوت أنثوي لبناني
-  'friend-nora': 'ar-JO-SanaNeural',        // صوت أنثوي أردني
-  'friend-maya': 'ar-QA-AmalNeural',        // صوت أنثوي قطري
-  'friend-yara': 'ar-BH-LailaNeural',       // صوت أنثوي بحريني
-  'friend-dina': 'ar-KW-NouraNeural',       // صوت أنثوي كويتي
-  'friend-hana': 'ar-IQ-RanaNeural',        // صوت أنثوي عراقي
-  'friend-farida': 'ar-LY-ImanNeural',      // صوت أنثوي ليبي
-  'friend-mariam': 'ar-MA-MounaNeural',     // صوت أنثوي مغربي
+  // === الأصدقاء الستات (8) ===
+  'friend-layla': 'ar-EG-SalmaNeural',      // ليلى — مصرية
+  'friend-sara': 'ar-LB-LaylaNeural',       // سارة — لبنانية
+  'friend-nora': 'ar-JO-SanaNeural',        // نورا — أردنية
+  'friend-maya': 'ar-QA-AmalNeural',        // مايا — قطرية
+  'friend-hassan': 'ar-BH-LailaNeural',     // حسنة — بحرينية (كان اسمها Hassan بالغلط في الصورة)
+  'friend-hana': 'ar-IQ-RanaNeural',        // هنا — عراقية
+  'friend-farida': 'ar-LY-ImanNeural',      // فريدة — ليبية
+  'friend-mariam': 'ar-MA-MounaNeural',     // مريم — مغربية
 };
 
 // أصوات افتراضية
