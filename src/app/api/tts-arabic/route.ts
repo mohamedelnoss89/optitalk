@@ -1,7 +1,4 @@
-// ===== OptiTalk - Arabic TTS API Route (توافقي — يعيد التوجيه لنفس محرك Edge TTS الموحد) =====
-// هذا المسار باقي عشان backward compatibility مع أي كود قديم يستدعيه.
-// بيستخدم نفس محرك Edge TTS الموحد في /api/tts.
-
+// ===== OptiTalk - Arabic TTS API Route (أصوات مختلفة لكل شخصية) =====
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
@@ -12,9 +9,44 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-// أصوات عربية (مصرية) من Edge TTS
-const AR_MALE = 'ar-EG-ShakirNeural';
-const AR_FEMALE = 'ar-EG-SalmaNeural';
+// ===== خريطة الأصوات — كل شخصية ليها صوت مختلف =====
+const VOICE_MAP: Record<string, string> = {
+  // === المدرسين الرجالة ===
+  'mr-james': 'ar-EG-ShakirNeural',        // صوت رجالي مصري هادي
+  'professor-david': 'ar-SA-HamedNeural',   // صوت رجالي سعودي أكاديمي
+
+  // === المدرسات الستات ===
+  'ms-sarah': 'ar-EG-SalmaNeural',          // صوت أنثوي مصري مرح
+  'miss-emma': 'ar-LB-LaylaNeural',         // صوت أنثوي لبناني دافئ
+  'coach-mike': 'ar-JO-SanaNeural',         // صوت أنثوي أردني نشيط
+  'dr-lisa': 'ar-QA-AmalNeural',            // صوت أنثوي قطري احترافي
+
+  // === الأصدقاء الرجالة ===
+  'friend-alex': 'ar-EG-ShakirNeural',      // صوت رجالي مصري
+  'friend-omar': 'ar-LY-OmarNeural',        // صوت رجالي ليبي
+  'friend-karim': 'ar-SY-LaithNeural',      // صوت رجالي سوري
+  'friend-sami': 'ar-MA-JamalNeural',       // صوت رجالي مغربي
+  'friend-tarek': 'ar-BH-AliNeural',        // صوت رجالي بحريني
+  'friend-amir': 'ar-KW-FahedNeural',       // صوت رجالي كويتي
+  'friend-ziad': 'ar-IQ-BasselNeural',      // صوت رجالي عراقي
+  'friend-khaled': 'ar-OM-AbdullahNeural',  // صوت رجالي عماني
+  'friend-hassan': 'ar-TN-HediNeural',      // صوت رجالي تونسي
+
+  // === الأصدقاء الستات ===
+  'friend-layla': 'ar-EG-SalmaNeural',      // صوت أنثوي مصري
+  'friend-sara': 'ar-LB-LaylaNeural',       // صوت أنثوي لبناني
+  'friend-nora': 'ar-JO-SanaNeural',        // صوت أنثوي أردني
+  'friend-maya': 'ar-QA-AmalNeural',        // صوت أنثوي قطري
+  'friend-yara': 'ar-BH-LailaNeural',       // صوت أنثوي بحريني
+  'friend-dina': 'ar-KW-NouraNeural',       // صوت أنثوي كويتي
+  'friend-hana': 'ar-IQ-RanaNeural',        // صوت أنثوي عراقي
+  'friend-farida': 'ar-LY-ImanNeural',      // صوت أنثوي ليبي
+  'friend-mariam': 'ar-MA-MounaNeural',     // صوت أنثوي مغربي
+};
+
+// أصوات افتراضية
+const DEFAULT_MALE = 'ar-EG-ShakirNeural';
+const DEFAULT_FEMALE = 'ar-EG-SalmaNeural';
 
 function cleanText(text: string): string {
   let out = text
@@ -86,25 +118,43 @@ async function handle(req: NextRequest, method: 'GET' | 'POST') {
     let text = '';
     let gender: 'male' | 'female' = 'male';
     let speedWPM = 160;
+    let characterId = '';
+    let voiceId = '';
 
     if (method === 'POST') {
       const body = await req.json().catch(() => ({}));
       text = typeof body.text === 'string' ? body.text : '';
       gender = body.gender === 'female' ? 'female' : 'male';
       speedWPM = typeof body.speed === 'number' ? body.speed : 160;
+      characterId = typeof body.characterId === 'string' ? body.characterId : '';
+      voiceId = typeof body.voiceId === 'string' ? body.voiceId : '';
     } else {
       const u = new URL(req.url);
       text = u.searchParams.get('text') || '';
       gender = u.searchParams.get('gender') === 'female' ? 'female' : 'male';
       speedWPM = parseInt(u.searchParams.get('speed') || '160', 10);
+      characterId = u.searchParams.get('characterId') || '';
+      voiceId = u.searchParams.get('voiceId') || '';
     }
 
     if (!text) return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     const clean = cleanText(text);
     if (!clean) return NextResponse.json({ error: 'Empty text' }, { status: 400 });
 
-    const voice = gender === 'female' ? AR_FEMALE : AR_MALE;
-    // speedWPM 160 → rate ~1.0; 200 → ~1.25
+    // ===== اختيار الصوت حسب الشخصية =====
+    let voice: string;
+    if (voiceId) {
+      // لو فيه voiceId محدد مباشرة
+      voice = voiceId;
+      console.log(`[tts-arabic] Direct voiceId: ${voice}`);
+    } else if (characterId && VOICE_MAP[characterId]) {
+      voice = VOICE_MAP[characterId];
+      console.log(`[tts-arabic] Voice for ${characterId}: ${voice}`);
+    } else {
+      voice = gender === 'female' ? DEFAULT_FEMALE : DEFAULT_MALE;
+      console.log(`[tts-arabic] Default voice (${gender}): ${voice}`);
+    }
+
     const rate = Math.min(1.5, Math.max(0.6, speedWPM / 160));
 
     let buf = await generateEdgeTTS(clean, voice, rate);

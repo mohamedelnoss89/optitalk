@@ -7,13 +7,14 @@ interface UseArabicSpeechOptions {
   rate?: number;
   pitch?: number;
   gender?: 'male' | 'female';
+  characterId?: string;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: () => void;
 }
 
 export function useArabicSpeech(opts: UseArabicSpeechOptions = {}) {
-  const { rate = 0.9, pitch, gender, onStart, onEnd, onError } = opts;
+  const { rate = 0.9, pitch, gender, characterId, onStart, onEnd, onError } = opts;
   const [speaking, setSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onStartRef = useRef(onStart);
@@ -91,6 +92,7 @@ export function useArabicSpeech(opts: UseArabicSpeechOptions = {}) {
 
     const params = new URLSearchParams({ text });
     if (gender) params.set('gender', gender);
+    if (characterId) params.set('characterId', characterId);
     params.set('speed', String(Math.round(175 * rate)));
     if (pitch !== undefined) params.set('pitch', String(pitch));
 
@@ -144,7 +146,7 @@ export function useArabicSpeech(opts: UseArabicSpeechOptions = {}) {
         onErrorRef.current?.();
         onEndRef.current?.();
       });
-  }, [rate, pitch, gender]);
+  }, [rate, pitch, gender, characterId]);
 
   const cancel = useCallback(() => {
     const audio = audioRef.current;
