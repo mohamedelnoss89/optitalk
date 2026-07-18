@@ -143,7 +143,7 @@ export function useSpeechSynthesis(
         params.set('gender', genderRef.current);
       }
 
-      const url = `/api/tts?${params.toString()}`;
+      const url = `/api/tts-arabic?${params.toString()}`;
 
       fetch(url)
         .then((res) => {

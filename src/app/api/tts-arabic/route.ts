@@ -1,51 +1,40 @@
-// ===== OptiTalk - Arabic TTS API Route (أصوات مختلفة لكل شخصية) =====
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
-import { tmpdir } from 'os';
+import { EdgeTTS } from 'node-edge-tts';
+import { readFile, unlink } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-// ===== خريطة الأصوات — كل شخصية ليها صوت مختلف =====
-// ملاحظة: تم تصحيح جنس الأصدقاء (friend-yara=يحيى ذكر، friend-hassan=حسنة أنثى، friend-dina=نديم ذكر)
 const VOICE_MAP: Record<string, string> = {
-  // === المدرسين الرجالة ===
-  'mr-james': 'ar-EG-ShakirNeural',        // مستر جيمس — مصري
-  'professor-david': 'ar-SA-HamedNeural',   // بروفيسور ديفيد — سعودي
-
-  // === المدرسات الستات ===
-  'ms-sarah': 'ar-EG-SalmaNeural',          // مس سارة — مصرية
-  'miss-emma': 'ar-LB-LaylaNeural',         // مس غالية — لبنانية
-  'coach-mike': 'ar-JO-SanaNeural',         // مس بسنت — أردنية
-  'dr-lisa': 'ar-QA-AmalNeural',            // مس سجدة — قطرية
-
-  // === الأصدقاء الرجالة (10) ===
-  'friend-alex': 'ar-EG-ShakirNeural',      // أليكس — مصري
-  'friend-omar': 'ar-LY-OmarNeural',        // عمر — ليبي
-  'friend-karim': 'ar-SY-LaithNeural',      // كريم — سوري
-  'friend-sami': 'ar-MA-JamalNeural',       // سامي — مغربي
-  'friend-tarek': 'ar-BH-AliNeural',        // طارق — بحريني
-  'friend-amir': 'ar-KW-FahedNeural',       // أمير — كويتي
-  'friend-ziad': 'ar-IQ-BasselNeural',      // زياد — عراقي
-  'friend-khaled': 'ar-OM-AbdullahNeural',  // خالد — عماني
-  'friend-yara': 'ar-TN-HediNeural',        // يحيى — تونسي (كان اسمه Yara بالغلط في الصورة)
-  'friend-dina': 'ar-YE-SalehNeural',       // نديم — يمني (كان اسمه Dina بالغلط في الصورة)
-
-  // === الأصدقاء الستات (8) ===
-  'friend-layla': 'ar-EG-SalmaNeural',      // ليلى — مصرية
-  'friend-sara': 'ar-LB-LaylaNeural',       // سارة — لبنانية
-  'friend-nora': 'ar-JO-SanaNeural',        // نورا — أردنية
-  'friend-maya': 'ar-QA-AmalNeural',        // مايا — قطرية
-  'friend-hassan': 'ar-BH-LailaNeural',     // حسنة — بحرينية (كان اسمها Hassan بالغلط في الصورة)
-  'friend-hana': 'ar-IQ-RanaNeural',        // هنا — عراقية
-  'friend-farida': 'ar-LY-ImanNeural',      // فريدة — ليبية
-  'friend-mariam': 'ar-MA-MounaNeural',     // مريم — مغربية
+  'mr-james': 'ar-EG-ShakirNeural',
+  'professor-david': 'ar-SA-HamedNeural',
+  'ms-sarah': 'ar-EG-SalmaNeural',
+  'miss-emma': 'ar-LB-LaylaNeural',
+  'coach-mike': 'ar-JO-SanaNeural',
+  'dr-lisa': 'ar-QA-AmalNeural',
+  'friend-alex': 'ar-EG-ShakirNeural',
+  'friend-omar': 'ar-LY-OmarNeural',
+  'friend-karim': 'ar-SY-LaithNeural',
+  'friend-sami': 'ar-MA-JamalNeural',
+  'friend-tarek': 'ar-BH-AliNeural',
+  'friend-amir': 'ar-KW-FahedNeural',
+  'friend-ziad': 'ar-IQ-BasselNeural',
+  'friend-khaled': 'ar-OM-AbdullahNeural',
+  'friend-hassan': 'ar-TN-HediNeural',
+  'friend-layla': 'ar-EG-SalmaNeural',
+  'friend-sara': 'ar-LB-LaylaNeural',
+  'friend-nora': 'ar-JO-SanaNeural',
+  'friend-maya': 'ar-QA-AmalNeural',
+  'friend-yara': 'ar-BH-LailaNeural',
+  'friend-dina': 'ar-KW-NouraNeural',
+  'friend-hana': 'ar-IQ-RanaNeural',
+  'friend-farida': 'ar-LY-ImanNeural',
+  'friend-mariam': 'ar-MA-MounaNeural',
 };
 
-// أصوات افتراضية
 const DEFAULT_MALE = 'ar-EG-ShakirNeural';
 const DEFAULT_FEMALE = 'ar-EG-SalmaNeural';
 
@@ -54,113 +43,61 @@ function cleanText(text: string): string {
     .replace(/\([^)]*\)/g, '')
     .replace(/[""«»]/g, '')
     .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+    .replace(/[\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  if (out.length > 900) {
-    const slice = out.slice(0, 900);
-    const lastPunct = Math.max(
-      slice.lastIndexOf('. '),
-      slice.lastIndexOf('؟ '),
-      slice.lastIndexOf('! '),
-      slice.lastIndexOf('? '),
-      slice.lastIndexOf('.'),
-      slice.lastIndexOf('؟'),
-      slice.lastIndexOf('!'),
-      slice.lastIndexOf('?')
-    );
-    out = lastPunct > 400 ? slice.slice(0, lastPunct + 1) : slice;
-  }
+  if (out.length > 900) out = out.slice(0, 900);
   return out;
-}
-
-async function generateEdgeTTS(text: string, voice: string, rate: number): Promise<Buffer | null> {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-ar-'));
-  const outputPath = join(tmpDir, 'out.mp3');
-  const processed = text.replace(/[\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652]/g, '').replace(/\s+/g, ' ').trim();
-  const ratePercent = Math.round((rate - 1) * 100);
-  const rateArg = ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`;
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const proc = spawn('edge-tts', [
-        '--voice', voice,
-        '--text', processed,
-        '--rate', rateArg,
-        '--write-media', outputPath,
-      ], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}` },
-      });
-      let stderr = '';
-      proc.stderr.on('data', (d) => { stderr += d.toString(); });
-      proc.on('error', reject);
-      proc.on('close', (code) => code === 0 ? resolve() : reject(new Error(`edge-tts ${code}: ${stderr.slice(-200)}`)));
-      proc.stdin.end();
-    });
-    return await readFile(outputPath);
-  } catch (e) {
-    console.error('[tts-arabic] edge-tts failed:', e);
-    return null;
-  } finally {
-    try { await rm(tmpDir, { recursive: true, force: true }); } catch {}
-  }
-}
-
-async function generateGoogleTTS(text: string): Promise<Buffer | null> {
-  try {
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.slice(0, 200))}&tl=ar&client=tw-ob`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
-  } catch { return null; }
 }
 
 async function handle(req: NextRequest, method: 'GET' | 'POST') {
   try {
     let text = '';
     let gender: 'male' | 'female' = 'male';
-    let speedWPM = 160;
     let characterId = '';
     let voiceId = '';
 
     if (method === 'POST') {
       const body = await req.json().catch(() => ({}));
-      text = typeof body.text === 'string' ? body.text : '';
+      text = body.text || '';
       gender = body.gender === 'female' ? 'female' : 'male';
-      speedWPM = typeof body.speed === 'number' ? body.speed : 160;
-      characterId = typeof body.characterId === 'string' ? body.characterId : '';
-      voiceId = typeof body.voiceId === 'string' ? body.voiceId : '';
+      characterId = body.characterId || '';
+      voiceId = body.voiceId || '';
     } else {
       const u = new URL(req.url);
       text = u.searchParams.get('text') || '';
       gender = u.searchParams.get('gender') === 'female' ? 'female' : 'male';
-      speedWPM = parseInt(u.searchParams.get('speed') || '160', 10);
       characterId = u.searchParams.get('characterId') || '';
       voiceId = u.searchParams.get('voiceId') || '';
     }
 
-    if (!text) return NextResponse.json({ error: 'Text is required' }, { status: 400 });
+    if (!text) return NextResponse.json({ error: 'Text required' }, { status: 400 });
     const clean = cleanText(text);
-    if (!clean) return NextResponse.json({ error: 'Empty text' }, { status: 400 });
+    if (!clean) return NextResponse.json({ error: 'Empty' }, { status: 400 });
 
-    // ===== اختيار الصوت حسب الشخصية =====
+    // اختيار الصوت
     let voice: string;
     if (voiceId) {
-      // لو فيه voiceId محدد مباشرة
       voice = voiceId;
-      console.log(`[tts-arabic] Direct voiceId: ${voice}`);
     } else if (characterId && VOICE_MAP[characterId]) {
       voice = VOICE_MAP[characterId];
-      console.log(`[tts-arabic] Voice for ${characterId}: ${voice}`);
     } else {
       voice = gender === 'female' ? DEFAULT_FEMALE : DEFAULT_MALE;
-      console.log(`[tts-arabic] Default voice (${gender}): ${voice}`);
     }
+    console.log(`[tts] voice: ${voice} | charId: ${characterId}`);
 
-    const rate = Math.min(1.5, Math.max(0.6, speedWPM / 160));
+    // استخدم node-edge-tts
+    const outPath = join(tmpdir(), `tts_${Date.now()}.mp3`);
+    const tts = new EdgeTTS({ voice, lang: 'ar', timeout: 15000 });
+    await tts.ttsPromise(clean, outPath);
 
-    let buf = await generateEdgeTTS(clean, voice, rate);
-    if (!buf || buf.length < 500) buf = await generateGoogleTTS(clean);
-    if (!buf) return NextResponse.json({ error: 'TTS failed' }, { status: 500 });
+    const buf = await readFile(outPath);
+    // امسح الملف المؤقت
+    try { await unlink(outPath); } catch {}
+
+    if (!buf || buf.length < 100) {
+      return NextResponse.json({ error: 'TTS failed' }, { status: 500 });
+    }
 
     return new NextResponse(new Uint8Array(buf), {
       status: 200,
@@ -171,6 +108,7 @@ async function handle(req: NextRequest, method: 'GET' | 'POST') {
       },
     });
   } catch (e: any) {
+    console.error('[tts] error:', e?.message);
     return NextResponse.json({ error: e?.message || 'fail' }, { status: 500 });
   }
 }
