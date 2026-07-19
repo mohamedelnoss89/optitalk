@@ -10,6 +10,7 @@ import type { Teacher } from '@/lib/teachers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Vercel serverless timeout
 
 interface ChatRequest {
   message: string;
@@ -701,7 +702,13 @@ export async function POST(req: NextRequest) {
     // Call z-ai-web-dev-sdk
     let aiReply: string;
     try {
-      const zai = await ZAI.create();
+      const zai = new ZAI({
+        baseUrl: 'https://internal-api.z.ai/v1',
+        apiKey: 'Z.ai',
+        chatId: 'chat-8ffd9bff-9755-4117-b81d-2eb40c71e1f7',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNDU2NzRhMTctMDViZi00MGM3LWE1ZmMtNzU0MGJiNjNkNjJkIiwiY2hhdF9pZCI6ImNoYXQtOGZmZDliZmYtOTc1NS00MTE3LWI4MWQtMmViNDBjNzFlMWY3IiwicGxhdGZvcm0iOiJ6YWkifQ.QkJKdjJaLA2L51KZex35niZjU3dpVbmKlgFB7mvGkKc',
+        userId: '45674a17-05bf-40c7-a5fc-7540bb63d62d'
+      });
       const completion = await zai.chat.completions.create({
         messages: aiMessages,
         temperature: temperature,
@@ -710,13 +717,37 @@ export async function POST(req: NextRequest) {
       });
       aiReply = completion.choices[0]?.message?.content ?? '';
     } catch (aiErr) {
-      console.error('[OptiTalk] AI SDK error:', aiErr);
-      // Graceful fallback so the conversation can continue
-      aiReply = JSON.stringify({
-        reply: `I'm sorry, I had trouble understanding that. Could you say it again, ${user.name || 'friend'}?`,
-        correction: null,
-        translatedWord: null,
-      });
+      console.error('[OptiTalk] AI SDK error:', aiErr?.message || aiErr);
+      
+      // Fallback: استخدم z-ai API مباشرة عبر fetch
+      try {
+        const res = await fetch('https://internal-api.z.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer Z.ai',
+          },
+          body: JSON.stringify({
+            messages: aiMessages,
+            temperature: temperature,
+            max_tokens: maxTokens,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          aiReply = data.choices?.[0]?.message?.content ?? '';
+        }
+      } catch (e2) {
+        console.error('[OptiTalk] Fallback fetch also failed:', e2);
+      }
+      
+      if (!aiReply) {
+        aiReply = JSON.stringify({
+          reply: `I'm sorry, I had trouble understanding that. Could you say it again, ${user.name || 'friend'}?`,
+          correction: null,
+          translatedWord: null,
+        });
+      }
     }
 
     const parsed = extractJson(aiReply);
