@@ -252,6 +252,50 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ===== قائمة كلمات تعليمية أساسية (للـ fallback) =====
+// بنتسلسل فيها الكلمات حسب الترتيب التعليمي المنطقي
+const LEARNING_WORDS: { en: string; ar: string }[] = [
+  { en: 'Hello', ar: 'أهلاً' },
+  { en: 'Hi', ar: 'مرحباً' },
+  { en: 'Good morning', ar: 'صباح الخير' },
+  { en: 'Good night', ar: 'تصبح على خير' },
+  { en: 'Goodbye', ar: 'مع السلامة' },
+  { en: 'Yes', ar: 'أيوه' },
+  { en: 'No', ar: 'لأ' },
+  { en: 'Thank you', ar: 'شكراً' },
+  { en: 'Please', ar: 'لو سمحت' },
+  { en: 'Sorry', ar: 'آسف' },
+  { en: 'How are you', ar: 'إزيك' },
+  { en: 'I am fine', ar: 'أنا كويس' },
+  { en: 'My name is', ar: 'اسمي' },
+  { en: 'Nice to meet you', ar: 'تشرفنا' },
+  { en: 'See you later', ar: 'نشوفك بعدين' },
+  { en: 'Water', ar: 'مياه' },
+  { en: 'Food', ar: 'أكل' },
+  { en: 'Book', ar: 'كتاب' },
+  { en: 'Friend', ar: 'صديق' },
+  { en: 'School', ar: 'مدرسة' },
+];
+
+// ===== اختار كلمة جديدة للتعليم (مش نفس الكلمة الحالية) =====
+function pickNextWord(currentWord: string | null): { en: string; ar: string } {
+  const currentLower = (currentWord || '').toLowerCase().trim();
+
+  // لو الكلمة الحالية موجودة في القائمة → رجّع اللي بعدها
+  if (currentLower) {
+    const idx = LEARNING_WORDS.findIndex(w => w.en.toLowerCase() === currentLower);
+    if (idx >= 0 && idx < LEARNING_WORDS.length - 1) {
+      return LEARNING_WORDS[idx + 1];
+    }
+    // لو وصلنا آخر القائمة → نرجّع كلمة عشوائية غير الحالية
+    const available = LEARNING_WORDS.filter(w => w.en.toLowerCase() !== currentLower);
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // لو مفيش كلمة حالية → نبدأ من الأول أو نختار عشوائي
+  return LEARNING_WORDS[Math.floor(Math.random() * Math.min(5, LEARNING_WORDS.length))];
+}
+
 // ===== ردود fallback ذكية حسب السياق =====
 function generateSmartFallback(
   message: string,
@@ -288,11 +332,13 @@ function generateSmartFallback(
     // لو الطالب قال الكلمة صح أو قريب منها
     const similarity = calculateSimilarity(msg, targetLower);
     if (similarity > 0.6 || msg.includes(targetLower)) {
+      // اختار كلمة جديدة فعلية للتعليم (مش نفس الكلمة)
+      const nextWord = pickNextWord(targetWord);
       return {
-        reply: `ممتاز يا بطل! قولتها صح. خلينا نجرّب كلمة تانية. قول: "Yes" يعني أيوه.`,
+        reply: `ممتاز يا بطل! قولتها صح. خلينا نجرّب كلمة تانية. قول: "${nextWord.en}" يعني ${nextWord.ar}.`,
         correction: null,
-        translatedWord: 'Yes = أيوه',
-        newTargetWord: 'Yes',
+        translatedWord: `${nextWord.en} = ${nextWord.ar}`,
+        newTargetWord: nextWord.en,
         advanceStage: false,
         exitReviewMode: false,
         enterSentenceBuilder: false,
@@ -325,11 +371,12 @@ function generateSmartFallback(
 
   // لو الطالب بيقول اسمه
   if (/^(my name is|i am|i'm|ana)/i.test(msg)) {
+    const firstWord = pickNextWord(null);
     return {
-      reply: `تشرفنا! خلينا نبدأ. أول كلمة هنقولها: "Hello" يعني أهلاً. قول Hello؟`,
+      reply: `تشرفنا! خلينا نبدأ. أول كلمة هنقولها: "${firstWord.en}" يعني ${firstWord.ar}. قول ${firstWord.en}؟`,
       correction: null,
-      translatedWord: 'Hello = أهلاً',
-      newTargetWord: 'Hello',
+      translatedWord: `${firstWord.en} = ${firstWord.ar}`,
+      newTargetWord: firstWord.en,
       advanceStage: false,
       exitReviewMode: false,
       enterSentenceBuilder: false,
@@ -338,11 +385,12 @@ function generateSmartFallback(
 
   // لو الطالب بيقول نعم/أيوة/شكراً
   if (/^(yes|yeah|yep|ok|okay|thank|thanks)/i.test(msg)) {
+    const nextWord = pickNextWord('Hello');
     return {
-      reply: `شاطر جداً! خلينا نكمّل. قول: "Good morning" يعني صباح الخير.`,
+      reply: `شاطر جداً! خلينا نكمّل. قول: "${nextWord.en}" يعني ${nextWord.ar}.`,
       correction: null,
-      translatedWord: 'Good morning = صباح الخير',
-      newTargetWord: 'Good morning',
+      translatedWord: `${nextWord.en} = ${nextWord.ar}`,
+      newTargetWord: nextWord.en,
       advanceStage: false,
       exitReviewMode: false,
       enterSentenceBuilder: false,
@@ -351,11 +399,12 @@ function generateSmartFallback(
 
   // لو الطالب بيقول لأ
   if (/^(no|nope|la|la'a)/i.test(msg)) {
+    const nextWord = pickNextWord(null);
     return {
-      reply: `تمام، مفيش مشكلة. خلينا نجرّب كلمة تانية: "Thank you" يعني شكراً. قولها معايا.`,
+      reply: `تمام، مفيش مشكلة. خلينا نجرّب كلمة تانية: "${nextWord.en}" يعني ${nextWord.ar}. قولها معايا.`,
       correction: null,
-      translatedWord: 'Thank you = شكراً',
-      newTargetWord: 'Thank you',
+      translatedWord: `${nextWord.en} = ${nextWord.ar}`,
+      newTargetWord: nextWord.en,
       advanceStage: false,
       exitReviewMode: false,
       enterSentenceBuilder: false,
@@ -377,17 +426,18 @@ function generateSmartFallback(
 
   // default fallback — ردود متنوعة تحاكي المدرس
   const teacherReplies = [
-    `تمام يا بطل! أنا سمعت كلامك. خلينا نكمّل — قول: "Hello" يعني أهلاً.`,
-    `أحسنت! أنا فهمت. نكمّل المحادثة — حاول تقول: "How are you?"`,
-    `شاطر! أنا معاك خطوة خطوة. قول معايا: "Nice to meet you" يعني تشرفنا.`,
-    `ممتاز! أنا ساكت بسمعك. جرّب تقول: "Goodbye" يعني مع السلامة.`,
+    `تمام يا بطل! أنا سمعت كلامك. خلينا نكمّل.`,
+    `أحسنت! أنا فهمت. نكمّل المحادثة.`,
+    `شاطر! أنا معاك خطوة خطوة.`,
+    `ممتاز! أنا ساكت بسمعك.`,
   ];
   const idx = Math.floor(Math.random() * teacherReplies.length);
+  const nextWord = pickNextWord(targetWord);
   return {
-    reply: teacherReplies[idx],
+    reply: `${teacherReplies[idx]} قول: "${nextWord.en}" يعني ${nextWord.ar}.`,
     correction: null,
-    translatedWord: idx === 0 ? 'Hello = أهلاً' : idx === 1 ? 'How are you = إزيك' : idx === 2 ? 'Nice to meet you = تشرفنا' : 'Goodbye = مع السلامة',
-    newTargetWord: idx === 0 ? 'Hello' : idx === 1 ? 'How are you' : idx === 2 ? 'Nice to meet you' : 'Goodbye',
+    translatedWord: `${nextWord.en} = ${nextWord.ar}`,
+    newTargetWord: nextWord.en,
     advanceStage: false,
     exitReviewMode: false,
     enterSentenceBuilder: false,
