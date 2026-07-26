@@ -1,27 +1,21 @@
-// ===== OptiTalk - TTS API Route (Edge TTS موحد) =====
-// POST /api/tts — body: { text, voiceId?, lang?, speed? }
+// ===== OptiTalk - TTS API Route (node-edge-tts) =====
+// بيشتغل على Vercel (مش محتاج Python CLI)
+// POST /api/tts — body: { text, voiceId?, gender?, lang?, speed? }
 // GET  /api/tts?text=...&voiceId=...&lang=...&speed=...
 // Returns: audio/mpeg binary (MP3)
-//
-// بيستخدم Microsoft Edge TTS (edge-tts CLI) — جودة عالية جداً:
-// - إنجليزي راجل: en-US-GuyNeural / en-US-ChristopherNeural / ...
-// - إنجليزي ست: en-US-AriaNeural / en-US-JennyNeural / ...
-// - عربي راجل: ar-EG-ShakirNeural
-// - عربي ست: ar-EG-SalmaNeural
-//
-// لو edge-tts فشل → fallback إلى Google Translate TTS.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
-import { tmpdir } from 'os';
+import { EdgeTTS } from 'node-edge-tts';
+import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-// ===== اختيار صوت افتراضي حسب اللغة والجنس =====
+// ===== الأصوات الافتراضية =====
 const DEFAULT_VOICES = {
   en: { male: 'en-US-GuyNeural', female: 'en-US-AriaNeural' },
   ar: { male: 'ar-EG-ShakirNeural', female: 'ar-EG-SalmaNeural' },
@@ -30,24 +24,15 @@ const DEFAULT_VOICES = {
 // ===== تنظيف النص =====
 function cleanText(text: string): string {
   let out = text
-    .replace(/\([^)]*\)/g, '')
-    .replace(/[""«»]/g, '')
-    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+    .replace(/\([^)]*\)/g, '')        // شيل المحتوى بين قوسين
+    .replace(/[""«»]/g, '')            // شيل علامات التنصيص
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')  // شيل الإيموجي
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '') // شيل التشكيل العربي
     .replace(/\s+/g, ' ')
     .trim();
+  // حد أقصى 900 حرف
   if (out.length > 900) {
-    const slice = out.slice(0, 900);
-    const lastPunct = Math.max(
-      slice.lastIndexOf('. '),
-      slice.lastIndexOf('؟ '),
-      slice.lastIndexOf('! '),
-      slice.lastIndexOf('? '),
-      slice.lastIndexOf('.'),
-      slice.lastIndexOf('؟'),
-      slice.lastIndexOf('!'),
-      slice.lastIndexOf('?')
-    );
-    out = lastPunct > 400 ? slice.slice(0, lastPunct + 1) : slice;
+    out = out.slice(0, 900);
   }
   return out;
 }
@@ -60,56 +45,36 @@ function detectLang(text: string): 'ar' | 'en' {
   return 'en';
 }
 
-// ===== توليد الصوت بـ Edge TTS =====
+// ===== توليد الصوت بـ node-edge-tts (يحفظ في ملف مؤقت) =====
 async function generateWithEdgeTTS(
   text: string,
   voice: string,
   speed: number = 1.0
 ): Promise<Buffer | null> {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-edge-'));
-  const outputPath = join(tmpDir, 'output.mp3');
-
-  // عالج النص العربي (شيل التشكيل)
-  let processedText = text;
-  if (voice.startsWith('ar-')) {
-    processedText = processedText
-      .replace(/[\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
+  const tmpDir = join(tmpdir(), 'optitalk-tts');
+  await mkdir(tmpDir, { recursive: true });
+  const fileId = randomUUID();
+  const outputPath = join(tmpDir, `${fileId}.mp3`);
 
   // نسبة السرعة لـ edge-tts (مثل "+0%", "-10%", "+20%")
   const ratePercent = Math.round((speed - 1) * 100);
   const rateArg = ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`;
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      const proc = spawn('edge-tts', [
-        '--voice', voice,
-        '--text', processedText,
-        '--rate', rateArg,
-        '--write-media', outputPath,
-      ], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}` },
-      });
-
-      let stderr = '';
-      proc.stderr.on('data', (d) => { stderr += d.toString(); });
-      proc.on('error', (err) => reject(new Error(`edge-tts failed: ${err.message}`)));
-      proc.on('close', (code) => {
-        if (code !== 0) reject(new Error(`edge-tts exited ${code}: ${stderr.slice(-300)}`));
-        else resolve();
-      });
-      proc.stdin.end();
+    const tts = new EdgeTTS({
+      voice,
+      rate: rateArg,
+      volume: '+0%',
+      pitch: '+0Hz',
     });
-
-    return await readFile(outputPath);
+    await tts.ttsPromise(text, outputPath);
+    const buffer = await readFile(outputPath);
+    return buffer;
   } catch (err) {
     console.error('[TTS] Edge TTS error:', err);
     return null;
   } finally {
-    try { await rm(tmpDir, { recursive: true, force: true }); } catch {}
+    try { await unlink(outputPath); } catch {}
   }
 }
 
@@ -155,26 +120,8 @@ async function generateWithGoogleTTS(text: string, lang: 'ar' | 'en'): Promise<B
   if (mp3Parts.length === 0) return null;
   if (mp3Parts.length === 1) return mp3Parts[0];
 
-  // ادمج باستخدام ffmpeg
-  const tmpDir = await mkdtemp(join(tmpdir(), 'optitalk-gmp3-'));
-  const outputPath = join(tmpDir, 'out.mp3');
-  const concatFile = join(tmpDir, 'concat.txt');
-  try {
-    for (let i = 0; i < mp3Parts.length; i++) {
-      await writeFile(join(tmpDir, `p${i}.mp3`), mp3Parts[i]);
-    }
-    await writeFile(concatFile, mp3Parts.map((_, i) => `file 'p${i}.mp3'`).join('\n'));
-    await new Promise<void>((resolve, reject) => {
-      const ffmpeg = spawn('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', concatFile, '-c', 'copy', outputPath]);
-      ffmpeg.on('error', reject);
-      ffmpeg.on('close', (code) => (code === 0 ? resolve() : reject(new Error('ffmpeg fail'))));
-    });
-    return await readFile(outputPath);
-  } catch {
-    return mp3Parts[0];
-  } finally {
-    try { await rm(tmpDir, { recursive: true, force: true }); } catch {}
-  }
+  // ادمج الـ buffers ببساطة (mp3 frames)
+  return Buffer.concat(mp3Parts);
 }
 
 // ===== اختيار الصوت المناسب =====
