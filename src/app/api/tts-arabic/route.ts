@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EdgeTTS } from 'node-edge-tts';
-import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
+import { readFile, unlink, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
@@ -9,8 +9,52 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
+// ===== الأصوات المصرية المتاحة =====
+const VOICE_MALE = 'ar-EG-ShakirNeural';   // صوت راجل مصري
+const VOICE_FEMALE = 'ar-EG-SalmaNeural';  // صوت ست مصرية
+
+// ===== إعدادات صوت مخصصة لكل شخصية =====
+// بنستخدم نفس الصوت المصري بس بنغيّر rate/pitch عشان نتميز بين الشخصيات
+interface VoiceConfig {
+  voice: string;
+  rate: string;   // السرعة (مثل: '-5%', '+0%', '-10%')
+  pitch: string;  // طبقة الصوت (مثل: '+0Hz', '-2Hz', '+3Hz')
+}
+
+const CHARACTER_VOICE_CONFIG: Record<string, VoiceConfig> = {
+  // ===== المدرسون =====
+  'mr-james':        { voice: VOICE_MALE,   rate: '-10%', pitch: '+0Hz' },   // صبور، بطيء
+  'ms-sarah':        { voice: VOICE_FEMALE, rate: '+5%',  pitch: '+2Hz' },   // مرحة، حيوية
+  'professor-david': { voice: VOICE_MALE,   rate: '-15%', pitch: '-3Hz' },   // أكاديمي، هادي، عميق
+  'miss-emma':       { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+0Hz' },   // دافية، ودودة
+  'coach-mike':      { voice: VOICE_FEMALE, rate: '+10%', pitch: '+3Hz' },   // حماسية، نشيطة
+  'dr-lisa':         { voice: VOICE_FEMALE, rate: '-5%',  pitch: '-2Hz' },   // احترافية، هادية
+
+  // ===== الأصدقاء الذكور (كلهم Shakir بس بسرعات/طبقات مختلفة) =====
+  'friend-alex':     { voice: VOICE_MALE,   rate: '+0%',  pitch: '+0Hz' },   // عادي
+  'friend-omar':     { voice: VOICE_MALE,   rate: '-5%',  pitch: '-2Hz' },   // هادي، chill
+  'friend-karim':    { voice: VOICE_MALE,   rate: '+0%',  pitch: '+2Hz' },   // مبدع، شاب
+  'friend-sami':     { voice: VOICE_MALE,   rate: '+10%', pitch: '+3Hz' },   // رياضي، نشيط
+  'friend-tarek':    { voice: VOICE_MALE,   rate: '-10%', pitch: '-3Hz' },   // موسيقي، chill
+  'friend-yara':     { voice: VOICE_MALE,   rate: '+5%',  pitch: '+4Hz' },   // شاب، مرح
+  'friend-dina':     { voice: VOICE_MALE,   rate: '+5%',  pitch: '+0Hz' },   // movie buff
+  'friend-amir':     { voice: VOICE_MALE,   rate: '+0%',  pitch: '-2Hz' },   // business، هادي
+  'friend-ziad':     { voice: VOICE_MALE,   rate: '+15%', pitch: '+5Hz' },   // جيمر، شغوف
+  'friend-khaled':   { voice: VOICE_MALE,   rate: '-15%', pitch: '-4Hz' },   // coffee، هادي عميق
+
+  // ===== الأصدقاء الإناث (كلهم Salma بس بسرعات/طبقات مختلفة) =====
+  'friend-layla':    { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+0Hz' },   // دافية
+  'friend-sara':     { voice: VOICE_FEMALE, rate: '+10%', pitch: '+3Hz' },   // نشطة، حماسية
+  'friend-nora':     { voice: VOICE_FEMALE, rate: '+0%',  pitch: '+1Hz' },   // طباخة، ودودة
+  'friend-maya':     { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+2Hz' },   // هادية، طبيعة
+  'friend-hassan':   { voice: VOICE_FEMALE, rate: '+5%',  pitch: '+4Hz' },   // فضولية، شابة
+  'friend-hana':     { voice: VOICE_FEMALE, rate: '-10%', pitch: '-1Hz' },   // فنانة، هادية
+  'friend-farida':   { voice: VOICE_FEMALE, rate: '+5%',  pitch: '+0Hz' },   // سفر، مغامرة
+  'friend-mariam':   { voice: VOICE_FEMALE, rate: '-10%', pitch: '-2Hz' },   // نباتات، هادية
+};
+
 // ===== helper: يحوّل نص لـ Buffer باستخدام ملف مؤقت =====
-async function textToBuffer(text: string, voice: string): Promise<Buffer> {
+async function textToBuffer(text: string, voice: string, rate: string, pitch: string): Promise<Buffer> {
   const tmpDir = join(tmpdir(), 'optitalk-tts');
   await mkdir(tmpDir, { recursive: true });
   const fileId = randomUUID();
@@ -19,9 +63,9 @@ async function textToBuffer(text: string, voice: string): Promise<Buffer> {
   try {
     const tts = new EdgeTTS({
       voice,
-      rate: '-5%',
+      rate,
       volume: '+0%',
-      pitch: '+0Hz',
+      pitch,
     });
     await tts.ttsPromise(text, filePath);
     const buffer = await readFile(filePath);
@@ -31,43 +75,17 @@ async function textToBuffer(text: string, voice: string): Promise<Buffer> {
   }
 }
 
-// ===== خريطة الأصوات لكل شخصية (مدرسين + أصدقاء) =====
-// 24+ صوت من 15 دولة عربية — تنوع لهجات
-const VOICE_MAP: Record<string, string> = {
-  // ===== المدرسون =====
-  'mr-james': 'ar-EG-ShakirNeural',          // مصر - راجل
-  'professor-david': 'ar-SA-HamedNeural',    // السعودية - راجل
-  'ms-sarah': 'ar-EG-SalmaNeural',           // مصر - ست
-  'miss-emma': 'ar-LB-LaylaNeural',          // لبنان - ست (مس غالية)
-  'coach-mike': 'ar-JO-SanaNeural',          // الأردن - ست (مس بسنت)
-  'dr-lisa': 'ar-QA-AmalNeural',             // قطر - ست (مس سجدة)
-  // ===== الأصدقاء الذكور =====
-  'friend-alex': 'ar-EG-ShakirNeural',       // مصر
-  'friend-omar': 'ar-LY-OmarNeural',         // ليبيا
-  'friend-karim': 'ar-SY-LaithNeural',       // سوريا
-  'friend-sami': 'ar-MA-JamalNeural',        // المغرب
-  'friend-tarek': 'ar-BH-AliNeural',         // البحرين
-  'friend-amir': 'ar-KW-FahedNeural',        // الكويت
-  'friend-ziad': 'ar-IQ-BasselNeural',       // العراق
-  'friend-khaled': 'ar-OM-AbdullahNeural',   // عمان
-  'friend-hassan': 'ar-TN-HediNeural',       // تونس
-  'friend-mohamed': 'ar-YE-SalehNeural',     // اليمن
-  'friend-ashraf': 'ar-DZ-AminNeural',       // الجزائر
-  // ===== الأصدقاء الإناث =====
-  'friend-layla': 'ar-EG-SalmaNeural',       // مصر
-  'friend-sara': 'ar-LB-LaylaNeural',        // لبنان
-  'friend-nora': 'ar-JO-SanaNeural',         // الأردن
-  'friend-maya': 'ar-QA-AmalNeural',         // قطر
-  'friend-yara': 'ar-BH-LailaNeural',        // البحرين
-  'friend-dina': 'ar-KW-NouraNeural',        // الكويت
-  'friend-hana': 'ar-IQ-RanaNeural',         // العراق
-  'friend-farida': 'ar-LY-ImanNeural',       // ليبيا
-  'friend-mariam': 'ar-MA-MounaNeural',      // المغرب
-};
+// ===== تحديد الصوت حسب الجنس (fallback لو مفيش characterId) =====
+function getDefaultVoice(voiceId?: string): { voice: string; rate: string; pitch: string } {
+  // لو voiceId مُرسل ومصرّح بيه، نستخدمه
+  if (voiceId === VOICE_MALE || voiceId === VOICE_FEMALE) {
+    return { voice: voiceId, rate: '-5%', pitch: '+0Hz' };
+  }
+  // default → صوت راجل مصري
+  return { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
+}
 
-const DEFAULT_VOICE = 'ar-EG-ShakirNeural';
-
-// ===== تنظيف النص العربي من التشكيل والعلامات =====
+// ===== تنظيف النص العربي =====
 function cleanText(text: string): string {
   let out = text;
   // إزالة التشكيل
@@ -86,7 +104,7 @@ function cleanText(text: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { text, voiceId: voiceIdParam, voice, characterId } = body;
+    const { text, voiceId: voiceIdParam, voice, characterId, gender } = body;
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Text required' }, { status: 400 });
@@ -97,11 +115,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Empty text' }, { status: 400 });
     }
 
-    // اختيار الصوت: الأول characterId من VOICE_MAP، بعدين voiceId المرسل، بعدين voice، بعدين default
-    const voiceId = VOICE_MAP[characterId] || voiceIdParam || voice || DEFAULT_VOICE;
+    // اختيار إعدادات الصوت:
+    // 1) الأول من CHARACTER_VOICE_CONFIG لو فيه characterId
+    // 2) لو في voiceId مباشر → استخدمه مع default rate/pitch
+    // 3) لو في gender → استخدم الصوت المناسب
+    // 4) default → صوت راجل مصري
+    let config: { voice: string; rate: string; pitch: string };
 
-    // توليد الصوت بـ Edge TTS (عبر ملف مؤقت)
-    const audioBuffer = await textToBuffer(clean, voiceId);
+    if (characterId && CHARACTER_VOICE_CONFIG[characterId]) {
+      config = CHARACTER_VOICE_CONFIG[characterId];
+    } else if (voiceIdParam || voice) {
+      const v = voiceIdParam || voice;
+      config = getDefaultVoice(v);
+    } else if (gender === 'female') {
+      config = { voice: VOICE_FEMALE, rate: '-5%', pitch: '+0Hz' };
+    } else {
+      config = { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
+    }
+
+    const audioBuffer = await textToBuffer(clean, config.voice, config.rate, config.pitch);
 
     return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,
@@ -123,6 +155,7 @@ export async function GET(req: NextRequest) {
     const voiceIdParam = url.searchParams.get('voiceId');
     const voice = url.searchParams.get('voice');
     const characterId = url.searchParams.get('characterId');
+    const gender = url.searchParams.get('gender');
 
     if (!text) {
       return NextResponse.json({ error: 'Text required' }, { status: 400 });
@@ -133,10 +166,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Empty text' }, { status: 400 });
     }
 
-    // اختيار الصوت: الأول characterId من VOICE_MAP، بعدين voiceId المرسل، بعدين voice، بعدين default
-    const voiceId = VOICE_MAP[characterId || ''] || voiceIdParam || voice || DEFAULT_VOICE;
+    let config: { voice: string; rate: string; pitch: string };
 
-    const audioBuffer = await textToBuffer(clean, voiceId);
+    if (characterId && CHARACTER_VOICE_CONFIG[characterId]) {
+      config = CHARACTER_VOICE_CONFIG[characterId];
+    } else if (voiceIdParam || voice) {
+      const v = voiceIdParam || voice;
+      config = getDefaultVoice(v);
+    } else if (gender === 'female') {
+      config = { voice: VOICE_FEMALE, rate: '-5%', pitch: '+0Hz' };
+    } else {
+      config = { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
+    }
+
+    const audioBuffer = await textToBuffer(clean, config.voice, config.rate, config.pitch);
 
     return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,

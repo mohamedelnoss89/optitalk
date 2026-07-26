@@ -9,6 +9,7 @@ interface UseSpeechSynthesisOptions {
   gender?: 'male' | 'female';
   voiceIdAr?: string;  // صوت عربي خاص بالشخصية
   voiceIdEn?: string;  // صوت إنجليزي خاص بالشخصية
+  characterId?: string; // ID الشخصية (عشان الـ API يختار rate/pitch مخصص)
   onEnd?: () => void;
   onStart?: () => void;
 }
@@ -32,7 +33,7 @@ function detectLang(text: string): 'ar' | 'en' {
 export function useSpeechSynthesis(
   opts: UseSpeechSynthesisOptions = {}
 ): UseSpeechSynthesisReturn {
-  const { rate = 1.0, gender, voiceIdAr, voiceIdEn, onEnd, onStart } = opts;
+  const { rate = 1.0, gender, voiceIdAr, voiceIdEn, characterId, onEnd, onStart } = opts;
   const [supported] = useState(() =>
     typeof window !== 'undefined' && typeof fetch === 'function'
   );
@@ -43,6 +44,7 @@ export function useSpeechSynthesis(
   const onStartRef = useRef(onStart);
   const voiceIdArRef = useRef(voiceIdAr);
   const voiceIdEnRef = useRef(voiceIdEn);
+  const characterIdRef = useRef(characterId);
   const genderRef = useRef(gender);
   const rateRef = useRef(rate);
   // generation counter يمنع race conditions
@@ -54,9 +56,10 @@ export function useSpeechSynthesis(
     onStartRef.current = onStart;
     voiceIdArRef.current = voiceIdAr;
     voiceIdEnRef.current = voiceIdEn;
+    characterIdRef.current = characterId;
     genderRef.current = gender;
     rateRef.current = rate;
-  }, [onEnd, onStart, voiceIdAr, voiceIdEn, gender, rate]);
+  }, [onEnd, onStart, voiceIdAr, voiceIdEn, characterId, gender, rate]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -137,6 +140,11 @@ export function useSpeechSynthesis(
       const params = new URLSearchParams({ text: truncated });
       params.set('lang', lang);
       params.set('speed', String(rateRef.current));
+      // ابعت characterId الأول عشان الـ API يختار rate/pitch مخصص
+      if (characterIdRef.current) {
+        params.set('characterId', characterIdRef.current);
+      }
+      // ابعت voiceId كمان fallback
       if (voiceId) {
         params.set('voiceId', voiceId);
       } else if (genderRef.current) {

@@ -106,7 +106,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Casual and tech-savvy. Talks about games, gadgets. Like a buddy.',
     tags: ['تكنولوجيا', 'ألعاب', 'هادي'],
     imageUrl: '/friends/friend-omar.png',
-    voiceIdAr: AR_LY_M, voiceIdEn: M2,
+    voiceIdAr: AR_EG_M, voiceIdEn: M2,
   },
   {
     id: 'friend-sara', name: 'Sara', nameAr: 'سارة', gender: 'female', age: 'adult',
@@ -118,7 +118,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'High energy. Talks about music, fitness, fun. Very positive.',
     tags: ['نشطة', 'موسيقى', 'رياضة'],
     imageUrl: '/friends/friend-sara.png',
-    voiceIdAr: AR_LB_F, voiceIdEn: F2,
+    voiceIdAr: AR_EG_F, voiceIdEn: F2,
   },
   {
     id: 'friend-karim', name: 'Karim', nameAr: 'كريم', gender: 'male', age: 'young',
@@ -130,7 +130,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Thoughtful and creative. Talks about art, photography.',
     tags: ['مبدع', 'فن', 'تصوير'],
     imageUrl: '/friends/friend-karim.png',
-    voiceIdAr: AR_SY_M, voiceIdEn: M3,
+    voiceIdAr: AR_EG_M, voiceIdEn: M3,
   },
   {
     id: 'friend-nora', name: 'Nora', nameAr: 'نورا', gender: 'female', age: 'young',
@@ -142,7 +142,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Warm and food-focused. Talks about recipes, restaurants.',
     tags: ['طبخ', 'أكل', 'ودودة'],
     imageUrl: '/friends/friend-nora.png',
-    voiceIdAr: AR_JO_F, voiceIdEn: F3,
+    voiceIdAr: AR_EG_F, voiceIdEn: F3,
   },
   // ===== أصدقاء جداد (12) — تم تصحيح النوع/الاسم ليطابق الصور الفعلية =====
   {
@@ -155,7 +155,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Sporty and energetic. Talks about football, basketball, outdoor fun.',
     tags: ['رياضي', 'كرة', 'نشيط'],
     imageUrl: '/friends/friend-sami.png',
-    voiceIdAr: AR_MA_M, voiceIdEn: M4,
+    voiceIdAr: AR_EG_M, voiceIdEn: M4,
   },
   {
     id: 'friend-maya', name: 'Maya', nameAr: 'مايا', gender: 'female', age: 'young',
@@ -167,7 +167,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Gentle and nature-focused. Talks about animals, hiking, plants.',
     tags: ['طبيعة', 'حيوانات', 'هادية'],
     imageUrl: '/friends/friend-maya.png',
-    voiceIdAr: AR_QA_F, voiceIdEn: F4,
+    voiceIdAr: AR_EG_F, voiceIdEn: F4,
   },
   {
     id: 'friend-tarek', name: 'Tarek', nameAr: 'طارق', gender: 'male', age: 'young',
@@ -179,7 +179,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Chill and music-focused. Talks about songs, instruments, concerts.',
     tags: ['موسيقى', 'جيتار', 'هادي'],
     imageUrl: '/friends/friend-tarek.png',
-    voiceIdAr: AR_BH_M, voiceIdEn: M5,
+    voiceIdAr: AR_EG_M, voiceIdEn: M5,
   },
   // صورة friend-yara.png فعلًا صورة ولد (ذكر)
   {
@@ -192,7 +192,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Bubbly and fashion-focused. Talks about clothes, trends, shopping.',
     tags: ['موضة', 'ستايل', 'مرح'],
     imageUrl: '/friends/friend-yara.png',
-    voiceIdAr: AR_TN_M, voiceIdEn: M6,
+    voiceIdAr: AR_EG_M, voiceIdEn: M6,
   },
   // صورة friend-hassan.png فعلًا صورة بنت صغيرة (أنثى)
   {
@@ -205,7 +205,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Curious and science-focused. Talks about space, experiments, tech.',
     tags: ['علوم', 'فضاء', 'فضولية'],
     imageUrl: '/friends/friend-hassan.png',
-    voiceIdAr: AR_BH_F, voiceIdEn: F5,
+    voiceIdAr: AR_EG_F, voiceIdEn: F5,
   },
   // صورة friend-dina.png فعلًا صورة ولد (ذكر)
   {
@@ -218,7 +218,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Witty and movie-focused. Talks about films, Netflix, actors.',
     tags: ['أفلام', 'سينما', 'مرح'],
     imageUrl: '/friends/friend-dina.png',
-    voiceIdAr: AR_YE_M, voiceIdEn: M7,
+    voiceIdAr: AR_EG_M, voiceIdEn: M7,
   },
   {
     id: 'friend-amir', name: 'Amir', nameAr: 'أمير', gender: 'male', age: 'young',
@@ -230,7 +230,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Ambitious and business-focused. Talks about ideas, goals, success.',
     tags: ['أعمال', 'ريادة', 'طموح'],
     imageUrl: '/friends/friend-amir.png',
-    voiceIdAr: AR_KW_M, voiceIdEn: M8,
+    voiceIdAr: AR_EG_M, voiceIdEn: M8,
   },
   {
     id: 'friend-hana', name: 'Hana', nameAr: 'هنا', gender: 'female', age: 'young',
@@ -242,7 +242,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Calm and art-focused. Talks about painting, colors, galleries.',
     tags: ['فن', 'رسم', 'هادية'],
     imageUrl: '/friends/friend-hana.png',
-    voiceIdAr: AR_IQ_F, voiceIdEn: F6,
+    voiceIdAr: AR_EG_F, voiceIdEn: F6,
   },
   {
     id: 'friend-ziad', name: 'Ziad', nameAr: 'زياد', gender: 'male', age: 'young',
@@ -254,7 +254,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Gamer and enthusiastic. Talks about video games, esports, streaming.',
     tags: ['ألعاب', 'جيمر', 'شغوف'],
     imageUrl: '/friends/friend-ziad.png',
-    voiceIdAr: AR_IQ_M, voiceIdEn: M9,
+    voiceIdAr: AR_EG_M, voiceIdEn: M9,
   },
   {
     id: 'friend-farida', name: 'Farida', nameAr: 'فريدة', gender: 'female', age: 'adult',
@@ -266,7 +266,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Adventurous and travel-focused. Talks about countries, cultures, languages.',
     tags: ['سفر', 'ثقافات', 'مغامرة'],
     imageUrl: '/friends/friend-farida.png',
-    voiceIdAr: AR_LY_F, voiceIdEn: F7,
+    voiceIdAr: AR_EG_F, voiceIdEn: F7,
   },
   {
     id: 'friend-khaled', name: 'Khaled', nameAr: 'خالد', gender: 'male', age: 'adult',
@@ -278,7 +278,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Relaxed and coffee-focused. Deep conversations, cafe culture.',
     tags: ['قهوة', 'هادي', 'كلام'],
     imageUrl: '/friends/friend-khaled.png',
-    voiceIdAr: AR_OM_M, voiceIdEn: M10,
+    voiceIdAr: AR_EG_M, voiceIdEn: M10,
   },
   {
     id: 'friend-mariam', name: 'Mariam', nameAr: 'مريم', gender: 'female', age: 'adult',
@@ -290,7 +290,7 @@ export const FRIENDS: Friend[] = [
     conversationStyle: 'Nurturing and nature-focused. Talks about plants, gardening, cozy life.',
     tags: ['نباتات', 'حدائق', 'هادية'],
     imageUrl: '/friends/friend-mariam.png',
-    voiceIdAr: AR_MA_F, voiceIdEn: F8,
+    voiceIdAr: AR_EG_F, voiceIdEn: F8,
   },
 ];
 

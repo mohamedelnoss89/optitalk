@@ -99,6 +99,8 @@ export function ChatScreen() {
   const synthesis = useSpeechSynthesis({
     rate: 1.0, // سرعة طبيعية
     gender: selectedTeacher?.gender,
+    // ID الشخصية عشان الـ API يختار rate/pitch مخصص لكل شخصية
+    characterId: (selectedTeacher as any)?.id,
     // صوت خاص بالشخصية المختارة (مدرس أو صديق)
     voiceIdAr: (selectedTeacher as any)?.voiceIdAr,
     voiceIdEn: (selectedTeacher as any)?.voiceIdEn,

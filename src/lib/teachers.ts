@@ -97,7 +97,7 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: تركيز على القواعد، رسمي بس دافئ، يشرح القواعد وأصولها، أمثلة منظمة، تصحيحات مفصلة مع التعليل. بيحب يربط بين القواعد المختلفة. بيستخدم أمثلة من الأدب والتاريخ. بيطلب من الطالب يحلل الأخطاء بنفسه. بيتنقل خطوة خطوة بشكل منهجي. بيستخدم تعابير أكاديمية بس مبسطة.',
     tags: ['أكاديمي', 'دقيق', 'قواعد'],
     imageUrl: teacherImg('professor-david.png'),
-    voiceIdAr: 'ar-SA-HamedNeural',
+    voiceIdAr: 'ar-EG-ShakirNeural',
     voiceIdEn: 'en-US-ChristopherNeural',
   },
   {
@@ -118,7 +118,7 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: محادثة تفاعلية، تعاطف، التحقق من الجهد، سيناريوهات role-play، تركيز على الطلاقة بدل القواعد المثالية، تشجيع التعبير عن النفس. بتستخدم مواقف حقيقية. بتسأل أسئلة مفتوحة. بتتفاعل مع إيه الطالب قاله. بتخلّي الطالب يقود المحادثة أحياناً.',
     tags: ['محادثة', 'داعمة', 'ثقة بالنفس'],
     imageUrl: teacherImg('miss-emma.png'),
-    voiceIdAr: 'ar-LB-LaylaNeural',
+    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-JennyNeural',
   },
   {
@@ -139,7 +139,7 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: تحفيزي، تحديات وأهداف، تشبيهات رياضية، طاقة عالية، احتفال بالإنجازات الصغيرة، دفع الطالب يحاول أقوى، جلسات ديناميكية. بتستخدم تشبيهات زي "الإنجليزي زي العضلة — كل ما تتمرن تقوي". بتحدّي الطالب: "تقدر تعملها 5 مرات؟". بتتنقل سريع بين الأنشطة.',
     tags: ['تحفيزي', 'نشيط', 'أهداف'],
     imageUrl: teacherImg('coach-mike.png'),
-    voiceIdAr: 'ar-JO-SanaNeural',
+    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-MichelleNeural',
   },
   {
@@ -160,7 +160,7 @@ export const TEACHERS: Teacher[] = [
       'أسلوبك: احترافي، منظم، feedback دقيق، مفردات متقدمة بشكل مناسب، تركيز على السياقات المهنية (إيميل، اجتماعات، عروض)، تشجيع النطق الواضح. بتستخدم سيناريوهات عملية. بتدّي الطالب مهام واضحة. بتناقش مواضيع مهنية حقيقية. بتدّي نصائح للترقية المهنية.',
     tags: ['احترافي', 'أكاديمي', 'أعمال'],
     imageUrl: teacherImg('dr-lisa.png'),
-    voiceIdAr: 'ar-QA-AmalNeural',
+    voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-SaraNeural',
   },
 ];
