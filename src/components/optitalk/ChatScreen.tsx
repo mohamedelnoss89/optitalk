@@ -281,20 +281,38 @@ export function ChatScreen() {
         }
 
         // ===== استخرج الكلمة المستهدفة الجديدة من رد المدرس =====
-        // الـ translatedWord بصيغة: "englishWord (النطق) = الترجمة"
-        // نستخرج الكلمة الإنجليزي ونحفظها كـ targetWord
-        if (data.translatedWord) {
-          const match = data.translatedWord.match(/^([a-zA-Z][a-zA-Z\s]*?)(?:\s*\()/);
+        // الأولوية الأولى: data.newTargetWord (لو المدرس بعتها صراحةً في الـ JSON)
+        if (data.newTargetWord && typeof data.newTargetWord === 'string' && data.newTargetWord.trim()) {
+          const newTargetWord = data.newTargetWord.trim();
+          console.log('[OptiTalk] New target word (from API):', newTargetWord);
+          setCurrentTargetWord(newTargetWord);
+
+          // لو المدرس علّم كلمة جديدة (confidence عالي ومفيش correction) → أضفها للكلمات اللي اتعلمت
+          if (user?.level === 'beginner' && !data.correction && confidence && confidence >= 0.6 && !learnedWords.includes(newTargetWord)) {
+            addLearnedWord(newTargetWord);
+          }
+        }
+        // الأولوية التانية: استخرج من translatedWord بصيغ مختلفة
+        else if (data.translatedWord) {
+          // بصيغة: "englishWord (النطق) = الترجمة" → مثلاً: "Hello (هَلُو) = أهلاً"
+          let match = data.translatedWord.match(/^([a-zA-Z][a-zA-Z\s]*?)(?:\s*\()/);
+          // بصيغة: "englishWord = الترجمة" → مثلاً: "Yes = أيوه"
+          if (!match) {
+            match = data.translatedWord.match(/^([a-zA-Z][a-zA-Z\s]*?)\s*=/);
+          }
           if (match) {
             const newTargetWord = match[1].trim();
-            console.log('[OptiTalk] New target word:', newTargetWord);
+            console.log('[OptiTalk] New target word (from translatedWord):', newTargetWord);
             setCurrentTargetWord(newTargetWord);
 
-            // لو المدرس علّم كلمة جديدة (confidence عالي ومفيش correction) → أضفها للكلمات اللي اتعلمت
             if (user?.level === 'beginner' && !data.correction && confidence && confidence >= 0.6 && !learnedWords.includes(newTargetWord)) {
               addLearnedWord(newTargetWord);
             }
           }
+        }
+        // لو مفيش newTargetWord ولا translatedWord → امسح الكلمة المستهدفة الحالية
+        else {
+          setCurrentTargetWord(null);
         }
 
         // ===== لو كنا في وضع المراجعة وخلصنا → ابدأ وضع بناء الجمل =====
