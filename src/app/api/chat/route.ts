@@ -172,32 +172,61 @@ export async function POST(req: NextRequest) {
       parts: [{ text: m.content }],
     }));
 
-    // محاولة بـ موديلات Gemini المختلفة (نبدأ بـ 2.0-flash لأنه المتاح)
-    const models = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
+    // محاولة بـ موديلات Gemini المختلفة + retry مع delay
+    const models = [
+      'gemini-2.0-flash',
+      'gemini-flash-latest',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash',
+    ];
     let text = '';
     let lastErr: any = null;
-    
+    let lastStatusCode = 0;
+
+    // Retry كل model مرتين مع delay متزايد
     for (const modelName of models) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          systemInstruction: systemPrompt,
-        });
-        const chat = model.startChat({ history });
-        const result = await chat.sendMessage(message);
-        text = result.response.text();
-        console.log(`[Chat] Success with model: ${modelName}`);
-        break;
-      } catch (err: any) {
-        lastErr = err;
-        console.log(`[Chat] Model ${modelName} failed: ${err?.message?.slice(0, 200)}`);
-        // لو 404 (مش موجود) نجرّب التالي، لو 429 (quota) نجرّب التالي، لو 400 (location) نجرّب التالي
-        continue;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            systemInstruction: systemPrompt,
+          });
+          const chat = model.startChat({ history });
+          const result = await chat.sendMessage(message);
+          text = result.response.text();
+          console.log(`[Chat] Success with model: ${modelName} (attempt ${attempt})`);
+          break;
+        } catch (err: any) {
+          lastErr = err;
+          const msg = err?.message || '';
+          // استخرج status code
+          const statusMatch = msg.match(/\[(\d+)\s/);
+          lastStatusCode = statusMatch ? parseInt(statusMatch[1]) : 0;
+          console.log(`[Chat] Model ${modelName} attempt ${attempt} failed (${lastStatusCode}): ${msg.slice(0, 150)}`);
+
+          // لو 404 (model مش موجود) → انتقل للـ model التالي على طول
+          if (lastStatusCode === 404) break;
+          // لو 400 (location) → انتقل للـ model التالي
+          if (lastStatusCode === 400) break;
+
+          // لو 429 (quota) → استنى شوية قبل الـ retry
+          if (lastStatusCode === 429 && attempt === 1) {
+            // شيل الـ retryDelay من الـ error message
+            const delayMatch = msg.match(/retryDelay":"(\d+)s/);
+            const delaySec = delayMatch ? parseInt(delayMatch[1]) : 5;
+            const waitMs = Math.min(delaySec * 1000, 10000); // حد أقصى 10 ثواني
+            console.log(`[Chat] Rate limited, waiting ${waitMs}ms before retry...`);
+            await new Promise(r => setTimeout(r, waitMs));
+            continue;
+          }
+          break; // أي خطأ تاني → انتقل للـ model التالي
+        }
       }
+      if (text) break;
     }
-    
+
     if (!text) {
-      throw new Error(`All Gemini models failed. Last error: ${lastErr?.message}`);
+      throw new Error(`All Gemini models failed. Last status: ${lastStatusCode}, error: ${lastErr?.message?.slice(0, 200)}`);
     }
 
     // تنظيف الرد من markdown tags
@@ -221,22 +250,179 @@ export async function POST(req: NextRequest) {
     }
   } catch (err: any) {
     console.error('[Chat] Error:', err?.message);
-    // رسالة fallback بالعامية المصرية
-    const fallbackReplies = [
-      'أها، فهمت. كمل كلامك.',
-      'تمام، أنا معاك. حاول تاني.',
-      'سمعتك، بس في مشكلة مؤقتة. كرر اللي قلته.',
-      'خد وقتك، أنا ساكت بسمعك.',
+
+    // ===== Fallback ذكي: ردود تعليمية فعلية تحاكي المدرس =====
+    // مش مجرد "كمل كلامك" — بنوفر ردود تفاعلية حسب سياق المحادثة
+    const fallbackReply = generateSmartFallback(message, teacher, isFriend, learningStage, targetWord);
+
+    return NextResponse.json(fallbackReply);
+  }
+}
+
+// ===== ردود fallback ذكية حسب السياق =====
+function generateSmartFallback(
+  message: string,
+  teacher: any,
+  isFriend: boolean,
+  learningStage: number,
+  targetWord: string | null
+) {
+  const msg = message.toLowerCase().trim();
+  const teacherName = teacher?.nameAr || 'المدرس';
+
+  // لو صديق → ردود عادية
+  if (isFriend) {
+    const friendReplies = [
+      `أها، فهمت! إنت إيه رأيك في اللي قلته؟`,
+      `تمام يا صاحبي، كمل. أنا ساكت بسمعك.`,
+      `حلو! تحب نتكلم في إيه تاني؟`,
+      `أوكي، أنا معاك. ابقالي كمان.`,
     ];
-    const reply = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
-    return NextResponse.json({
-      reply,
+    return {
+      reply: friendReplies[Math.floor(Math.random() * friendReplies.length)],
       correction: null,
       translatedWord: null,
       newTargetWord: null,
       advanceStage: false,
       exitReviewMode: false,
       enterSentenceBuilder: false,
-    });
+    };
   }
+
+  // لو المدرس طلب كلمة مستهدفة (targetWord) → قيّم نطقها
+  if (targetWord) {
+    const targetLower = targetWord.toLowerCase();
+    // لو الطالب قال الكلمة صح أو قريب منها
+    const similarity = calculateSimilarity(msg, targetLower);
+    if (similarity > 0.6 || msg.includes(targetLower)) {
+      return {
+        reply: `ممتاز يا بطل! قولتها صح. خلينا نجرّب كلمة تانية. قول: "Yes" يعني أيوه.`,
+        correction: null,
+        translatedWord: 'Yes = أيوه',
+        newTargetWord: 'Yes',
+        advanceStage: false,
+        exitReviewMode: false,
+        enterSentenceBuilder: false,
+      };
+    } else {
+      return {
+        reply: `أوكي، أنا سمعت "${message.slice(0, 50)}". بس المفروض تقول: "${targetWord}". جرّب تاني ببطء.`,
+        correction: `المفروض تقول: ${targetWord}`,
+        translatedWord: null,
+        newTargetWord: targetWord,
+        advanceStage: false,
+        exitReviewMode: false,
+        enterSentenceBuilder: false,
+      };
+    }
+  }
+
+  // لو الطالب بيسلم (hi, hello, hello there)
+  if (/^(hi|hello|hey|hello there|good morning|good evening)/i.test(msg)) {
+    return {
+      reply: `أهلاً وسهلاً! أنا ${teacherName}. إنت إيه اسمك؟`,
+      correction: null,
+      translatedWord: null,
+      newTargetWord: null,
+      advanceStage: false,
+      exitReviewMode: false,
+      enterSentenceBuilder: false,
+    };
+  }
+
+  // لو الطالب بيقول اسمه
+  if (/^(my name is|i am|i'm|ana)/i.test(msg)) {
+    return {
+      reply: `تشرفنا! خلينا نبدأ. أول كلمة هنقولها: "Hello" يعني أهلاً. قول Hello؟`,
+      correction: null,
+      translatedWord: 'Hello = أهلاً',
+      newTargetWord: 'Hello',
+      advanceStage: false,
+      exitReviewMode: false,
+      enterSentenceBuilder: false,
+    };
+  }
+
+  // لو الطالب بيقول نعم/أيوة/شكراً
+  if (/^(yes|yeah|yep|ok|okay|thank|thanks)/i.test(msg)) {
+    return {
+      reply: `شاطر جداً! خلينا نكمّل. قول: "Good morning" يعني صباح الخير.`,
+      correction: null,
+      translatedWord: 'Good morning = صباح الخير',
+      newTargetWord: 'Good morning',
+      advanceStage: false,
+      exitReviewMode: false,
+      enterSentenceBuilder: false,
+    };
+  }
+
+  // لو الطالب بيقول لأ
+  if (/^(no|nope|la|la'a)/i.test(msg)) {
+    return {
+      reply: `تمام، مفيش مشكلة. خلينا نجرّب كلمة تانية: "Thank you" يعني شكراً. قولها معايا.`,
+      correction: null,
+      translatedWord: 'Thank you = شكراً',
+      newTargetWord: 'Thank you',
+      advanceStage: false,
+      exitReviewMode: false,
+      enterSentenceBuilder: false,
+    };
+  }
+
+  // لو الطالب بيقول إزيك
+  if (/(how are you|ezzak|how are u)/i.test(msg)) {
+    return {
+      reply: `أنا تمام، الحمد لله! شكراً على السؤال. إنت إزيك؟`,
+      correction: null,
+      translatedWord: null,
+      newTargetWord: null,
+      advanceStage: false,
+      exitReviewMode: false,
+      enterSentenceBuilder: false,
+    };
+  }
+
+  // default fallback — ردود متنوعة تحاكي المدرس
+  const teacherReplies = [
+    `تمام يا بطل! أنا سمعت كلامك. خلينا نكمّل — قول: "Hello" يعني أهلاً.`,
+    `أحسنت! أنا فهمت. نكمّل المحادثة — حاول تقول: "How are you?"`,
+    `شاطر! أنا معاك خطوة خطوة. قول معايا: "Nice to meet you" يعني تشرفنا.`,
+    `ممتاز! أنا ساكت بسمعك. جرّب تقول: "Goodbye" يعني مع السلامة.`,
+  ];
+  const idx = Math.floor(Math.random() * teacherReplies.length);
+  return {
+    reply: teacherReplies[idx],
+    correction: null,
+    translatedWord: idx === 0 ? 'Hello = أهلاً' : idx === 1 ? 'How are you = إزيك' : idx === 2 ? 'Nice to meet you = تشرفنا' : 'Goodbye = مع السلامة',
+    newTargetWord: idx === 0 ? 'Hello' : idx === 1 ? 'How are you' : idx === 2 ? 'Nice to meet you' : 'Goodbye',
+    advanceStage: false,
+    exitReviewMode: false,
+    enterSentenceBuilder: false,
+  };
+}
+
+// ===== حساب التشابه بين نصين (Levenshtein) =====
+function calculateSimilarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  const longer = a.length >= b.length ? a : b;
+  const shorter = a.length >= b.length ? b : a;
+  const longerLength = longer.length;
+  if (longerLength === 0) return 1.0;
+  const dist = levenshtein(longer, shorter);
+  return (longerLength - dist) / longerLength;
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const d: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+    }
+  }
+  return d[m][n];
 }
