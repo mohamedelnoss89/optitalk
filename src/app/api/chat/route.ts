@@ -172,7 +172,9 @@ export async function POST(req: NextRequest) {
       parts: [{ text: m.content }],
     }));
 
-    // محاولة بـ موديلات Gemini المختلفة + retry مع delay
+    // محاولة بـ موديلات Gemini المختلفة
+    // استراتيجية: جرّب كل model مرة واحدة بس. لو 429 (quota) → انتقل للتالي على طول.
+    // الـ retry مع delay بياخد وقت طويل ويكسر UX.
     const models = [
       'gemini-2.0-flash',
       'gemini-flash-latest',
@@ -181,52 +183,29 @@ export async function POST(req: NextRequest) {
     ];
     let text = '';
     let lastErr: any = null;
-    let lastStatusCode = 0;
 
-    // Retry كل model مرتين مع delay متزايد
     for (const modelName of models) {
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          const model = genAI.getGenerativeModel({
-            model: modelName,
-            systemInstruction: systemPrompt,
-          });
-          const chat = model.startChat({ history });
-          const result = await chat.sendMessage(message);
-          text = result.response.text();
-          console.log(`[Chat] Success with model: ${modelName} (attempt ${attempt})`);
-          break;
-        } catch (err: any) {
-          lastErr = err;
-          const msg = err?.message || '';
-          // استخرج status code
-          const statusMatch = msg.match(/\[(\d+)\s/);
-          lastStatusCode = statusMatch ? parseInt(statusMatch[1]) : 0;
-          console.log(`[Chat] Model ${modelName} attempt ${attempt} failed (${lastStatusCode}): ${msg.slice(0, 150)}`);
-
-          // لو 404 (model مش موجود) → انتقل للـ model التالي على طول
-          if (lastStatusCode === 404) break;
-          // لو 400 (location) → انتقل للـ model التالي
-          if (lastStatusCode === 400) break;
-
-          // لو 429 (quota) → استنى شوية قبل الـ retry
-          if (lastStatusCode === 429 && attempt === 1) {
-            // شيل الـ retryDelay من الـ error message
-            const delayMatch = msg.match(/retryDelay":"(\d+)s/);
-            const delaySec = delayMatch ? parseInt(delayMatch[1]) : 5;
-            const waitMs = Math.min(delaySec * 1000, 10000); // حد أقصى 10 ثواني
-            console.log(`[Chat] Rate limited, waiting ${waitMs}ms before retry...`);
-            await new Promise(r => setTimeout(r, waitMs));
-            continue;
-          }
-          break; // أي خطأ تاني → انتقل للـ model التالي
-        }
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: systemPrompt,
+        });
+        const chat = model.startChat({ history });
+        const result = await chat.sendMessage(message);
+        text = result.response.text();
+        console.log(`[Chat] Success with model: ${modelName}`);
+        break;
+      } catch (err: any) {
+        lastErr = err;
+        const msg = err?.message || '';
+        console.log(`[Chat] Model ${modelName} failed: ${msg.slice(0, 150)}`);
+        // كل الأخطاء → انتقل للـ model التالي على طول (مفيش retry)
+        continue;
       }
-      if (text) break;
     }
 
     if (!text) {
-      throw new Error(`All Gemini models failed. Last status: ${lastStatusCode}, error: ${lastErr?.message?.slice(0, 200)}`);
+      throw new Error(`All Gemini models failed: ${lastErr?.message?.slice(0, 150)}`);
     }
 
     // تنظيف الرد من markdown tags
