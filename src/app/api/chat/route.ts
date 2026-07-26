@@ -142,6 +142,13 @@ ${friend.personality || 'بتتكلم بحرية وودودة'}
 }
 
 export async function POST(req: NextRequest) {
+  // متغيرات بره الـ try عشان الـ catch يقدر يستخدمها
+  let msg = '';
+  let teacherObj: any = null;
+  let isFriendFlag = false;
+  let stage = 1;
+  let targetW: string | null = null;
+
   try {
     const body = await req.json() as ChatRequest;
     const {
@@ -156,6 +163,13 @@ export async function POST(req: NextRequest) {
       inSentenceBuilderMode = false,
       isFriend = false,
     } = body;
+
+    // خزّنهم في المتغيرات الخارجية
+    msg = message;
+    teacherObj = teacher;
+    isFriendFlag = isFriend;
+    stage = learningStage;
+    targetW = targetWord;
 
     if (!message || !teacher || !user) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
@@ -232,7 +246,7 @@ export async function POST(req: NextRequest) {
 
     // ===== Fallback ذكي: ردود تعليمية فعلية تحاكي المدرس =====
     // مش مجرد "كمل كلامك" — بنوفر ردود تفاعلية حسب سياق المحادثة
-    const fallbackReply = generateSmartFallback(message, teacher, isFriend, learningStage, targetWord);
+    const fallbackReply = generateSmartFallback(msg, teacherObj, isFriendFlag, stage, targetW);
 
     return NextResponse.json(fallbackReply);
   }
