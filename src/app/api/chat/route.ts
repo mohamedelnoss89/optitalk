@@ -172,15 +172,33 @@ export async function POST(req: NextRequest) {
       parts: [{ text: m.content }],
     }));
 
-    // اختيار الموديل — gemini-2.0-flash هو الوحيد المتاح على المفتاح ده
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      systemInstruction: systemPrompt,
-    });
-
-    const chat = model.startChat({ history });
-    const result = await chat.sendMessage(message);
-    const text = result.response.text();
+    // محاولة بـ موديلات Gemini المختلفة (نبدأ بـ 2.0-flash لأنه المتاح)
+    const models = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
+    let text = '';
+    let lastErr: any = null;
+    
+    for (const modelName of models) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: systemPrompt,
+        });
+        const chat = model.startChat({ history });
+        const result = await chat.sendMessage(message);
+        text = result.response.text();
+        console.log(`[Chat] Success with model: ${modelName}`);
+        break;
+      } catch (err: any) {
+        lastErr = err;
+        console.log(`[Chat] Model ${modelName} failed: ${err?.message?.slice(0, 200)}`);
+        // لو 404 (مش موجود) نجرّب التالي، لو 429 (quota) نجرّب التالي، لو 400 (location) نجرّب التالي
+        continue;
+      }
+    }
+    
+    if (!text) {
+      throw new Error(`All Gemini models failed. Last error: ${lastErr?.message}`);
+    }
 
     // تنظيف الرد من markdown tags
     const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
