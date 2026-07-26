@@ -57,7 +57,6 @@ export const TEACHERS: Teacher[] = [
     imageUrl: teacherImg('mr-james.png'),
     voiceIdAr: 'ar-EG-ShakirNeural',
     voiceIdEn: 'en-US-GuyNeural',
-    voiceIdEn: 'ar-EG-ShakirNeural',
   },
   {
     id: 'ms-sarah',
@@ -79,7 +78,6 @@ export const TEACHERS: Teacher[] = [
     imageUrl: teacherImg('ms-sarah.png'),
     voiceIdAr: 'ar-EG-SalmaNeural',
     voiceIdEn: 'en-US-AriaNeural',
-    voiceIdEn: 'ar-EG-SalmaNeural',
   },
   {
     id: 'professor-david',
@@ -101,7 +99,6 @@ export const TEACHERS: Teacher[] = [
     imageUrl: teacherImg('professor-david.png'),
     voiceIdAr: 'ar-SA-HamedNeural',
     voiceIdEn: 'en-US-ChristopherNeural',
-    voiceIdEn: 'ar-SA-HamedNeural',
   },
   {
     id: 'miss-emma',
@@ -123,7 +120,6 @@ export const TEACHERS: Teacher[] = [
     imageUrl: teacherImg('miss-emma.png'),
     voiceIdAr: 'ar-LB-LaylaNeural',
     voiceIdEn: 'en-US-JennyNeural',
-    voiceIdEn: 'ar-LB-LaylaNeural',
   },
   {
     id: 'coach-mike',
@@ -145,7 +141,6 @@ export const TEACHERS: Teacher[] = [
     imageUrl: teacherImg('coach-mike.png'),
     voiceIdAr: 'ar-JO-SanaNeural',
     voiceIdEn: 'en-US-MichelleNeural',
-    voiceIdEn: 'ar-JO-SanaNeural',
   },
   {
     id: 'dr-lisa',
@@ -167,7 +162,6 @@ export const TEACHERS: Teacher[] = [
     imageUrl: teacherImg('dr-lisa.png'),
     voiceIdAr: 'ar-QA-AmalNeural',
     voiceIdEn: 'en-US-SaraNeural',
-    voiceIdEn: 'ar-QA-AmalNeural',
   },
 ];
 

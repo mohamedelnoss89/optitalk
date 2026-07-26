@@ -86,7 +86,7 @@ function cleanText(text: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { text, voice, characterId } = body;
+    const { text, voiceId: voiceIdParam, voice, characterId } = body;
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Text required' }, { status: 400 });
@@ -97,8 +97,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Empty text' }, { status: 400 });
     }
 
-    // اختيار الصوت
-    const voiceId = VOICE_MAP[characterId] || voice || DEFAULT_VOICE;
+    // اختيار الصوت: الأول characterId من VOICE_MAP، بعدين voiceId المرسل، بعدين voice، بعدين default
+    const voiceId = VOICE_MAP[characterId] || voiceIdParam || voice || DEFAULT_VOICE;
 
     // توليد الصوت بـ Edge TTS (عبر ملف مؤقت)
     const audioBuffer = await textToBuffer(clean, voiceId);
@@ -120,6 +120,7 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const text = url.searchParams.get('text');
+    const voiceIdParam = url.searchParams.get('voiceId');
     const voice = url.searchParams.get('voice');
     const characterId = url.searchParams.get('characterId');
 
@@ -132,7 +133,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Empty text' }, { status: 400 });
     }
 
-    const voiceId = VOICE_MAP[characterId || ''] || voice || DEFAULT_VOICE;
+    // اختيار الصوت: الأول characterId من VOICE_MAP، بعدين voiceId المرسل، بعدين voice، بعدين default
+    const voiceId = VOICE_MAP[characterId || ''] || voiceIdParam || voice || DEFAULT_VOICE;
 
     const audioBuffer = await textToBuffer(clean, voiceId);
 
