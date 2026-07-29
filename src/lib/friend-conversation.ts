@@ -661,7 +661,7 @@ const FRIEND_LESSONS: TeachWord[] = [
 ];
 
 // ===== دالة تعليم الإنجليزي بأسلوب الصديق =====
-// الصديق بيعلّم بطريقة ودودة مش رسمية
+// كل صديق بيعلّم بطريقته الشخصية حسب الـ persona بتاعته
 function teachEnglishAsFriend(
   message: string,
   friend: Friend,
@@ -669,10 +669,287 @@ function teachEnglishAsFriend(
 ): any {
   const msg = message.toLowerCase().trim();
   const isFemale = friend.gender === 'female';
+  const persona = PERSONAS[friend.id] || PERSONAS['friend-alex'];
 
   // ضمائر حسب الجنس
-  const yally = isFemale ? 'يخلّيك' : 'يخلّيك';
   const yala = 'يلا';
+  const yaSahby = isFemale ? 'يا صاحبي' : 'يا صاحبي';
+
+  // ===== أساليب التعليم حسب شخصية الصديق =====
+  // كل صديق ليه أسلوبه في التعليم
+  const teachingStyles: Record<string, {
+    start: string[];      // بداية التعليم (أول مرة)
+    correct: string[];    // رد لما المستخدم ينطق صح
+    wrong: string[];      // رد لما المستخدم ينطق غلط
+  }> = {
+    // ===== الأصدقاء الذكور =====
+    'friend-alex': {
+      start: [
+        `يا صاحبي! أنا بموت في الإنجليزي. خلينا نبدأ بكلمة سهلة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام يا أسطورة! يلا نتعلم. أول كلمة: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول تقول {{en}}؟`,
+      ],
+      correct: [
+        `يا سلام! قولتها صح. خلينا نكمّل، الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `ممتاز يا صاحبي! الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب تقول {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، سمعت "{{userInput}}". بس حاول تقول "{{en}}" تاني ببطء. إنت تقدر!`,
+        `قريب بس مش مظبوط. جرّب "{{en}}" تاني ببطء شوية.`,
+      ],
+    },
+    'friend-omar': {
+      start: [
+        `أوكي يا صاحبي، خلينا نركز شوية. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول تقول {{en}}؟`,
+      ],
+      correct: [
+        `كويس. خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — قولها ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-karim': {
+      start: [
+        `حلو يا صاحبي! خلينا نبدأ بفن. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `يا سلام! التعلم دي فن. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `رائع! خلينا نجرّب كلمة تانية: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام يا فنان! الكلمة الجديدة: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `قريب يا صاحبي! حاول "{{en}}" تاني ببطء.`,
+        `مش بطّل، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-sami': {
+      start: [
+        `يلا يا بطل! التعليم زي التمرين. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام يا بطل! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز يا بطل! خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `شاطر يا بطل! الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `ماشي يا بطل، حاول تاني: "{{en}}" — قولها ببطء.`,
+        `قريب يا بطل! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-tarek': {
+      start: [
+        `تمام يا صاحبي. خلينا نبدأ هادي. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `تمام. خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `كويس. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-yara': {
+      start: [
+        `يا صاحبي! أنا مبسوط إنك عايز تتعلم. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو يا صاحبي! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `يا سلام! قولتها صح. الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `ممتاز يا صاحبي! الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي يا صاحبي، حاول تاني: "{{en}}" — ببطء.`,
+        `قريب! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-dina': {
+      start: [
+        `تمام يا صاحبي! خلينا نبدأ. الكلمة الأولى: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو! التعلم زي الأفلام — ممتع. أول كلمة: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `يا سلام! قولتها صح. الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `ممتاز يا صاحبي! الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — قولها ببطء.`,
+        `قريب بس مش مظبوط. جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-amir': {
+      start: [
+        `تمام يا صاحبي. التعليم استثمار. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز. الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `كويس. خلينا نكمّل: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-ziad': {
+      start: [
+        `يلا يا صاحبي! التعليم زي الألعاب — ممتع. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام يا صاحبي! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `يا سلام! قولتها صح. الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `ممتاز يا صاحبي! خلينا نكمّل: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي يا صاحبي، حاول تاني: "{{en}}" — ببطء.`,
+        `قريب! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-khaled': {
+      start: [
+        `تمام يا صاحبي. خلينا نبدأ بهدوء. أول كلمة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `كويس. خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    // ===== الأصدقاء الإناث =====
+    'friend-layla': {
+      start: [
+        `يا صاحبي، أنا أفرح أوي إنك عايز تتعلم! ${yala} نبدأ بكلمة سهلة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو أوي! خلينا نبدأ. الكلمة الأولى: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قولها معايا: {{en}}؟`,
+      ],
+      correct: [
+        `يا سلام! قولتها صح. ${yala} نكمّل، الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `ممتاز يا صاحبي! أنت بتتعلم بسرعة. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، أنا سمعت "{{userInput}}". بس حاول تقول "{{en}}" تاني ببطء. إنت تقدر!`,
+        `قريب بس مش مظبوط خالص. جرّب "{{en}}" تاني، ببطء شوية.`,
+      ],
+    },
+    'friend-sara': {
+      start: [
+        `يا سلام! أنا حماسية أوي. خلينا نبدأ: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `يلا يا صاحبي! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز يا صاحبي! خلينا نكمّل بسرعة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `يا سلام! قولتها صح. الكلمة الجديدة: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي يا صاحبي، حاول تاني: "{{en}}" — ببطء.`,
+        `قريب! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-nora': {
+      start: [
+        `حلو يا صاحبي! خلينا نبدأ بكلمة سهلة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز! خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `شاطر! الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `قريب! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-maya': {
+      start: [
+        `حلو يا صاحبي. خلينا نبدأ بهدوء: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز. خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `شاطر. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-hassan': {
+      start: [
+        `يا سلام! أنا بحب التعليم. خلينا نبدأ: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام يا صاحبي! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `يا سلام! قولتها صح. الكلمة الجديدة: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `ممتاز! خلينا نكمّل: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي يا صاحبي، حاول تاني: "{{en}}" — ببطء.`,
+        `قريب! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-hana': {
+      start: [
+        `حلو يا صاحبي. خلينا نبدأ بهدوء: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز. خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `شاطر. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-farida': {
+      start: [
+        `يا سلام! أنا بموت في اللغات. خلينا نبدأ: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `حلو يا صاحبي! الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز يا صاحبي! خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `يا سلام! قولتها صح. الكلمة الجديدة: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `قريب! جرّب "{{en}}" تاني.`,
+      ],
+    },
+    'friend-mariam': {
+      start: [
+        `حلو يا صاحبي. خلينا نبدأ بهدوء: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `تمام. الكلمة الأولى: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. حاول {{en}}؟`,
+      ],
+      correct: [
+        `ممتاز. خلينا نكمّل: "{{en}}" يعني {{ar}}. مثال: {{example}} ({{exampleAr}}). قول {{en}}؟`,
+        `شاطر. الكلمة الجاية: "{{en}}" ومعناها {{ar}}. مثال: {{example}}. جرّب {{en}}؟`,
+      ],
+      wrong: [
+        `أوكي، حاول تاني: "{{en}}" — ببطء.`,
+        `مش مظبوط، جرّب "{{en}}" تاني.`,
+      ],
+    },
+  };
+
+  // اختار أسلوب التعليم المناسب للصديق (fallback لـ Alex لو مفيش)
+  const style = teachingStyles[friend.id] || teachingStyles['friend-alex'];
+
+  // ===== helper: استبدال {{en}}, {{ar}}, {{example}}, {{exampleAr}}, {{userInput}} =====
+  function fillTemplate(template: string, word: TeachWord, userInput?: string): string {
+    return template
+      .replace(/\{\{en\}\}/g, word.en)
+      .replace(/\{\{ar\}\}/g, word.ar)
+      .replace(/\{\{example\}\}/g, word.example)
+      .replace(/\{\{exampleAr\}\}/g, word.exampleAr)
+      .replace(/\{\{userInput\}\}/g, (userInput || message).slice(0, 50));
+  }
 
   // ===== 1) لو في سياق سابق فيه كلمة بتتعلم → قيّم نطق المستخدم =====
   const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
@@ -680,50 +957,31 @@ function teachEnglishAsFriend(
     const lastText = lastAssistant.content;
 
     // لو الصديق كان بيطلب من المستخدم يقول كلمة معينة
-    const teachingMatch = lastText.match(/قول\s*[""']?([A-Za-z][A-Za-z\s\?']+?)[""']?\s*(?:يعني|معناها)/);
+    const teachingMatch = lastText.match(/قول\s*[""']?([A-Za-z][A-Za-z\s\?']+?)[""']?\s*(?:\?|؟|يعني|معناها|$)/);
     if (teachingMatch) {
       const expectedWord = teachingMatch[1].toLowerCase().trim();
-      // قيّم تشابه نطق المستخدم مع الكلمة المتوقعة
       const similarity = calculateSimilarity(msg, expectedWord);
-      const userSaidExpected = (msg.includes(expectedWord)) ||
+      const userSaidExpected = msg.includes(expectedWord) ||
         (FRIEND_LESSONS.find(w => w.en.toLowerCase() === expectedWord)?.expectedUserReply?.some(r => msg.includes(r)));
 
       if (similarity > 0.6 || userSaidExpected) {
         // نطقها صح → امتدح وانتقل لكلمة جديدة
         const nextWord = pick(FRIEND_LESSONS.filter(w => w.en.toLowerCase() !== expectedWord));
-        return baseReply(
-          pick([
-            `يا سلام! قولتها صح. ${yala} نكمّل، الكلمة الجديدة: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example} (${nextWord.exampleAr}). قول ${nextWord.en}؟`,
-            `ممتاز يا صاحبي! أنت بتتعلم بسرعة. الكلمة الجاية: "${nextWord.en}" ومعناها ${nextWord.ar}. مثال: ${nextWord.example}. جرّب تقول ${nextWord.en}؟`,
-            `تمام جداً! شاطر. خلينا نجرّب كلمة تانية: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example} (${nextWord.exampleAr}). قولها معايا: ${nextWord.en}؟`,
-            `الله يخليك! قولتها صح. الكلمة الجديدة: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example}. حاول تقول ${nextWord.en}؟`,
-          ])
-        );
+        return baseReply(fillTemplate(pick(style.correct), nextWord));
       } else {
-        // نطقها غلط → شجّعه يحاول تاني
-        return baseReply(
-          pick([
-            `أوكي، أنا سمعت "${message.slice(0, 50)}". بس حاول تقول "${teachingMatch[1]}" تاني ببطء. إنت تقدر!`,
-            `قريب بس مش مظبوط خالص. جرّب "${teachingMatch[1]}" تاني، ببطء شوية.`,
-            `مش بطّل، حاول تاني! الكلمة "${teachingMatch[1]}" — قولها ببطء.`,
-            `أنا عارف إنك تقدر. حاول تاني: "${teachingMatch[1]}" — كده كده هتنطقها صح.`,
-          ])
-        );
+        // نطقها غلط → شجّعه يحاول تاني (بنستخدم الكلمة الحالية)
+        const currentWord = FRIEND_LESSONS.find(w => w.en.toLowerCase() === expectedWord) || FRIEND_LESSONS[0];
+        return baseReply(fillTemplate(pick(style.wrong), currentWord, message));
       }
     }
   }
 
   // ===== 2) لو أول مرة يطلب تعليم → ابدأ بكلمة ترحيب =====
   const firstWord = pick(FRIEND_LESSONS.slice(0, 6)); // أول 6 كلمات (تحيات)
-  return baseReply(
-    pick([
-      `يا صاحبي، أنا أفرح أوي إنك عايز تتعلم! ${yala} نبدأ بكلمة سهلة: "${firstWord.en}" يعني ${firstWord.ar}. مثال: ${firstWord.example} (${firstWord.exampleAr}). قول ${firstWord.en}؟`,
-      `تمام يا جميل! أنا هعلّمك بطريقتي. أول كلمة: "${firstWord.en}" ومعناها ${firstWord.ar}. مثال: ${firstWord.example}. حاول تقول ${firstWord.en}؟`,
-      `حلو أوي! خلينا نبدأ. الكلمة الأولى: "${firstWord.en}" يعني ${firstWord.ar}. مثال: ${firstWord.example} (${firstWord.exampleAr}). قولها معايا: ${firstWord.en}؟`,
-      `أكيد يا صاحبي! أنا معاك خطوة خطوة. أول كلمة: "${firstWord.en}" يعني ${firstWord.ar}. مثال: ${firstWord.example}. جرّب تقول ${firstWord.en}؟`,
-    ])
-  );
+  return baseReply(fillTemplate(pick(style.start), firstWord));
 }
+
+void yaSahby; // suppress unused warning
 
 // ===== حساب التشابه بين نصين (Levenshtein) =====
 function calculateSimilarity(a: string, b: string): number {
