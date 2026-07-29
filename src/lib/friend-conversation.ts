@@ -668,12 +668,10 @@ function teachEnglishAsFriend(
   history: { role: 'user' | 'assistant'; content: string }[] = []
 ): any {
   const msg = message.toLowerCase().trim();
-  const isFemale = friend.gender === 'female';
-  const persona = PERSONAS[friend.id] || PERSONAS['friend-alex'];
+  void friend; // friend used via teachingStyles lookup
 
-  // ضمائر حسب الجنس
+  // ضمائر ثابتة
   const yala = 'يلا';
-  const yaSahby = isFemale ? 'يا صاحبي' : 'يا صاحبي';
 
   // ===== أساليب التعليم حسب شخصية الصديق =====
   // كل صديق ليه أسلوبه في التعليم
@@ -980,8 +978,6 @@ function teachEnglishAsFriend(
   const firstWord = pick(FRIEND_LESSONS.slice(0, 6)); // أول 6 كلمات (تحيات)
   return baseReply(fillTemplate(pick(style.start), firstWord));
 }
-
-void yaSahby; // suppress unused warning
 
 // ===== حساب التشابه بين نصين (Levenshtein) =====
 function calculateSimilarity(a: string, b: string): number {
