@@ -184,10 +184,47 @@ export function generateFriendReply(
   // ضمائر حسب الجنس
   const bentVerb = isFemale ? 'بحب' : 'بحب'; // نفس الفعل بس النهاية بتختلف
 
-  // ===== 1) لو في سياق سابق، حاول تتفاعل مع آخر سؤال =====
+  // استخرج آخر رسالة من الصديق من الـ history
   const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
   const lastAssistantText = (lastAssistant?.content || '').toLowerCase();
 
+  // ===== 1) لو في سياق سابق فيه تعليم → قيّم نطق المستخدم الأول =====
+  // ده أعلى أولوية — لو الصديق كان بيعلّم، نكمّل التعليم
+  if (lastAssistant) {
+    // لو الصديق كان بيطلب من المستخدم يقول كلمة إنجليزي
+    const teachingMatch = lastAssistant.content.match(/قول\s*[""']?([A-Za-z][A-Za-z\s\?'-]+?)[""']?\s*(?:\?|؟|يعني|معناها|$)/);
+    if (teachingMatch) {
+      const expectedWord = teachingMatch[1].toLowerCase().trim();
+      const similarity = calculateSimilarity(msg, expectedWord);
+      const userSaidExpected = msg.includes(expectedWord) ||
+        (FRIEND_LESSONS.find(w => w.en.toLowerCase() === expectedWord)?.expectedUserReply?.some(r => msg.includes(r)));
+
+      if (similarity > 0.6 || userSaidExpected) {
+        // نطقها صح → امتدح وانتقل لكلمة جديدة
+        const nextWord = pick(FRIEND_LESSONS.filter(w => w.en.toLowerCase() !== expectedWord));
+        return baseReply(
+          pick([
+            `يا سلام! قولتها صح. يلا نكمّل، الكلمة الجديدة: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example} (${nextWord.exampleAr}). قول ${nextWord.en}؟`,
+            `ممتاز يا صاحبي! أنت بتتعلم بسرعة. الكلمة الجاية: "${nextWord.en}" ومعناها ${nextWord.ar}. مثال: ${nextWord.example}. جرّب تقول ${nextWord.en}؟`,
+            `تمام جداً! شاطر. خلينا نجرّب كلمة تانية: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example} (${nextWord.exampleAr}). قولها معايا: ${nextWord.en}؟`,
+            `الله يخليك! قولتها صح. الكلمة الجديدة: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example}. حاول تقول ${nextWord.en}؟`,
+          ])
+        );
+      } else {
+        // نطقها غلط → شجّعه يحاول تاني
+        return baseReply(
+          pick([
+            `أوكي، أنا سمعت "${message.slice(0, 50)}". بس حاول تقول "${teachingMatch[1]}" تاني ببطء. إنت تقدر!`,
+            `قريب بس مش مظبوط خالص. جرّب "${teachingMatch[1]}" تاني، ببطء شوية.`,
+            `مش بطّل، حاول تاني! الكلمة "${teachingMatch[1]}" — قولها ببطء.`,
+            `أنا عارف إنك تقدر. حاول تاني: "${teachingMatch[1]}" — كده كده هتنطقها صح.`,
+          ])
+        );
+      }
+    }
+  }
+
+  // ===== 1.5) لو في سياق سابق، حاول تتفاعل مع آخر سؤال =====
   if (lastAssistant) {
     // الصديق سأل عن إخوة
     if (/إخوة|إخواتك|عندك إخوة|إخوة كام/.test(lastAssistantText)) {
