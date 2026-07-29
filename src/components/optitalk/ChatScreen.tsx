@@ -351,25 +351,30 @@ export function ChatScreen() {
 
   // ===== Mic toggle =====
   const handleMicToggle = useCallback(() => {
-    if (!recognition.supported) {
-      toast.info('استخدم زرار الكتابة ⌨️', { duration: 3000 });
-      return;
-    }
-    // لو المدرس بيتكلم → وقف الصوت
-    if (isSpeaking) {
+    try {
+      if (!recognition.supported) {
+        toast.info('استخدم زرار الكتابة ⌨️', { duration: 3000 });
+        return;
+      }
+      // لو المدرس بيتكلم → وقف الصوت
+      if (isSpeaking) {
+        synthesis.cancel();
+        return;
+      }
+      // لو الميك شغال → وقفه
+      if (isListening) {
+        recognition.stop();
+        return;
+      }
+      // ===== الميك مفصول → ابدأ =====
+      // أوقف أي صوت أول
       synthesis.cancel();
-      return;
+      // ابدأ الميك مباشرة (لازم جوه الـ click event عشان الموبايل)
+      recognition.start();
+    } catch (err) {
+      console.error('[ChatScreen] Mic toggle error:', err);
+      toast.error('مشكلة في الميكروفون. حاول تاني');
     }
-    // لو الميك شغال → وقفه
-    if (isListening) {
-      recognition.stop();
-      return;
-    }
-    // ===== الميك مفصول → ابدأ =====
-    // أوقف أي صوت أول
-    synthesis.cancel();
-    // ابدأ الميك مباشرة (لازم جوه الـ click event عشان الموبايل)
-    recognition.start();
   }, [recognition, isListening, isSpeaking, synthesis]);
 
   // ===== Force restart للحالات العالقة =====

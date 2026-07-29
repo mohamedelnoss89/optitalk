@@ -178,11 +178,26 @@ export function useSpeechRecognition(
 
     recognition.onerror = (e: any) => {
       console.warn('[SpeechRecognition] ❌ Error:', e.error);
+      // كل الأخطاء لازم نوقف الـ listening state
+      userWantsRef.current = false;
+      try { recognition.stop(); } catch {}
+
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        userWantsRef.current = false;
         onErrorRef.current?.(e.error);
-        updateState(false);
+      } else if (e.error === 'no-speech') {
+        // مفيش كلام — نوقف بهدوء
+        console.log('[SpeechRecognition] No speech detected');
+      } else if (e.error === 'audio-capture') {
+        onErrorRef.current?.('ميكروفون مش متاح');
+      } else if (e.error === 'network') {
+        // network error — نوقف بهدوء
+        console.log('[SpeechRecognition] Network error');
+      } else if (e.error === 'aborted') {
+        // aborted — عادي
+      } else {
+        console.warn('[SpeechRecognition] Unknown error:', e.error);
       }
+      updateState(false);
     };
 
     recognition.onend = () => {
