@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Teacher } from '@/lib/teachers';
+import { generateFriendReply } from '@/lib/friend-conversation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -272,7 +273,6 @@ export async function POST(req: NextRequest) {
     // ===== Fallback ذكي =====
     if (isFriendFlag) {
       // محرك محادثة احترافي للصديق - بيحاكي أصحاب حقيقيين
-      const { generateFriendReply } = await import('@/lib/friend-conversation');
       const reply = generateFriendReply(msg, teacherObj, convHistory);
       return NextResponse.json({
         reply,
