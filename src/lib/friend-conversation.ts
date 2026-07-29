@@ -275,19 +275,15 @@ export function generateFriendReply(
   }
 
   // ===== 2.5) طلب تعلم الإنجليزي — الأولوية الأعلى =====
-  // لو المستخدم بيسأل الصديق يعلّمه إنجليزي → الصديق بيتأسف ويحوله لمدرس
+  // لو المستخدم بيسأل الصديق يعلّمه إنجليزي → الصديق بيعلّمه بأسلوب الأصحاب
   if (/(علمني|علميني|اتعلم|اتعلّم|تعلم|تعلّم|علمنا|نتعلم|نتعلّم).{0,20}(انجليزي|إنجليزي|انجليزيه|إنجليزية|english|انجليزية)/i.test(msg) ||
       /(هل يمكنك|تقدري|تقدر|ممكن).{0,20}(تعلميني|تعلمني|تعلّميني|تعلّمني).{0,20}(انجليزي|إنجليزي|english)/i.test(msg) ||
       /(عايز|عاوزه|محتاج|نفسي|نفسي أتعلم|عايز اتعلم).{0,20}(اتعلم|اتعلّم|تعلّم|نتعلم).{0,20}(انجليزي|إنجليزي|english)/i.test(msg) ||
       /نتكلم.{0,15}(انجليزي|إنجليزي|english)/i.test(msg) ||
       /نتكلم.{0,15}مع بعض.{0,30}(انجليزي|إنجليزي|english)/i.test(msg)) {
-    return pick([
-      `بصراحة أنا صديقتك مش مدرستك. بس لو عايز تتعلم إنجليزي بجد، روح على قسم "المدرسين" واختار واحد منهم. هما المتخصصين في تعليم الإنجليزي.`,
-      `أنا صاحبتك مش مدرستك! بس في قسم "المدرسين" فيه 6 مدرسين ممتازين يقدروا يعلّموك. اختار واحد ورجعلي بعدين بقى.`,
-      `يا محمد أنا صديقتك، لو عايز تتعلم إنجليزي روح على قسم "المدرسين". هما اللي يعلّموا. أنا معاك للكلام والتسليه.`,
-      `أنا مش مدرسة إنجليزي! بس لو رحت على قسم "المدرسين" هتلاقي 6 مدرسين محترفين. اختار واحد منهم وابدأ.`,
-      `يا صاحبي أنا للكلام والمزاح، مش للتعليم. روح على قسم "المدرسين" واختار واحد منهم. هما الأصول في التعليم.`,
-    ]);
+
+    // الصديق بيعلّم المستخدم كلمة/جملة بأسلوب الأصحاب (مش مدرس)
+    return teachEnglishAsFriend(message, friend, history);
   }
 
   // ===== 2) ردود عاطفية — الأولوية الأعلى قبل أي حاجة تانية =====
@@ -556,4 +552,160 @@ export function generateFriendReply(
 // ===== Helper: اختار عنصر عشوائي =====
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ===== Helper: بناء الرد الأساسي للصديق =====
+function baseReply(reply: string): any {
+  return {
+    reply,
+    correction: null,
+    translatedWord: null,
+    newTargetWord: null,
+    advanceStage: false,
+    exitReviewMode: false,
+    enterSentenceBuilder: false,
+  };
+}
+
+// ===== قائمة كلمات وجمل إنجليزية للتعليم بأسلوب الأصحاب =====
+// كل كلمة فيها: الكلمة الإنجليزي، النطق، المعنى، مثال استخدام، إجابة محتملة من المستخدم
+interface TeachWord {
+  en: string;
+  ar: string;
+  example: string;
+  exampleAr: string;
+  expectedUserReply?: string[];  // الإجابات المتوقعة من المستخدم
+}
+
+const FRIEND_LESSONS: TeachWord[] = [
+  // ===== تحيات =====
+  { en: 'Hello', ar: 'أهلاً / مرحباً', example: 'Hello! How are you?', exampleAr: 'مرحبا! إزيك؟', expectedUserReply: ['hello', 'hi', 'hey'] },
+  { en: 'Hi', ar: 'أهلاً (غير رسمية)', example: 'Hi there!', exampleAr: 'أهلاً يا صاحبي!', expectedUserReply: ['hi', 'hello'] },
+  { en: 'Good morning', ar: 'صباح الخير', example: 'Good morning! Did you sleep well?', exampleAr: 'صباح الخير! نمت كويس؟', expectedUserReply: ['good morning', 'morning'] },
+  { en: 'Good night', ar: 'تصبح على خير', example: 'Good night! See you tomorrow.', exampleAr: 'تصبح على خير! نشوفك بكرة.', expectedUserReply: ['good night', 'night'] },
+  { en: 'See you later', ar: 'نشوفك بعدين', example: "I have to go. See you later!", exampleAr: 'لازم أمشي. نشوفك بعدين!', expectedUserReply: ['see you', 'later', 'bye'] },
+  { en: 'Goodbye', ar: 'مع السلامة', example: 'Goodbye! Take care.', exampleAr: 'مع السلامة! خد بالك من نفسك.', expectedUserReply: ['goodbye', 'bye'] },
+
+  // ===== مجاملة وتعبيرات =====
+  { en: 'Thank you', ar: 'شكراً', example: 'Thank you for your help.', exampleAr: 'شكراً على مساعدتك.', expectedUserReply: ['thank you', 'thanks', 'thank'] },
+  { en: 'Please', ar: 'لو سمحت / من فضلك', example: 'Please give me water.', exampleAr: 'لو سمحت ادّيني مياه.', expectedUserReply: ['please'] },
+  { en: "You're welcome", ar: 'العفو / على الرحب والسعة', example: "Thanks! - You're welcome!", exampleAr: 'شكراً! - العفو!', expectedUserReply: ['welcome', "you're welcome"] },
+  { en: 'Sorry', ar: 'آسف', example: "Sorry I'm late.", exampleAr: 'آسف على التأخير.', expectedUserReply: ['sorry', 'no problem'] },
+  { en: 'Excuse me', ar: 'لو سمحت / اعذرني', example: 'Excuse me, where is the bathroom?', exampleAr: 'لو سمحت، الحمام فين؟', expectedUserReply: ['excuse me'] },
+  { en: 'No problem', ar: 'مفيش مشكلة', example: "Sorry! - No problem.", exampleAr: 'آسف! - مفيش مشكلة.', expectedUserReply: ['no problem', 'ok'] },
+
+  // ===== مشاعر وحالة =====
+  { en: "I'm fine", ar: 'أنا كويس', example: "How are you? - I'm fine, thanks.", exampleAr: 'إزيك؟ - أنا كويس، شكراً.', expectedUserReply: ["i'm fine", 'fine', 'good'] },
+  { en: 'I am tired', ar: 'أنا تعبان', example: "I am tired from work.", exampleAr: 'أنا تعبان من الشغل.', expectedUserReply: ['tired', "i'm tired"] },
+  { en: "I'm happy", ar: 'أنا مبسوط', example: "I'm happy to see you!", exampleAr: 'أنا مبسوط إني شفتك!', expectedUserReply: ['happy', "i'm happy"] },
+  { en: "I'm hungry", ar: 'أنا جعان', example: "I'm hungry. Let's eat.", exampleAr: 'أنا جعان. يلا ناكل.', expectedUserReply: ['hungry', "i'm hungry"] },
+  { en: 'I am sick', ar: 'أنا مريض', example: "I am sick today.", exampleAr: 'أنا مريض النهاردة.', expectedUserReply: ['sick', "i'm sick"] },
+
+  // ===== أسئلة شائعة =====
+  { en: 'How are you?', ar: 'إزيك؟', example: "Hi! How are you?", exampleAr: 'أهلاً! إزيك؟', expectedUserReply: ['how are you', 'how r u', 'how are u'] },
+  { en: 'What is your name?', ar: 'إيه اسمك؟', example: "What is your name? - My name is Mohamed.", exampleAr: 'إيه اسمك؟ - اسمي محمد.', expectedUserReply: ['what is your name', "what's your name", 'your name'] },
+  { en: 'Where are you from?', ar: 'إنت منين؟', example: "Where are you from? - I'm from Egypt.", exampleAr: 'إنت منين؟ - أنا من مصر.', expectedUserReply: ['where are you from', 'where from'] },
+  { en: 'How old are you?', ar: 'عندك كام سنة؟', example: "How old are you? - I'm 25.", exampleAr: 'عندك كام سنة؟ - أنا عندي 25.', expectedUserReply: ['how old', 'age'] },
+
+  // ===== كلمات يومية =====
+  { en: 'friend', ar: 'صديق / صاحب', example: "You are my best friend.", exampleAr: 'إنت أعز صاحب ليا.', expectedUserReply: ['friend'] },
+  { en: 'family', ar: 'عيلة', example: "I love my family.", exampleAr: 'بحب عيلتي.', expectedUserReply: ['family'] },
+  { en: 'work', ar: 'شغل', example: "I go to work every day.", exampleAr: 'بروح الشغل كل يوم.', expectedUserReply: ['work'] },
+  { en: 'food', ar: 'أكل', example: "The food is delicious.", exampleAr: 'الأكل لذيذ.', expectedUserReply: ['food'] },
+  { en: 'water', ar: 'مياه', example: "Can I have water please?", exampleAr: 'ممكن مياه لو سمحت؟', expectedUserReply: ['water'] },
+  { en: 'time', ar: 'وقت', example: "What time is it?", exampleAr: 'الساعة كام؟', expectedUserReply: ['time'] },
+  { en: 'money', ar: 'فلوس', example: "I don't have money today.", exampleAr: 'ممش معايا فلوس النهاردة.', expectedUserReply: ['money'] },
+  { en: 'home', ar: 'بيت', example: "I'm going home now.", exampleAr: 'أنا رايح البيت دلوقتي.', expectedUserReply: ['home'] },
+  { en: 'book', ar: 'كتاب', example: "I'm reading a good book.", exampleAr: 'بقرا كتاب حلو.', expectedUserReply: ['book'] },
+];
+
+// ===== دالة تعليم الإنجليزي بأسلوب الصديق =====
+// الصديق بيعلّم بطريقة ودودة مش رسمية
+function teachEnglishAsFriend(
+  message: string,
+  friend: Friend,
+  history: { role: 'user' | 'assistant'; content: string }[] = []
+): any {
+  const msg = message.toLowerCase().trim();
+  const isFemale = friend.gender === 'female';
+
+  // ضمائر حسب الجنس
+  const yally = isFemale ? 'يخلّيك' : 'يخلّيك';
+  const yala = 'يلا';
+
+  // ===== 1) لو في سياق سابق فيه كلمة بتتعلم → قيّم نطق المستخدم =====
+  const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
+  if (lastAssistant) {
+    const lastText = lastAssistant.content;
+
+    // لو الصديق كان بيطلب من المستخدم يقول كلمة معينة
+    const teachingMatch = lastText.match(/قول\s*[""']?([A-Za-z][A-Za-z\s\?']+?)[""']?\s*(?:يعني|معناها)/);
+    if (teachingMatch) {
+      const expectedWord = teachingMatch[1].toLowerCase().trim();
+      // قيّم تشابه نطق المستخدم مع الكلمة المتوقعة
+      const similarity = calculateSimilarity(msg, expectedWord);
+      const userSaidExpected = (msg.includes(expectedWord)) ||
+        (FRIEND_LESSONS.find(w => w.en.toLowerCase() === expectedWord)?.expectedUserReply?.some(r => msg.includes(r)));
+
+      if (similarity > 0.6 || userSaidExpected) {
+        // نطقها صح → امتدح وانتقل لكلمة جديدة
+        const nextWord = pick(FRIEND_LESSONS.filter(w => w.en.toLowerCase() !== expectedWord));
+        return baseReply(
+          pick([
+            `يا سلام! قولتها صح. ${yala} نكمّل، الكلمة الجديدة: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example} (${nextWord.exampleAr}). قول ${nextWord.en}؟`,
+            `ممتاز يا صاحبي! أنت بتتعلم بسرعة. الكلمة الجاية: "${nextWord.en}" ومعناها ${nextWord.ar}. مثال: ${nextWord.example}. جرّب تقول ${nextWord.en}؟`,
+            `تمام جداً! شاطر. خلينا نجرّب كلمة تانية: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example} (${nextWord.exampleAr}). قولها معايا: ${nextWord.en}؟`,
+            `الله يخليك! قولتها صح. الكلمة الجديدة: "${nextWord.en}" يعني ${nextWord.ar}. مثال: ${nextWord.example}. حاول تقول ${nextWord.en}؟`,
+          ])
+        );
+      } else {
+        // نطقها غلط → شجّعه يحاول تاني
+        return baseReply(
+          pick([
+            `أوكي، أنا سمعت "${message.slice(0, 50)}". بس حاول تقول "${teachingMatch[1]}" تاني ببطء. إنت تقدر!`,
+            `قريب بس مش مظبوط خالص. جرّب "${teachingMatch[1]}" تاني، ببطء شوية.`,
+            `مش بطّل، حاول تاني! الكلمة "${teachingMatch[1]}" — قولها ببطء.`,
+            `أنا عارف إنك تقدر. حاول تاني: "${teachingMatch[1]}" — كده كده هتنطقها صح.`,
+          ])
+        );
+      }
+    }
+  }
+
+  // ===== 2) لو أول مرة يطلب تعليم → ابدأ بكلمة ترحيب =====
+  const firstWord = pick(FRIEND_LESSONS.slice(0, 6)); // أول 6 كلمات (تحيات)
+  return baseReply(
+    pick([
+      `يا صاحبي، أنا أفرح أوي إنك عايز تتعلم! ${yala} نبدأ بكلمة سهلة: "${firstWord.en}" يعني ${firstWord.ar}. مثال: ${firstWord.example} (${firstWord.exampleAr}). قول ${firstWord.en}؟`,
+      `تمام يا جميل! أنا هعلّمك بطريقتي. أول كلمة: "${firstWord.en}" ومعناها ${firstWord.ar}. مثال: ${firstWord.example}. حاول تقول ${firstWord.en}؟`,
+      `حلو أوي! خلينا نبدأ. الكلمة الأولى: "${firstWord.en}" يعني ${firstWord.ar}. مثال: ${firstWord.example} (${firstWord.exampleAr}). قولها معايا: ${firstWord.en}؟`,
+      `أكيد يا صاحبي! أنا معاك خطوة خطوة. أول كلمة: "${firstWord.en}" يعني ${firstWord.ar}. مثال: ${firstWord.example}. جرّب تقول ${firstWord.en}؟`,
+    ])
+  );
+}
+
+// ===== حساب التشابه بين نصين (Levenshtein) =====
+function calculateSimilarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  const longer = a.length >= b.length ? a : b;
+  const shorter = a.length >= b.length ? b : a;
+  const longerLength = longer.length;
+  if (longerLength === 0) return 1.0;
+  const dist = levenshtein(longer, shorter);
+  return (longerLength - dist) / longerLength;
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const d: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+    }
+  }
+  return d[m][n];
 }
