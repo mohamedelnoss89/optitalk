@@ -39,18 +39,34 @@ export default function InstallPage() {
     }
   }, [isStandalone, router]);
 
+  // ===== سجّل الـ service worker عشان يقدر يثبّت PWA مباشرة =====
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!('serviceWorker' in navigator)) return;
+
+    // سجّل الـ SW
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('[Install] SW registered:', registration.scope);
+      })
+      .catch((err) => {
+        console.warn('[Install] SW registration failed:', err);
+      });
+  }, []);
+
   // ===== Android: خزّن beforeinstallprompt event عشان نستخدمه لما المستخدم يدوس زرار التحميل =====
   useEffect(() => {
-    if (device !== 'android') return;
-
     const handler = (e: Event) => {
+      // امنع الـ prompt الافتراضي عشان نتحكم فيه إحنا
       e.preventDefault();
+      // خزّن الـ event في window عشان نستخدمه بعدين
       (window as any).deferredPrompt = e;
+      console.log('[Install] beforeinstallprompt fired and saved');
     };
 
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, [device]);
+  }, []);
 
   return (
     <div className="relative min-h-[100dvh] flex flex-col items-center justify-center bg-[#0a0e1a] text-white px-6 py-10 overflow-hidden">
@@ -109,26 +125,53 @@ export default function InstallPage() {
 
         {/* ===== زرارين التحميل ===== */}
         <div className="space-y-3">
-          {/* زرار تحميل التطبيق — بيبدأ التحميل على طول */}
+          {/* زرار تحميل التطبيق — بيبدأ التثبيت المباشر على الجهاز */}
           <button
             id="install-pwa-btn"
-            onClick={() => {
-              // للأندرويد: لو المتصفح بيدعم PWA → ثبّت على طول
+            onClick={async () => {
+              showToastMsg('جاري تثبيت التطبيق... ⏳');
+
+              // حاول تشغيل beforeinstallprompt (PWA direct install)
               const evt = (window as any).deferredPrompt;
               if (evt) {
-                evt.prompt();
-                evt.userChoice.then(() => {
-                  setTimeout(() => router.push('/'), 1000);
-                });
+                try {
+                  evt.prompt();
+                  const choice = await evt.userChoice;
+                  if (choice.outcome === 'accepted') {
+                    showToastMsg('تم تثبيت التطبيق! ✅');
+                    setTimeout(() => router.push('/'), 1500);
+                  } else {
+                    showToastMsg('تم رفض التثبيت. حاول تاني 📲');
+                  }
+                  // امسح الـ event بعد الاستخدام
+                  (window as any).deferredPrompt = null;
+                } catch (err) {
+                  console.error('[Install] prompt error:', err);
+                  showToastMsg('حاول تاني — التثبيت المباشر مش متاح دلوقتي');
+                }
               } else {
-                // لو مش بيدعم PWA (iOS Safari / متصفح قديم) → نزّل APK على طول
-                const link = document.createElement('a');
-                link.href = '/optitalk.apk';
-                link.download = 'OptiTalk.apk';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showToastMsg('بدأ تحميل التطبيق... 📲');
+                // لو beforeinstallprompt مش متاح (iOS Safari / متصفحات تانية)
+                // ننتظر 2 ثانية عشان نتيقن إنه مش هيظهر
+                showToastMsg('جاري التحقق من دعم التثبيت المباشر... ⏳');
+                await new Promise(r => setTimeout(r, 2000));
+
+                const evt2 = (window as any).deferredPrompt;
+                if (evt2) {
+                  evt2.prompt();
+                  await evt2.userChoice;
+                  (window as any).deferredPrompt = null;
+                  showToastMsg('تم تثبيت التطبيق! ✅');
+                  setTimeout(() => router.push('/'), 1500);
+                } else {
+                  // fallback: نزّل APK على طول (للموبايلات اللي مش بيدعموا PWA)
+                  showToastMsg('جاري تحميل التطبيق... 📲');
+                  const link = document.createElement('a');
+                  link.href = '/optitalk.apk';
+                  link.download = 'OptiTalk.apk';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }
               }
             }}
             className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
