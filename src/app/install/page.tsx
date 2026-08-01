@@ -103,69 +103,17 @@ export default function InstallPage() {
           <div className="text-5xl">📱</div>
           <h2 className="text-2xl font-bold">نزّل التطبيق على جهازك</h2>
           <p className="text-sm text-white/60 leading-relaxed">
-            عشان تجيب أحسن تجربة، نزّل OptiTalk كتطبيق على جهازك. هتقدر تفتحه بسرعة من غير متصفح.
+            دوس على زرار التحميل وتطبيق OptiTalk هينزل على جهازك على طول.
           </p>
-
-          {device === 'ios' && (
-            <div className="space-y-3 text-right">
-              <div className="rounded-xl bg-blue-500/10 p-4 border border-blue-500/20">
-                <p className="text-sm font-bold text-blue-300 mb-2">📱 iPhone / iPad:</p>
-                <ol className="text-xs text-white/80 space-y-2 list-decimal list-inside">
-                  <li>
-                    دوس على زرار المشاركة{' '}
-                    <span className="inline-block px-2 py-0.5 bg-white/10 rounded text-blue-300">📤</span>
-                  </li>
-                  <li>
-                    اختار "Add to Home Screen"{' '}
-                    <span className="inline-block px-2 py-0.5 bg-white/10 rounded text-blue-300">➕</span>
-                  </li>
-                  <li>دوس "Add" — التطبيق هيظهر على الشاشة الرئيسية</li>
-                </ol>
-              </div>
-            </div>
-          )}
-
-          {device === 'android' && (
-            <div className="space-y-3 text-right">
-              <div className="rounded-xl bg-green-500/10 p-4 border border-green-500/20">
-                <p className="text-sm font-bold text-green-300 mb-2">📱 Android:</p>
-                <ol className="text-xs text-white/80 space-y-2 list-decimal list-inside">
-                  <li>دوس على زرار القائمة (⋮) في المتصفح</li>
-                  <li>اختار "Add to Home screen" أو "Install app"</li>
-                  <li>دوس "Install" — التطبيق هيظهر على شاشة جهازك</li>
-                </ol>
-              </div>
-              <button
-                id="android-install-btn"
-                style={{ display: 'none' }}
-                className="w-full rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-4 text-base font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                📲 نزّل التطبيق دلوقتي
-              </button>
-            </div>
-          )}
-
-          {device === 'desktop' && (
-            <div className="space-y-3 text-right">
-              <div className="rounded-xl bg-purple-500/10 p-4 border border-purple-500/20">
-                <p className="text-sm font-bold text-purple-300 mb-2">💻 Desktop:</p>
-                <ol className="text-xs text-white/80 space-y-2 list-decimal list-inside">
-                  <li>دوس على أيقونة التثبيت 📲 في شريط العنوان</li>
-                  <li>أو دوس على قائمة المتصفح (⋮) → "Install OptiTalk"</li>
-                  <li>دوس "Install" — التطبيق هيفتح في نافذة منفصلة</li>
-                </ol>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* ===== زرارين التحميل ===== */}
         <div className="space-y-3">
-          {/* زرار تحميل التطبيق (PWA) */}
+          {/* زرار تحميل التطبيق — بيبدأ التحميل على طول */}
           <button
             id="install-pwa-btn"
             onClick={() => {
-              // للأندرويد: حاول تفعّل beforeinstallprompt
+              // للأندرويد: لو المتصفح بيدعم PWA → ثبّت على طول
               const evt = (window as any).deferredPrompt;
               if (evt) {
                 evt.prompt();
@@ -173,12 +121,14 @@ export default function InstallPage() {
                   setTimeout(() => router.push('/'), 1000);
                 });
               } else {
-                // iOS / Desktop: اعرض التعليمات
-                const instructions = document.getElementById('install-instructions');
-                if (instructions) {
-                  instructions.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                showToastMsg('اتبع التعليمات بالظبط تحت 👇');
+                // لو مش بيدعم PWA (iOS Safari / متصفح قديم) → نزّل APK على طول
+                const link = document.createElement('a');
+                link.href = '/optitalk.apk';
+                link.download = 'OptiTalk.apk';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToastMsg('بدأ تحميل التطبيق... 📲');
               }
             }}
             className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
@@ -198,50 +148,8 @@ export default function InstallPage() {
           </a>
 
           <p className="text-xs text-white/40 text-center pt-1">
-            📲 للموبايلات الضعيفة — حمّل APK وثبّته يدوياً
+            📲 دوس وحمّل التطبيق على جهازك
           </p>
-        </div>
-
-        {/* ===== التعليمات ===== */}
-        <div id="install-instructions" className="space-y-3">
-          {device === 'ios' && (
-            <div className="rounded-xl bg-blue-500/10 p-4 border border-blue-500/20">
-              <p className="text-sm font-bold text-blue-300 mb-2">📱 iPhone / iPad:</p>
-              <ol className="text-xs text-white/80 space-y-2 list-decimal list-inside">
-                <li>
-                  دوس على زرار المشاركة{' '}
-                  <span className="inline-block px-2 py-0.5 bg-white/10 rounded text-blue-300">📤</span>
-                </li>
-                <li>
-                  اختار "Add to Home Screen"{' '}
-                  <span className="inline-block px-2 py-0.5 bg-white/10 rounded text-blue-300">➕</span>
-                </li>
-                <li>دوس "Add" — التطبيق هيظهر على الشاشة الرئيسية</li>
-              </ol>
-            </div>
-          )}
-
-          {device === 'android' && (
-            <div className="rounded-xl bg-green-500/10 p-4 border border-green-500/20">
-              <p className="text-sm font-bold text-green-300 mb-2">📱 Android:</p>
-              <ol className="text-xs text-white/80 space-y-2 list-decimal list-inside">
-                <li>دوس على زرار القائمة (⋮) في المتصفح</li>
-                <li>اختار "Add to Home screen" أو "Install app"</li>
-                <li>دوس "Install" — التطبيق هيظهر على شاشة جهازك</li>
-              </ol>
-            </div>
-          )}
-
-          {device === 'desktop' && (
-            <div className="rounded-xl bg-purple-500/10 p-4 border border-purple-500/20">
-              <p className="text-sm font-bold text-purple-300 mb-2">💻 Desktop:</p>
-              <ol className="text-xs text-white/80 space-y-2 list-decimal list-inside">
-                <li>دوس على أيقونة التثبيت 📲 في شريط العنوان</li>
-                <li>أو دوس على قائمة المتصفح (⋮) → "Install OptiTalk"</li>
-                <li>دوس "Install" — التطبيق هيفتح في نافذة منفصلة</li>
-              </ol>
-            </div>
-          )}
         </div>
 
         {/* ===== المميزات ===== */}
