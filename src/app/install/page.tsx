@@ -174,7 +174,13 @@ export default function InstallPage() {
         {showContinueButton && (
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => {
+                // علامة إن المستخدم اختار يكمل على الويب
+                try {
+                  sessionStorage.setItem('continue-on-web', 'true');
+                } catch {}
+                router.push('/');
+              }}
               className="w-full rounded-2xl bg-white/10 px-6 py-3 text-sm font-medium text-white/70 transition-all hover:bg-white/20"
             >
               أكمل على الويب بدون تنزيل

@@ -2,7 +2,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { WelcomeScreen } from '@/components/optitalk/WelcomeScreen';
 import { OnboardingScreen } from '@/components/optitalk/OnboardingScreen';
@@ -20,8 +20,34 @@ export default function Home() {
   // ===== flag عشان نمنع الـ redirect التلقائي بعد ما المستخدم يروح لـ welcome يدوياً =====
   const userNavigatedToWelcomeRef = useRef(false);
 
+  // ===== redirect لصفحة التنزيل لو المستخدم مش فاتح التطبيق كـ PWA =====
+  const [showApp, setShowApp] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 1) لو التطبيق مفتوح كـ standalone (PWA) → اعرضه
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
+
+    // 2) لو المستخدم داس "أكمل على الويب" (sessionStorage)
+    const continueOnWeb = sessionStorage.getItem('continue-on-web') === 'true';
+
+    // 3) لو المستخدم ليه محادثات سابقة (رجع للتطبيق)
+    const hasMessages = useStore.getState()?.messages?.length > 0;
+
+    if (isStandalone || continueOnWeb || hasMessages) {
+      setShowApp(true);
+    } else {
+      // غير كده → redirect لصفحة التنزيل
+      window.location.href = '/install';
+    }
+  }, []);
+
   // ===== التحقق عند تحميل التطبيق =====
   useEffect(() => {
+    if (!showApp) return;
     const timer = setTimeout(() => {
       // ===== الحالات =====
       // ===== تسجيل الدخول معطل مؤقتاً =====
@@ -39,7 +65,7 @@ export default function Home() {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [user, selectedTeacher, currentScreen, isAuthenticated, setScreen]);
+  }, [user, selectedTeacher, currentScreen, isAuthenticated, setScreen, showApp]);
 
   // ===== رصد لو المستخدم راح welcome يدوياً =====
   useEffect(() => {
@@ -54,8 +80,25 @@ export default function Home() {
 
   return (
     <div className="relative mx-auto min-h-[100dvh] w-full max-w-md bg-background">
-      <AnimatePresence mode="wait">
-        {currentScreen === 'welcome' && (
+      {!showApp ? (
+        // ===== loading screen لحد ما نحدد نعرض التطبيق ولا نعمل redirect =====
+        <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-[#0a0e1a] text-white">
+          <div className="relative flex h-28 w-28 items-center justify-center">
+            <div
+              className="absolute inset-0 rounded-[2rem] opacity-30 blur-2xl animate-pulse"
+              style={{ background: 'radial-gradient(circle, #6C5CE7 0%, transparent 70%)' }}
+            />
+            <img
+              src="/logo.png"
+              alt="OptiTalk"
+              className="relative h-24 w-24 rounded-[1.5rem] object-cover"
+            />
+          </div>
+          <div className="mt-6 text-white/60 text-sm">جاري التحميل...</div>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {currentScreen === 'welcome' && (
           <motion.div
             key="welcome"
             initial={{ opacity: 0 }}
@@ -103,6 +146,7 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+      )}
     </div>
   );
 }
