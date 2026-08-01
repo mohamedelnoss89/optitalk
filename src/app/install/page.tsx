@@ -187,15 +187,10 @@ export default function InstallPage() {
             <span>تحميل التطبيق</span>
           </button>
 
-          {/* زرار تحميل APK */}
+          {/* زرار تحميل APK — بينزّل ملف APK مباشرة للموبايلات الضعيفة */}
           <a
-            href="https://optitalk.vercel.app/optitalk.apk"
+            href="/optitalk.apk"
             download="OptiTalk.apk"
-            onClick={(e) => {
-              // لو الـ APK مش موجود، نمنع الـ download ونظهر رسالة
-              e.preventDefault();
-              showToastMsg('هتحمل APK قريب جداً! استخدم زرار "تحميل التطبيق" دلوقتي');
-            }}
             className="w-full rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
           >
             <span className="text-xl">🤖</span>
@@ -203,7 +198,7 @@ export default function InstallPage() {
           </a>
 
           <p className="text-xs text-white/40 text-center pt-1">
-            📲 التحميل الأول بنقولك تعمل إيه خطوة بخطوة
+            📲 للموبايلات الضعيفة — حمّل APK وثبّته يدوياً
           </p>
         </div>
 
