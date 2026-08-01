@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: "OptiTalk - تعلّم الإنجليزية بالمحادثة",
   description:
     "تطبيق تعليم اللغة الإنجليزية بالمحادثة الحية مع مدرس AI. اختار مدرسك، تحدث بصوتك، واحصل على تصحيح فوري.",
+  manifest: "/manifest.json",
   other: {
     'cache-control': 'no-cache, no-store, must-revalidate',
     'pragma': 'no-cache',
