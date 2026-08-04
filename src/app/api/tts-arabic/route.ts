@@ -99,46 +99,179 @@ function cleanText(text: string): string {
   // مسافات متعددة → مسافة واحدة
   out = out.replace(/\s+/g, ' ').trim();
 
-  // ===== حيلة عشان نخلي الصوت يقرأ العامية بشكل أطبيع =====
-  // 1. إضافة فاصل قصير (,) بعد بعض الكلمات اللي بتقرا رسمي
-  // عشان نخلي الصوت ياخد نَفَس ويقرا الكلمة اللي بعدها بشكل منفصل (أقل رسمية)
-
-  // كلمات لازم نضيف بعدها فاصل قصير
-  const wordsNeedingPause = [
-    'يعني', 'بصراحة', 'طب', 'أوكي', 'تمام', 'حلو', 'كويس',
-    'يا صاحبي', 'يا جميل', 'يا بطل', 'يا صاحبي',
-    'قول', 'جرّب', 'سمع', 'شوف',
-    'اسمع', 'بص', 'خد',
-  ];
-
-  for (const word of wordsNeedingPause) {
-    // لو الكلمة موجودة وبعدها مسافة (مش فاصلة) → ضيف فاصلة بعدها
-    const regex = new RegExp(`${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?![،,])`, 'g');
-    out = out.replace(regex, `${word}, `);
-  }
-
-  // 2. تحويل بعض الكلمات اللي بتنقرا رسمي لصيغة عامية
+  // ===== تحويل الكلمات الرسمية لعامية مصرية =====
   const colloquialReplacements: [RegExp, string][] = [
-    [/هذا/g, 'ده'],      // هذا → ده
-    [/هذه/g, 'دي'],     // هذه → دي
-    [/ذلك/g, 'كده'],     // ذلك → كده
-    [/هكذا/g, 'كده'],    // هكذا → كده
-    [/الآن/g, 'دلوقتي'], // الآن → دلوقتي
-    [/كيف/g, 'إزاي'],    // كيف → إزاي ( بس لو لوحدها )
-    [/ماذا/g, 'إيه'],    // ماذا → إيه
-    [/لماذا/g, 'ليه'],   // لماذا → ليه
-    [/أيضاً/g, 'كمان'],  // أيضاً → كمان
-    [/جداً/g, 'أوي'],    // جداً → أوي
-    [/جدا/g, 'أوي'],     // جدا → أوي
-    [/لكن/g, 'بس'],      // لكن → بس
-    [/إلى/g, 'لـ'],      // إلى → لـ (مش دايماً صح)
+    [/هذا/g, 'ده'],
+    [/هذه/g, 'دي'],
+    [/ذلك/g, 'كده'],
+    [/هكذا/g, 'كده'],
+    [/الآن/g, 'دلوقتي'],
+    [/كيف/g, 'إزاي'],
+    [/ماذا/g, 'إيه'],
+    [/لماذا/g, 'ليه'],
+    [/أيضاً/g, 'كمان'],
+    [/جداً/g, 'أوي'],
+    [/جدا/g, 'أوي'],
+    [/لكن/g, 'بس'],
+    [/إلى/g, 'لـ'],
+    // كلمات إضافية عشان نخلي النطق عامي أكتر
+    [/تماماً/g, 'تمام'],
+    [/صباح الخير/g, 'صباح الخير'],
+    [/مساء الخير/g, 'مساء الخير'],
+    // كلمات بتنقرا رسمي → نخليها عامية
+    [/لقد/g, ''],
+    [/قد/g, ''],
+    [/سوف/g, 'هـ'],
+    [/لم/g, 'ما'],
+    [/لن/g, 'ما'],
+    [/إن/g, ''],
+    [/أن/g, ''],
+    [/كانت/g, 'كانت'],
+    [/يكون/g, 'يبقى'],
+    [/تكون/g, 'تبقى'],
+    // ضمائر رسمية → عامية
+    [/أنا/g, 'أنا'],
+    [/أنت/g, 'إنت'],
+    [/أنتما/g, 'إنتو'],
+    [/أنتم/g, 'إنتو'],
+    // أدوات استفهام رسمية
+    [/هل/g, ''],
+    // كلمات عامية إضافية
+    [/كثيراً/g, 'كتير'],
+    [/كثير/g, 'كتير'],
+    [/قليل/g, 'شوية'],
+    [/سريعاً/g, 'بسرعة'],
+    [/ببطء/g, 'ببطء'],
   ];
 
   for (const [pattern, replacement] of colloquialReplacements) {
     out = out.replace(pattern, replacement);
   }
 
+  // إضافة فواصل بعد كلمات المحادثة
+  const pauseWords = ['يعني', 'بصراحة', 'طب', 'أوكي', 'تمام', 'حلو', 'كويس', 'قول', 'جرّب', 'سمع', 'شوف', 'اسمع', 'بص', 'خد'];
+  for (const word of pauseWords) {
+    const regex = new RegExp(`${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?![،,])`, 'g');
+    out = out.replace(regex, `${word}, `);
+  }
+
   return out;
+}
+
+// ===== فصل النص لقطع (عربي / إنجليزي) =====
+// عشان كل قطعة تتقرا بالصوت المناسب
+interface TextSegment {
+  text: string;
+  lang: 'ar' | 'en';
+}
+
+function splitByLanguage(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  // regex يفصل النص حسب: عربي + أقواس اقتباس + إنجليزي
+  // 1) نص إنجليزي (حروف لاتينية + مسافات + علامات ترقيم)
+  // 2) نص عربي (حروف عربية + مسافات + علامات ترقيم)
+
+  // نقطع النص حسب الكلمات الإنجليزية
+  const englishRegex = /[A-Za-z]+(?:\s+[A-Za-z]+)*/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = englishRegex.exec(text)) !== null) {
+    // أضف الجزء العربي اللي قبل الجزء الإنجليزي
+    if (match.index > lastIndex) {
+      const arabicPart = text.slice(lastIndex, match.index).trim();
+      if (arabicPart) {
+        segments.push({ text: arabicPart, lang: 'ar' });
+      }
+    }
+    // أضف الجزء الإنجليزي
+    segments.push({ text: match[0], lang: 'en' });
+    lastIndex = match.index + match[0].length;
+  }
+
+  // أضف آخر جزء عربي لو موجود
+  if (lastIndex < text.length) {
+    const remaining = text.slice(lastIndex).trim();
+    if (remaining) {
+      segments.push({ text: remaining, lang: 'ar' });
+    }
+  }
+
+  // لو مفيش قطع (نص عربي بس) → رجّع كل النص عربي
+  if (segments.length === 0) {
+    segments.push({ text, lang: 'ar' });
+  }
+
+  return segments;
+}
+
+// ===== دمج ملفات MP3 متعددة في ملف واحد =====
+// ببساطة بندمج الـ buffers (MP3 frames مستقلة، بتشتغل لما تتدمج)
+function concatMP3Buffers(buffers: Buffer[]): Buffer {
+  return Buffer.concat(buffers);
+}
+
+// ===== helper: يولّد الصوت من نص (مع دعم اللغات المتعددة) =====
+async function generateAudio(
+  cleanText: string,
+  characterId: string | null,
+  voiceIdParam: string | null,
+  voice: string | null,
+  gender: string | null,
+): Promise<Buffer> {
+  // اختيار إعدادات الصوت:
+  let config: { voice: string; rate: string; pitch: string };
+  let englishVoice = 'en-US-GuyNeural';
+
+  if (characterId && CHARACTER_VOICE_CONFIG[characterId]) {
+    config = CHARACTER_VOICE_CONFIG[characterId];
+    if (characterId === 'mr-james') englishVoice = 'en-US-GuyNeural';
+    else if (characterId === 'ms-sarah') englishVoice = 'en-US-AriaNeural';
+    else if (characterId === 'professor-david') englishVoice = 'en-US-ChristopherNeural';
+    else if (characterId === 'miss-emma') englishVoice = 'en-US-JennyNeural';
+    else if (characterId === 'coach-mike') englishVoice = 'en-US-MichelleNeural';
+    else if (characterId === 'dr-lisa') englishVoice = 'en-US-SaraNeural';
+    else if (config.voice === VOICE_FEMALE) englishVoice = 'en-US-AriaNeural';
+    else englishVoice = 'en-US-GuyNeural';
+  } else if (voiceIdParam || voice) {
+    const v = voiceIdParam || voice;
+    config = getDefaultVoice(v || undefined);
+    if (v && v.startsWith('en-')) englishVoice = v;
+  } else if (gender === 'female') {
+    config = { voice: VOICE_FEMALE, rate: '-5%', pitch: '+0Hz' };
+    englishVoice = 'en-US-AriaNeural';
+  } else {
+    config = { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
+    englishVoice = 'en-US-GuyNeural';
+  }
+
+  // ===== فصل النص لقطع (عربي / إنجليزي) =====
+  const segments = splitByLanguage(cleanText);
+
+  // لو فيه قطعة واحدة بس → استخدم الطريقة المباشرة (أسرع)
+  if (segments.length === 1) {
+    const seg = segments[0];
+    const voiceToUse = seg.lang === 'en' ? englishVoice : config.voice;
+    return await textToBuffer(seg.text, voiceToUse, config.rate, config.pitch);
+  }
+
+  // لو فيه قطع متعددة → ولّد صوت لكل قطعة ودمجها
+  const audioBuffers: Buffer[] = [];
+  for (const seg of segments) {
+    const voiceToUse = seg.lang === 'en' ? englishVoice : config.voice;
+    try {
+      const buf = await textToBuffer(seg.text, voiceToUse, config.rate, config.pitch);
+      audioBuffers.push(buf);
+    } catch (err) {
+      console.error('[TTS] Segment failed:', seg.lang, seg.text.slice(0, 50));
+      try {
+        const buf = await textToBuffer(seg.text, config.voice, config.rate, config.pitch);
+        audioBuffers.push(buf);
+      } catch {}
+    }
+  }
+
+  return concatMP3Buffers(audioBuffers);
 }
 
 export async function POST(req: NextRequest) {
@@ -155,32 +288,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Empty text' }, { status: 400 });
     }
 
-    // اختيار إعدادات الصوت:
-    // 1) الأول من CHARACTER_VOICE_CONFIG لو فيه characterId
-    // 2) لو في voiceId مباشر → استخدمه مع default rate/pitch
-    // 3) لو في gender → استخدم الصوت المناسب
-    // 4) default → صوت راجل مصري
-    let config: { voice: string; rate: string; pitch: string };
-
-    if (characterId && CHARACTER_VOICE_CONFIG[characterId]) {
-      config = CHARACTER_VOICE_CONFIG[characterId];
-    } else if (voiceIdParam || voice) {
-      const v = voiceIdParam || voice;
-      config = getDefaultVoice(v);
-    } else if (gender === 'female') {
-      config = { voice: VOICE_FEMALE, rate: '-5%', pitch: '+0Hz' };
-    } else {
-      config = { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
-    }
-
-    const audioBuffer = await textToBuffer(clean, config.voice, config.rate, config.pitch);
+    const audioBuffer = await generateAudio(clean, characterId, voiceIdParam, voice, gender);
 
     return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,
-      headers: {
-        'Content-Type': 'audio/mpeg',
-        'Cache-Control': 'no-cache',
-      },
+      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-cache' },
     });
   } catch (err: any) {
     console.error('[TTS-Arabic] Error:', err?.message);
@@ -206,27 +318,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Empty text' }, { status: 400 });
     }
 
-    let config: { voice: string; rate: string; pitch: string };
-
-    if (characterId && CHARACTER_VOICE_CONFIG[characterId]) {
-      config = CHARACTER_VOICE_CONFIG[characterId];
-    } else if (voiceIdParam || voice) {
-      const v = voiceIdParam || voice;
-      config = getDefaultVoice(v);
-    } else if (gender === 'female') {
-      config = { voice: VOICE_FEMALE, rate: '-5%', pitch: '+0Hz' };
-    } else {
-      config = { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
-    }
-
-    const audioBuffer = await textToBuffer(clean, config.voice, config.rate, config.pitch);
+    const audioBuffer = await generateAudio(clean, characterId, voiceIdParam, voice, gender);
 
     return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,
-      headers: {
-        'Content-Type': 'audio/mpeg',
-        'Cache-Control': 'no-cache',
-      },
+      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-cache' },
     });
   } catch (err: any) {
     console.error('[TTS-Arabic GET] Error:', err?.message);
