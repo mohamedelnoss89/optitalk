@@ -55,7 +55,7 @@ const CHARACTER_VOICE_CONFIG: Record<string, VoiceConfig> = {
   'friend-mariam':   { voice: VOICE_FEMALE, rate: '-20%', pitch: '-2Hz' },
 };
 
-// ===== helper: يحوّل نص لـ Buffer باستخدام ملف مؤقت =====
+// ===== helper: يحوّل نص لـ Buffer باستخدام ملف مؤقت (Edge TTS) =====
 async function textToBuffer(text: string, voice: string, rate: string, pitch: string): Promise<Buffer> {
   const tmpDir = join(tmpdir(), 'optitalk-tts');
   await mkdir(tmpDir, { recursive: true });
@@ -75,6 +75,86 @@ async function textToBuffer(text: string, voice: string, rate: string, pitch: st
   } finally {
     try { await unlink(filePath); } catch {}
   }
+}
+
+// ===== helper: Google Translate TTS (بينطق العامية المصرية أحسن) =====
+async function googleTTS(text: string, lang: string = 'ar'): Promise<Buffer | null> {
+  try {
+    // Google Translate TTS بيقبل نصوص لحد 200 حرف بس
+    // فبنقسم النص لجمل
+    const chunks = splitTextForGoogle(text, 200);
+    const audioBuffers: Buffer[] = [];
+
+    for (const chunk of chunks) {
+      if (!chunk.trim()) continue;
+
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk)}&tl=${lang}&client=tw-ob`;
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      });
+
+      if (!res.ok) {
+        console.warn('[Google TTS] Failed:', res.status);
+        continue;
+      }
+
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > 100) {
+        audioBuffers.push(buf);
+      }
+
+      // انتظار قصير عشان Google ميقفلش الـ connection
+      await new Promise(r => setTimeout(r, 80));
+    }
+
+    if (audioBuffers.length === 0) return null;
+    if (audioBuffers.length === 1) return audioBuffers[0];
+
+    return Buffer.concat(audioBuffers);
+  } catch (err: any) {
+    console.error('[Google TTS] Error:', err?.message);
+    return null;
+  }
+}
+
+// ===== helper: قسم النص لجمل صغيرة (لأن Google TTS بيقبل 200 حرف) =====
+function splitTextForGoogle(text: string, maxLen: number = 200): string[] {
+  if (text.length <= maxLen) return [text];
+
+  const chunks: string[] = [];
+  // نقسم على . ! ؟ . ، ;
+  const sentences = text.match(/[^.!?؟،;]+[.!?؟،;]?/g) || [text];
+  let current = '';
+
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (!trimmed) continue;
+
+    // لو الجملة نفسها أطول من maxLen → نقسمها على المسافات
+    if (trimmed.length > maxLen) {
+      const words = trimmed.split(' ');
+      for (const word of words) {
+        if ((current + ' ' + word).length <= maxLen) {
+          current = (current + ' ' + word).trim();
+        } else {
+          if (current) chunks.push(current);
+          current = word;
+        }
+      }
+    } else {
+      if ((current + ' ' + trimmed).length <= maxLen) {
+        current = (current + ' ' + trimmed).trim();
+      } else {
+        if (current) chunks.push(current);
+        current = trimmed;
+      }
+    }
+  }
+
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
 }
 
 // ===== تحديد الصوت حسب الجنس (fallback لو مفيش characterId) =====
@@ -510,6 +590,7 @@ function concatMP3Buffers(buffers: Buffer[]): Buffer {
 }
 
 // ===== helper: يولّد الصوت من نص (مع دعم اللغات المتعددة) =====
+// بيجرّب Google TTS الأول (بينطق العامية أحسن)، ولو فشل يرجع لـ Edge TTS
 async function generateAudio(
   cleanText: string,
   characterId: string | null,
@@ -536,24 +617,58 @@ async function generateAudio(
     config = getDefaultVoice(v || undefined);
     if (v && v.startsWith('en-')) englishVoice = v;
   } else if (gender === 'female') {
-    config = { voice: VOICE_FEMALE, rate: '-5%', pitch: '+0Hz' };
+    config = { voice: VOICE_FEMALE, rate: '-15%', pitch: '+0Hz' };
     englishVoice = 'en-US-AriaNeural';
   } else {
-    config = { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
+    config = { voice: VOICE_MALE, rate: '-15%', pitch: '+0Hz' };
     englishVoice = 'en-US-GuyNeural';
   }
 
-  // ===== فصل النص لقطع (عربي / إنجليزي) =====
+  // ===== 1) جرّب Google TTS الأول (بينطق العامية المصرية أحسن) =====
+  try {
+    // فصل النص لقطع (عربي / إنجليزي)
+    const segments = splitByLanguage(cleanText);
+
+    if (segments.length === 1) {
+      // نص واحد بس → استخدم Google TTS مباشرة
+      const lang = segments[0].lang === 'en' ? 'en' : 'ar';
+      const googleBuffer = await googleTTS(segments[0].text, lang);
+      if (googleBuffer && googleBuffer.length > 500) {
+        console.log('[TTS] Using Google TTS (single segment)');
+        return googleBuffer;
+      }
+    } else {
+      // نصوص متعددة → استخدم Google TTS لكل قطعة
+      const audioBuffers: Buffer[] = [];
+      for (const seg of segments) {
+        const lang = seg.lang === 'en' ? 'en' : 'ar';
+        const buf = await googleTTS(seg.text, lang);
+        if (buf && buf.length > 100) {
+          audioBuffers.push(buf);
+        } else {
+          // fallback لـ Edge TTS لو Google فشل
+          const edgeVoice = seg.lang === 'en' ? englishVoice : config.voice;
+          const edgeBuf = await textToBuffer(seg.text, edgeVoice, config.rate, config.pitch);
+          audioBuffers.push(edgeBuf);
+        }
+      }
+      console.log('[TTS] Using Google TTS (mixed segments)');
+      return concatMP3Buffers(audioBuffers);
+    }
+  } catch (err: any) {
+    console.warn('[TTS] Google TTS failed, falling back to Edge TTS:', err?.message);
+  }
+
+  // ===== 2) Fallback: استخدم Edge TTS لو Google فشل =====
+  console.log('[TTS] Using Edge TTS (fallback)');
   const segments = splitByLanguage(cleanText);
 
-  // لو فيه قطعة واحدة بس → استخدم الطريقة المباشرة (أسرع)
   if (segments.length === 1) {
     const seg = segments[0];
     const voiceToUse = seg.lang === 'en' ? englishVoice : config.voice;
     return await textToBuffer(seg.text, voiceToUse, config.rate, config.pitch);
   }
 
-  // لو فيه قطع متعددة → ولّد صوت لكل قطعة ودمجها
   const audioBuffers: Buffer[] = [];
   for (const seg of segments) {
     const voiceToUse = seg.lang === 'en' ? englishVoice : config.voice;
