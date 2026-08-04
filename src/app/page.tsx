@@ -20,13 +20,13 @@ export default function Home() {
   // ===== flag عشان نمنع الـ redirect التلقائي بعد ما المستخدم يروح لـ welcome يدوياً =====
   const userNavigatedToWelcomeRef = useRef(false);
 
-  // ===== redirect لصفحة التنزيل لو المستخدم مش فاتح التطبيق كـ PWA =====
+  // ===== redirect لصفحة تسجيل الدخول لو المستخدم مش مسجل =====
   const [showApp, setShowApp] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // 1) لو التطبيق مفتوح كـ standalone (PWA) → اعرضه
+    // 1) لو التطبيق مفتوح كـ standalone (PWA) → اعرضه لو مسجل
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (navigator as any).standalone === true;
@@ -34,14 +34,27 @@ export default function Home() {
     // 2) لو المستخدم داس "أكمل على الويب" (sessionStorage)
     const continueOnWeb = sessionStorage.getItem('continue-on-web') === 'true';
 
-    // 3) لو المستخدم ليه محادثات سابقة (رجع للتطبيق)
-    const hasMessages = useStore.getState()?.messages?.length > 0;
+    // 3) لو المستخدم مسجل دخول
+    const stored = localStorage.getItem('optitalk-store-v6');
+    let isAuthenticated = false;
+    let hasMessages = false;
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        isAuthenticated = parsed?.state?.isAuthenticated === true && !!parsed?.state?.authUser;
+        hasMessages = (parsed?.state?.messages?.length || 0) > 0;
+      } catch {}
+    }
 
-    if (isStandalone || continueOnWeb || hasMessages) {
+    if (isStandalone && (isAuthenticated || hasMessages)) {
+      // PWA + مسجل → اعرض التطبيق
+      setShowApp(true);
+    } else if (continueOnWeb && isAuthenticated) {
+      // continue-on-web + مسجل → اعرض التطبيق
       setShowApp(true);
     } else {
-      // غير كده → redirect لصفحة التنزيل
-      window.location.href = '/install';
+      // غير كده → redirect لصفحة تسجيل الدخول
+      window.location.href = '/login';
     }
   }, []);
 
