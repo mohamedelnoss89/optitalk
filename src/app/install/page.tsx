@@ -195,14 +195,6 @@ export default function InstallPage() {
           </p>
         </div>
 
-        {/* زرار تسجيل الدخول */}
-        <button
-          onClick={() => router.push('/login')}
-          className="w-full rounded-2xl bg-white/5 border border-white/10 px-6 py-3 text-sm font-medium text-white/70 transition-all hover:bg-white/10 hover:text-white"
-        >
-          🔑 لديّ حساب — سجّل دخول
-        </button>
-
         {/* ===== المميزات ===== */}
         <div className="grid grid-cols-3 gap-3 pt-4">
           <div className="rounded-xl bg-white/5 p-3 text-center">
