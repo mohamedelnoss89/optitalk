@@ -20,24 +20,18 @@ export default function Home() {
   // ===== flag عشان نمنع الـ redirect التلقائي بعد ما المستخدم يروح لـ welcome يدوياً =====
   const userNavigatedToWelcomeRef = useRef(false);
 
-  // ===== redirect لصفحة تسجيل الدخول لو المستخدم مش مسجل =====
+  // ===== تحديد الصفحة المناسبة للمستخدم =====
   const [showApp, setShowApp] = useState(false);
+  const [redirect, setRedirect] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // 1) لو التطبيق مفتوح كـ standalone (PWA) → اعرضه لو مسجل
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as any).standalone === true;
-
-    // 2) لو المستخدم داس "أكمل على الويب" (sessionStorage)
-    const continueOnWeb = sessionStorage.getItem('continue-on-web') === 'true';
-
-    // 3) لو المستخدم مسجل دخول
+    // اقرأ حالة المستخدم من localStorage
     const stored = localStorage.getItem('optitalk-store-v6');
     let isAuthenticated = false;
     let hasMessages = false;
+
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -46,17 +40,49 @@ export default function Home() {
       } catch {}
     }
 
-    if (isStandalone && (isAuthenticated || hasMessages)) {
-      // PWA + مسجل → اعرض التطبيق
+    // هل التطبيق مفتوح كـ PWA (standalone)؟
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
+
+    // هل المستخدم داس "أكمل على الويب" قبل كده؟
+    const continueOnWeb = sessionStorage.getItem('continue-on-web') === 'true';
+
+    // ===== المنطق الصح =====
+    // 1) لو المستخدم مسجل دخول (وعنده بيانات) → اعرض التطبيق على طول
+    if (isAuthenticated) {
       setShowApp(true);
-    } else if (continueOnWeb && isAuthenticated) {
-      // continue-on-web + مسجل → اعرض التطبيق
-      setShowApp(true);
-    } else {
-      // غير كده → redirect لصفحة تسجيل الدخول
-      window.location.href = '/login';
+      return;
     }
+
+    // 2) لو التطبيق مفتوح كـ PWA وله محادثات سابقة → اعرض التطبيق
+    if (isStandalone && hasMessages) {
+      setShowApp(true);
+      return;
+    }
+
+    // 3) لو المستخدم داس "أكمل على الويب" قبل كده → اعرض التطبيق
+    if (continueOnWeb) {
+      setShowApp(true);
+      return;
+    }
+
+    // 4) لو التطبيق مفتوح كـ PWA لأول مرة (مش مسجل) → روح لتسجيل الدخول
+    if (isStandalone) {
+      setRedirect('/login');
+      return;
+    }
+
+    // 5) أي حالة تانية (متصفح عادي، أول زيارة) → روح لصفحة التنزيل
+    setRedirect('/install');
   }, []);
+
+  // نفّذ الـ redirect
+  useEffect(() => {
+    if (redirect) {
+      window.location.href = redirect;
+    }
+  }, [redirect]);
 
   // ===== التحقق عند تحميل التطبيق =====
   useEffect(() => {
