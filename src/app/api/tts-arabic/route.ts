@@ -10,11 +10,13 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 // ===== الأصوات المصرية المتاحة =====
+// نستخدم ar-EG (مصري) — هي الأفضل للعامية المصرية
 const VOICE_MALE = 'ar-EG-ShakirNeural';   // صوت راجل مصري
 const VOICE_FEMALE = 'ar-EG-SalmaNeural';  // صوت ست مصرية
 
 // ===== إعدادات صوت مخصصة لكل شخصية =====
 // بنستخدم نفس الصوت المصري بس بنغيّر rate/pitch عشان نتميز بين الشخصيات
+// ملاحظة: rate أبطأ = نطق أوضح
 interface VoiceConfig {
   voice: string;
   rate: string;   // السرعة (مثل: '-5%', '+0%', '-10%')
@@ -23,34 +25,34 @@ interface VoiceConfig {
 
 const CHARACTER_VOICE_CONFIG: Record<string, VoiceConfig> = {
   // ===== المدرسون =====
-  'mr-james':        { voice: VOICE_MALE,   rate: '-10%', pitch: '+0Hz' },   // صبور، بطيء
-  'ms-sarah':        { voice: VOICE_FEMALE, rate: '+5%',  pitch: '+2Hz' },   // مرحة، حيوية
-  'professor-david': { voice: VOICE_MALE,   rate: '-15%', pitch: '-3Hz' },   // أكاديمي، هادي، عميق
-  'miss-emma':       { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+0Hz' },   // دافية، ودودة
-  'coach-mike':      { voice: VOICE_FEMALE, rate: '+10%', pitch: '+3Hz' },   // حماسية، نشيطة
-  'dr-lisa':         { voice: VOICE_FEMALE, rate: '-5%',  pitch: '-2Hz' },   // احترافية، هادية
+  'mr-james':        { voice: VOICE_MALE,   rate: '-15%', pitch: '+0Hz' },   // صبور، بطيء، واضح
+  'ms-sarah':        { voice: VOICE_FEMALE, rate: '-10%', pitch: '+2Hz' },   // مرحة، حيوية
+  'professor-david': { voice: VOICE_MALE,   rate: '-20%', pitch: '-3Hz' },   // أكاديمي، هادي، عميق
+  'miss-emma':       { voice: VOICE_FEMALE, rate: '-15%', pitch: '+0Hz' },   // دافية، ودودة
+  'coach-mike':      { voice: VOICE_FEMALE, rate: '-10%', pitch: '+3Hz' },   // حماسية، نشيطة
+  'dr-lisa':         { voice: VOICE_FEMALE, rate: '-15%', pitch: '-2Hz' },   // احترافية، هادية
 
-  // ===== الأصدقاء الذكور (كلهم Shakir بس بسرعات/طبقات مختلفة) =====
-  'friend-alex':     { voice: VOICE_MALE,   rate: '+0%',  pitch: '+0Hz' },   // عادي
-  'friend-omar':     { voice: VOICE_MALE,   rate: '-5%',  pitch: '-2Hz' },   // هادي، chill
-  'friend-karim':    { voice: VOICE_MALE,   rate: '+0%',  pitch: '+2Hz' },   // مبدع، شاب
-  'friend-sami':     { voice: VOICE_MALE,   rate: '+10%', pitch: '+3Hz' },   // رياضي، نشيط
-  'friend-tarek':    { voice: VOICE_MALE,   rate: '-10%', pitch: '-3Hz' },   // موسيقي، chill
-  'friend-yara':     { voice: VOICE_MALE,   rate: '+5%',  pitch: '+4Hz' },   // شاب، مرح
-  'friend-dina':     { voice: VOICE_MALE,   rate: '+5%',  pitch: '+0Hz' },   // movie buff
-  'friend-amir':     { voice: VOICE_MALE,   rate: '+0%',  pitch: '-2Hz' },   // business، هادي
-  'friend-ziad':     { voice: VOICE_MALE,   rate: '+15%', pitch: '+5Hz' },   // جيمر، شغوف
-  'friend-khaled':   { voice: VOICE_MALE,   rate: '-15%', pitch: '-4Hz' },   // coffee، هادي عميق
+  // ===== الأصدقاء الذكور =====
+  'friend-alex':     { voice: VOICE_MALE,   rate: '-10%', pitch: '+0Hz' },
+  'friend-omar':     { voice: VOICE_MALE,   rate: '-15%', pitch: '-2Hz' },
+  'friend-karim':    { voice: VOICE_MALE,   rate: '-10%', pitch: '+2Hz' },
+  'friend-sami':     { voice: VOICE_MALE,   rate: '-5%',  pitch: '+3Hz' },
+  'friend-tarek':    { voice: VOICE_MALE,   rate: '-20%', pitch: '-3Hz' },
+  'friend-yara':     { voice: VOICE_MALE,   rate: '-10%', pitch: '+4Hz' },
+  'friend-dina':     { voice: VOICE_MALE,   rate: '-10%', pitch: '+0Hz' },
+  'friend-amir':     { voice: VOICE_MALE,   rate: '-15%', pitch: '-2Hz' },
+  'friend-ziad':     { voice: VOICE_MALE,   rate: '-5%',  pitch: '+5Hz' },
+  'friend-khaled':   { voice: VOICE_MALE,   rate: '-25%', pitch: '-4Hz' },
 
-  // ===== الأصدقاء الإناث (كلهم Salma بس بسرعات/طبقات مختلفة) =====
-  'friend-layla':    { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+0Hz' },   // دافية
-  'friend-sara':     { voice: VOICE_FEMALE, rate: '+10%', pitch: '+3Hz' },   // نشطة، حماسية
-  'friend-nora':     { voice: VOICE_FEMALE, rate: '+0%',  pitch: '+1Hz' },   // طباخة، ودودة
-  'friend-maya':     { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+2Hz' },   // هادية، طبيعة
-  'friend-hassan':   { voice: VOICE_FEMALE, rate: '+5%',  pitch: '+4Hz' },   // فضولية، شابة
-  'friend-hana':     { voice: VOICE_FEMALE, rate: '-10%', pitch: '-1Hz' },   // فنانة، هادية
-  'friend-farida':   { voice: VOICE_FEMALE, rate: '+5%',  pitch: '+0Hz' },   // سفر، مغامرة
-  'friend-mariam':   { voice: VOICE_FEMALE, rate: '-10%', pitch: '-2Hz' },   // نباتات، هادية
+  // ===== الأصدقاء الإناث =====
+  'friend-layla':    { voice: VOICE_FEMALE, rate: '-15%', pitch: '+0Hz' },
+  'friend-sara':     { voice: VOICE_FEMALE, rate: '-5%',  pitch: '+3Hz' },
+  'friend-nora':     { voice: VOICE_FEMALE, rate: '-10%', pitch: '+1Hz' },
+  'friend-maya':     { voice: VOICE_FEMALE, rate: '-15%', pitch: '+2Hz' },
+  'friend-hassan':   { voice: VOICE_FEMALE, rate: '-10%', pitch: '+4Hz' },
+  'friend-hana':     { voice: VOICE_FEMALE, rate: '-20%', pitch: '-1Hz' },
+  'friend-farida':   { voice: VOICE_FEMALE, rate: '-10%', pitch: '+0Hz' },
+  'friend-mariam':   { voice: VOICE_FEMALE, rate: '-20%', pitch: '-2Hz' },
 };
 
 // ===== helper: يحوّل نص لـ Buffer باستخدام ملف مؤقت =====
@@ -79,10 +81,10 @@ async function textToBuffer(text: string, voice: string, rate: string, pitch: st
 function getDefaultVoice(voiceId?: string): { voice: string; rate: string; pitch: string } {
   // لو voiceId مُرسل ومصرّح بيه، نستخدمه
   if (voiceId === VOICE_MALE || voiceId === VOICE_FEMALE) {
-    return { voice: voiceId, rate: '-5%', pitch: '+0Hz' };
+    return { voice: voiceId, rate: '-15%', pitch: '+0Hz' };  // أبطأ = أوضح
   }
   // default → صوت راجل مصري
-  return { voice: VOICE_MALE, rate: '-5%', pitch: '+0Hz' };
+  return { voice: VOICE_MALE, rate: '-15%', pitch: '+0Hz' };
 }
 
 // ===== تنظيف وتحضير النص العربي للنطق بالعامية المصرية =====
