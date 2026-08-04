@@ -4,7 +4,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Flame, Trophy, LogOut, Settings2, Volume2, Home, Plus } from 'lucide-react';
+import { Flame, Trophy, LogOut, Settings2, Volume2, Home, Plus, Trash2 } from 'lucide-react';
 import { useStore, type ChatMessage } from '@/lib/store';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import { useSpeechSynthesis } from '@/hooks/use-speech-synthesis';
@@ -409,6 +409,11 @@ export function ChatScreen() {
 
   // ===== Start new conversation (روح لشاشة اختيار المدرس) =====
   const handleNewConversation = useCallback(() => {
+    // اسأل المستخدم قبل ما يمسح
+    if (messages.length > 0) {
+      const confirmed = window.confirm('هل تريد بدء محادثة جديدة؟ سيتم مسح المحادثة الحالية.');
+      if (!confirmed) return;
+    }
     synthesis.cancel();
     recognition.stop();
     setListening(false);
@@ -424,7 +429,31 @@ export function ChatScreen() {
     // روح لشاشة اختيار المدرس
     toast.success('اختار المدرس اللي عايزه! 🎓');
     setScreen('teacher-select');
-  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen]);
+  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, setScreen, messages.length]);
+
+  // ===== مسح المحادثة الحالية (نفس المدرس) =====
+  const handleClearConversation = useCallback(() => {
+    if (messages.length === 0) {
+      toast.info('مفيش محادثة للمسح');
+      return;
+    }
+    const confirmed = window.confirm('هل تريد مسح المحادثة الحالية؟ مش هتقدر ترجعها.');
+    if (!confirmed) return;
+
+    synthesis.cancel();
+    recognition.stop();
+    setListening(false);
+    setAiThinking(false);
+    setSpeakingId(null);
+    clearMessages();
+    setConversationId(null);
+    setCurrentTargetWord(null);
+    setInReviewMode(false);
+    setInSentenceBuilderMode(false);
+    greetingSentRef.current = false;
+    convIdRef.current = null;
+    toast.success('تم مسح المحادثة — ابدأ واحدة جديدة! 🗑️');
+  }, [synthesis, recognition, setListening, setSpeaking, setAiThinking, clearMessages, setConversationId, setCurrentTargetWord, setInReviewMode, setInSentenceBuilderMode, messages.length]);
 
   // ===== Go Home (ارجع لصفحة المعلومات الأساسية - onboarding) =====
   const handleGoHome = useCallback(() => {
@@ -494,6 +523,15 @@ export function ChatScreen() {
             title="محادثة جديدة"
           >
             <Plus className="h-3.5 w-3.5" />
+          </button>
+          {/* ===== زرار مسح المحادثة الحالية ===== */}
+          <button
+            onClick={handleClearConversation}
+            className="flex h-7 w-7 items-center justify-center rounded-lg opti-glass text-red-400 hover:bg-red-500/10"
+            aria-label="مسح المحادثة"
+            title="مسح المحادثة"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
           {/* ===== زرار الصفحة الرئيسية ===== */}
           <button
