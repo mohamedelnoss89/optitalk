@@ -29,7 +29,7 @@ export default function LoginPage() {
       if (stored) {
         const data = JSON.parse(stored);
         if (data?.state?.isAuthenticated === true && data?.state?.authUser) {
-          router.push('/');
+          router.push('/app');
         }
       }
     } catch {}
@@ -112,7 +112,7 @@ export default function LoginPage() {
       } catch {}
 
       toast.success(`أهلاً ${data.name}! 👋`);
-      setTimeout(() => router.push('/'), 800);
+      setTimeout(() => router.push('/app'), 800);
     } catch (err: any) {
       console.error('[Google Auth] Error:', err);
       toast.error('مشكلة في الاتصال. حاول تاني');
@@ -186,7 +186,7 @@ export default function LoginPage() {
 
       // روح للتطبيق
       setTimeout(() => {
-        router.push('/');
+        router.push('/app');
       }, 800);
     } catch (err: any) {
       console.error('[Auth] Error:', err);
