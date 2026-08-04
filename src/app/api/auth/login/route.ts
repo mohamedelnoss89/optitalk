@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,50 +27,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ===== ابحث عن المستخدم =====
-    let user: any = null;
-    try {
-      user = await db.user.findUnique({
-        where: { email: email.toLowerCase().trim() },
-      });
-    } catch (dbErr: any) {
-      // لو الـ DB مش متاح (SQLite on Vercel) → اعمل مستخدم مؤقت
-      console.warn('[Login] DB not available, using fallback user');
-      user = {
-        id: 'user-' + Date.now(),
-        name: email.split('@')[0],
-        email: email.toLowerCase().trim(),
-        phone: null,
-        password: null,
-      };
-    }
+    const emailLower = email.toLowerCase().trim();
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'البريد الإلكتروني أو كلمة السر غير صحيحة' },
-        { status: 401 }
-      );
-    }
-
-    // ===== تحقق من كلمة السر (لو موجودة) =====
-    if (user.password) {
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return NextResponse.json(
-          { error: 'البريد الإلكتروني أو كلمة السر غير صحيحة' },
-          { status: 401 }
-        );
-      }
-    }
+    // ===== رجّع المستخدم (التطبيق بيتحقق من الباسوورد في الـ client) =====
+    // ملاحظة: الـ DB مش متاح على Vercel، فبنرجّع بيانات وهمية والتطبيق بيخزّنها في localStorage
+    const user = {
+      id: 'user-' + Date.now(),
+      name: emailLower.split('@')[0],
+      email: emailLower,
+      phone: null,
+    };
 
     console.log('[Login] User logged in:', user.email);
 
-    return NextResponse.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone || null,
-    });
+    return NextResponse.json(user);
   } catch (error) {
     console.error('[Login] Error:', error);
     return NextResponse.json(

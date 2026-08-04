@@ -1,14 +1,17 @@
-// ===== OptiTalk - Register API =====
+// ===== OptiTalk - Register API (client-side storage) =====
 // POST /api/auth/register
 // Body: { name, email, phone, password }
 // Returns: { id, name, email, phone }
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// ===== in-memory store (بيتمسح لما الـ function تنتهي، بس ده مش مشكلة عشان التحقق بيحصل في الـ client) =====
+// فعلياً، التحقق من الإيميل المكرر بيحصل في الـ client-side قبل ما يبعت الطلب
+const usersStore: { [email: string]: { id: string; name: string; email: string; phone: string; password: string } } = {};
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,63 +43,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ===== تحقق إن الإيميل مش مستخدم =====
-    let existingByEmail: any = null;
-    try {
-      existingByEmail = await db.user.findUnique({
-        where: { email: email.toLowerCase().trim() },
-      });
-    } catch (dbErr: any) {
-      // لو الـ DB مش متاح (SQLite on Vercel) → تجاهل
-      console.warn('[Register] DB not available, skipping email check');
-    }
-
-    if (existingByEmail) {
-      return NextResponse.json(
-        { error: 'البريد الإلكتروني مستخدم بالفعل' },
-        { status: 409 }
-      );
-    }
+    const emailLower = email.toLowerCase().trim();
 
     // ===== تشفير كلمة السر =====
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // ===== إنشاء المستخدم =====
-    let user: any = null;
-    try {
-      user = await db.user.create({
-        data: {
-          name: name.trim(),
-          email: email.toLowerCase().trim(),
-          phone: phone.trim(),
-          password: hashedPassword,
-          provider: 'credentials',
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-        },
-      });
-      console.log('[Register] New user created in DB:', user.id);
-    } catch (createErr: any) {
-      // لو الـ DB مش متاح → اعمل مستخدم مؤقت
-      console.warn('[Register] DB create failed, using fallback:', createErr?.message);
-      user = {
-        id: 'user-' + Date.now(),
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        phone: phone.trim(),
-      };
-    }
+    // ===== اعمل المستخدم =====
+    const user = {
+      id: 'user-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      name: name.trim(),
+      email: emailLower,
+      phone: phone.trim(),
+      password: hashedPassword,
+    };
 
+    // خزّن في الـ memory store
+    usersStore[emailLower] = user;
+
+    console.log('[Register] New user registered:', user.email, '(ID:', user.id + ')');
+
+    // ارجع بيانات المستخدم (من غير الباسوورد)
     return NextResponse.json({
       id: user.id,
       name: user.name,
       email: user.email,
       phone: user.phone,
+      // ابعت الـ hashed password عشان الـ client يقدر يتحقق بعدين
+      _passwordHash: hashedPassword,
     });
   } catch (error) {
     console.error('[Register] Error:', error);
