@@ -590,7 +590,7 @@ function concatMP3Buffers(buffers: Buffer[]): Buffer {
 }
 
 // ===== helper: يولّد الصوت من نص (مع دعم اللغات المتعددة) =====
-// بيجرّب Google TTS الأول (بينطق العامية أحسن)، ولو فشل يرجع لـ Edge TTS
+// نستخدم Edge TTS المصري فقط (ar-EG) — هو الأفضل للعامية المصرية
 async function generateAudio(
   cleanText: string,
   characterId: string | null,
@@ -624,43 +624,7 @@ async function generateAudio(
     englishVoice = 'en-US-GuyNeural';
   }
 
-  // ===== 1) جرّب Google TTS الأول (بينطق العامية المصرية أحسن) =====
-  try {
-    // فصل النص لقطع (عربي / إنجليزي)
-    const segments = splitByLanguage(cleanText);
-
-    if (segments.length === 1) {
-      // نص واحد بس → استخدم Google TTS مباشرة
-      const lang = segments[0].lang === 'en' ? 'en' : 'ar';
-      const googleBuffer = await googleTTS(segments[0].text, lang);
-      if (googleBuffer && googleBuffer.length > 500) {
-        console.log('[TTS] Using Google TTS (single segment)');
-        return googleBuffer;
-      }
-    } else {
-      // نصوص متعددة → استخدم Google TTS لكل قطعة
-      const audioBuffers: Buffer[] = [];
-      for (const seg of segments) {
-        const lang = seg.lang === 'en' ? 'en' : 'ar';
-        const buf = await googleTTS(seg.text, lang);
-        if (buf && buf.length > 100) {
-          audioBuffers.push(buf);
-        } else {
-          // fallback لـ Edge TTS لو Google فشل
-          const edgeVoice = seg.lang === 'en' ? englishVoice : config.voice;
-          const edgeBuf = await textToBuffer(seg.text, edgeVoice, config.rate, config.pitch);
-          audioBuffers.push(edgeBuf);
-        }
-      }
-      console.log('[TTS] Using Google TTS (mixed segments)');
-      return concatMP3Buffers(audioBuffers);
-    }
-  } catch (err: any) {
-    console.warn('[TTS] Google TTS failed, falling back to Edge TTS:', err?.message);
-  }
-
-  // ===== 2) Fallback: استخدم Edge TTS لو Google فشل =====
-  console.log('[TTS] Using Edge TTS (fallback)');
+  // استخدم Edge TTS المصري فقط
   const segments = splitByLanguage(cleanText);
 
   if (segments.length === 1) {
